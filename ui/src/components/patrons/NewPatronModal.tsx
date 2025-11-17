@@ -20,7 +20,7 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { addYears } from 'date-fns';
 import { validate_required } from '../../utils/validators';
-import type { Patron_Form_Data } from '../../types';
+import type { Create_Patron_Data } from '../../types';
 
 export interface Patron_Form_Errors {
   first_name: string;
@@ -34,7 +34,7 @@ export interface Patron_Form_Errors {
 interface New_Patron_Modal_Props {
   open: boolean;
   on_close: () => void;
-  on_submit: (patron_data: Patron_Form_Data) => void;
+  on_submit: (patron_data: Create_Patron_Data) => void;
   is_loading?: boolean;
 }
 
@@ -44,7 +44,7 @@ const New_Patron_Modal: FC<New_Patron_Modal_Props> = ({
   on_submit,
   is_loading = false,
 }) => {
-  const [form_data, set_form_data] = useState<Patron_Form_Data>({
+  const [form_data, set_form_data] = useState<Create_Patron_Data>({
     first_name: '',
     last_name: '',
     balance: 0,
@@ -87,7 +87,7 @@ const New_Patron_Modal: FC<New_Patron_Modal_Props> = ({
   };
 
   const handle_input_change =
-    (field: keyof Patron_Form_Data) =>
+    (field: keyof Create_Patron_Data) =>
     (event: React.ChangeEvent<HTMLInputElement>) => {
       const value = event.target.value;
       set_form_data((prev) => ({

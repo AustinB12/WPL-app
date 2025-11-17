@@ -3,13 +3,13 @@ import type { JSX } from 'react';
 import type { Transaction_Type } from '../../types';
 
 export function TransactionTypeChip({
-  status,
+  transaction_type,
 }: {
-  status: Transaction_Type;
+  transaction_type: Transaction_Type;
 }): JSX.Element {
   const theme = useTheme();
   const is_light = theme.palette.mode === 'light';
-  switch (status.toUpperCase()) {
+  switch (transaction_type.toUpperCase()) {
     case 'CHECKOUT':
       return (
         <Chip

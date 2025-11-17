@@ -26,7 +26,10 @@ import {
 import { Link } from 'react-router-dom';
 import CreateLibraryItemDrawer from '../components/books/CreateLibraryItemDrawer';
 import NewPatronModal from '../components/patrons/NewPatronModal';
-import type { Create_Library_Item_Form_Data, Patron_Form_Data } from '../types';
+import type {
+  Create_Library_Item_Form_Data,
+  Create_Patron_Data,
+} from '../types';
 import React, { useState, type PropsWithChildren } from 'react';
 import { useCreatePatron } from '../hooks/usePatrons';
 import { useStats } from '../hooks/useStats';
@@ -61,7 +64,7 @@ export const HomePage = () => {
       },
     });
 
-  const handle_create_patron = (patron_data: Patron_Form_Data) => {
+  const handle_create_patron = (patron_data: Create_Patron_Data) => {
     create_patron(patron_data);
   };
 

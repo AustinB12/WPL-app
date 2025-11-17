@@ -6,9 +6,10 @@ import {
   CardHeader,
   IconButton,
 } from '@mui/material';
-import { DataGrid, type GridColDef } from '@mui/x-data-grid';
+import { type GridColDef } from '@mui/x-data-grid';
 import { useTransactions } from '../../hooks/useTransactions';
 import { Loop } from '@mui/icons-material';
+import { BaseDataGrid } from './BaseDataGrid';
 
 const columns: GridColDef[] = [
   {
@@ -77,14 +78,10 @@ export const RecentTransactionsList = () => {
       <CardContent
         sx={{ p: 0, maxHeight: 'calc(100vh - 200px)', width: '100%' }}
       >
-        <DataGrid
+        <BaseDataGrid
           rows={data || []}
           columns={columns}
           loading={isLoading}
-          pageSizeOptions={[15, 30, 50]}
-          initialState={{
-            pagination: { paginationModel: { pageSize: 15 } },
-          }}
           disableRowSelectionOnClick
           sx={{
             border: 'none',

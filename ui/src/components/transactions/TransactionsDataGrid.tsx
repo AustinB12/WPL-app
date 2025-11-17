@@ -31,7 +31,9 @@ const transaction_cols: GridColDef[] = [
     field: 'transaction_type',
     headerName: 'Type',
     width: 120,
-    renderCell: (params) => <TransactionTypeChip status={params.value} />,
+    renderCell: (params) => (
+      <TransactionTypeChip transaction_type={params.value} />
+    ),
   },
   {
     field: 'created_at',

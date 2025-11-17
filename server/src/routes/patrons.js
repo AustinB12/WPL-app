@@ -186,7 +186,7 @@ router.put(
   }
 );
 
-// DELETE /api/v1/patrons/:id - Delete patron (soft delete by setting is_active to false)
+// DELETE /api/v1/patrons/:id - Delete patron
 router.delete('/:id', async (req, res) => {
   try {
     const existing_patron = await db.get_by_id('PATRONS', req.params.id);
@@ -209,23 +209,16 @@ router.delete('/:id', async (req, res) => {
       });
     }
 
-    const updated = await db.update_record('PATRONS', req.params.id, {
-      is_active: false,
-    });
+    // Delete patron record
+    await db.delete_record('PATRONS', req.params.id);
 
-    if (updated) {
-      res.json({
-        success: true,
-        message: 'Patron deactivated successfully',
-      });
-    } else {
-      res.status(500).json({
-        error: 'Failed to deactivate patron',
-      });
-    }
+    res.json({
+      success: true,
+      message: 'Patron deleted successfully',
+    });
   } catch (error) {
     res.status(500).json({
-      error: 'Failed to deactivate patron',
+      error: 'Failed to delete patron',
       message: error.message,
     });
   }

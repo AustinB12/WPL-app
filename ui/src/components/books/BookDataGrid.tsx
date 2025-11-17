@@ -1,5 +1,6 @@
-import { DataGrid, type GridColDef } from '@mui/x-data-grid';
+import { type GridColDef } from '@mui/x-data-grid';
 import { useBooks } from '../../hooks/useBooks';
+import { BaseDataGrid } from '../common/BaseDataGrid';
 
 const columns: GridColDef[] = [
   { field: 'id', headerName: 'ID' },
@@ -23,25 +24,12 @@ export const BooksDataGrid: React.FC<BooksDataGridProps> = ({
   }
 
   return (
-    <DataGrid
-      showToolbar
+    <BaseDataGrid
       disableColumnSelector
       rows={books || []}
       columns={cols}
       loading={loading}
       label="Books"
-      pageSizeOptions={[15, 10, 5]}
-      initialState={{
-        pagination: {
-          paginationModel: { pageSize: 5, page: 0 },
-        },
-      }}
-      slotProps={{
-        toolbar: {
-          printOptions: { disableToolbarButton: true },
-          csvOptions: { disableToolbarButton: true },
-        },
-      }}
     />
   );
 };

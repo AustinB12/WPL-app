@@ -4,7 +4,7 @@ import {
   type GridRowSelectionModel,
 } from '@mui/x-data-grid';
 
-import { useState } from 'react';
+import { useState, type FC } from 'react';
 import { useAllPatrons } from '../../hooks/usePatrons';
 import { format_date, is_overdue } from '../../utils/dateUtils';
 import { Alert, Box, Chip, Snackbar, Typography } from '@mui/material';
@@ -29,7 +29,7 @@ const columns: GridColDef[] = [
         <Typography
           sx={(theme) => ({
             textDecoration: 'none',
-            color: `color-mix(in srgb, ${theme.palette.primary.main} 50%, ${theme.palette.text.primary} 50%)`,
+            color: `color-mix(in srgb, ${theme.palette.primary.main} 20%, ${theme.palette.text.primary} 80%)`,
             display: 'inline',
             fontWeight: 500,
           })}
@@ -105,6 +105,7 @@ const columns: GridColDef[] = [
     field: 'is_active',
     headerName: 'Status',
     flex: 1,
+    minWidth: 120,
     renderCell: (params) => (
       <>
         {params.value ? (
@@ -122,15 +123,17 @@ interface PatronsDataGridProps {
   onPatronSelected?: (patronId: string) => void;
   check_overdue?: boolean;
   hidden_columns?: string[];
+  just_active?: boolean;
 }
 
-export const PatronsDataGrid: React.FC<PatronsDataGridProps> = ({
+export const PatronsDataGrid: FC<PatronsDataGridProps> = ({
   cols = columns,
   hidden_columns = [],
   onPatronSelected = undefined,
-  check_overdue: check_card_and_blanance = false,
+  check_overdue = false,
+  just_active = true,
 }) => {
-  const { data: patrons, isLoading: loading } = useAllPatrons();
+  const { data: patrons, isLoading: loading } = useAllPatrons(just_active);
 
   const [snack, set_snack] = useState<boolean>(false);
 
@@ -138,9 +141,9 @@ export const PatronsDataGrid: React.FC<PatronsDataGridProps> = ({
     card_expiration_date: Date;
     balance: number;
   }) => {
-    if (!check_card_and_blanance) return true;
+    if (!check_overdue) return true;
     return (
-      check_card_and_blanance &&
+      check_overdue &&
       !is_overdue(row.card_expiration_date) &&
       !(row.balance > 0)
     );
@@ -149,20 +152,17 @@ export const PatronsDataGrid: React.FC<PatronsDataGridProps> = ({
   return (
     <>
       <BaseDataGrid
+        label="Patrons"
         onRowDoubleClick={(params) =>
           !patron_can_be_selected(params.row) && set_snack(true)
         }
         rows={patrons || []}
         columns={cols}
         loading={loading}
-        pageSizeOptions={[50, 20, 15, 10, 5]}
         initialState={{
-          pagination: {
-            paginationModel: { pageSize: 20, page: 0 },
-          },
           filter: {
             filterModel: {
-              items: check_card_and_blanance
+              items: check_overdue
                 ? [
                     {
                       field: 'balance',
@@ -174,7 +174,7 @@ export const PatronsDataGrid: React.FC<PatronsDataGridProps> = ({
             },
           },
         }}
-        disableRowSelectionOnClick={!check_card_and_blanance}
+        disableRowSelectionOnClick={!check_overdue}
         onRowSelectionModelChange={(x) => {
           const selected_id =
             Array.from((x as GridRowSelectionModel).ids)[0]?.toString() || '';

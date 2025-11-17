@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { data_service } from '../services/dataService';
-import type { Patron_Form_Data } from '../types';
+import type { Create_Patron_Data, Update_Patron_Data } from '../types';
 
 export const useAllPatrons = (just_active: boolean = true) => {
   return useQuery({
@@ -21,7 +21,7 @@ export const useCreatePatron = (options?: {
   onError?: (error: Error) => void;
 }) => {
   return useMutation({
-    mutationFn: (patron_data: Patron_Form_Data) =>
+    mutationFn: (patron_data: Create_Patron_Data) =>
       data_service.create_patron(patron_data),
     onSuccess: options?.onSuccess,
     onError: options?.onError,
@@ -40,7 +40,7 @@ export const useUpdatePatron = (options?: {
       patron_data,
     }: {
       patron_id: number;
-      patron_data: Partial<Patron_Form_Data>;
+      patron_data: Update_Patron_Data;
     }) => data_service.update_patron(patron_id, patron_data),
     onSuccess: (_data, variables) => {
       query_client.invalidateQueries({

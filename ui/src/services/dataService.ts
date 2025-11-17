@@ -7,12 +7,13 @@ import type {
   Item_Copy,
   Branch,
   Patron,
-  Patron_Form_Data,
   Book_Form_Data,
   Create_Library_Item_Form_Data,
   Item_Condition,
   Item_Copy_Results,
   Checkin_Receipt,
+  Update_Patron_Data,
+  Create_Patron_Data,
 } from '../types';
 import { Genre } from '../types';
 
@@ -446,7 +447,7 @@ export const data_service = {
     }
   },
 
-  async create_patron(patron_data: Patron_Form_Data): Promise<Patron> {
+  async create_patron(patron_data: Create_Patron_Data): Promise<Patron> {
     return await api_request<Patron>('/patrons', {
       method: 'POST',
       body: JSON.stringify(patron_data),
@@ -455,7 +456,7 @@ export const data_service = {
 
   async update_patron(
     patron_id: number,
-    patron_data: Partial<Patron_Form_Data>
+    patron_data: Update_Patron_Data
   ): Promise<Patron> {
     return await api_request<Patron>(`/patrons/${patron_id}`, {
       method: 'PUT',

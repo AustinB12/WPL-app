@@ -120,18 +120,12 @@ export interface Patron {
   phone?: string;
   card_expiration_date: Date;
   image_url?: string;
+  is_active?: boolean;
 }
 
-export interface Patron_Form_Data {
-  first_name: string;
-  last_name: string;
-  balance?: number;
-  birthday?: Date;
-  email?: string;
-  phone?: string;
-  card_expiration_date: Date;
-  image_url?: string;
-}
+export type Update_Patron_Data = Partial<Omit<Patron, 'id'>>;
+
+export type Create_Patron_Data = Omit<Patron, 'id'>;
 
 export interface Branch {
   id: number;

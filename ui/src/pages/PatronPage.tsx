@@ -22,6 +22,9 @@ import {
   DialogActions,
   TextField,
   Snackbar,
+  CardContent,
+  Switch,
+  FormControlLabel,
 } from '@mui/material';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -36,7 +39,7 @@ import {
   Edit,
   Delete,
 } from '@mui/icons-material';
-import { DataGrid, type GridColDef } from '@mui/x-data-grid';
+import { type GridColDef } from '@mui/x-data-grid';
 import {
   useDeletePatronById,
   usePatronById,
@@ -44,17 +47,18 @@ import {
 } from '../hooks/usePatrons';
 import { useGetTransactionsByPatronId } from '../hooks/useTransactions';
 import { format_date } from '../utils/dateUtils';
-import type { Patron_Form_Data } from '../types';
+import type { Update_Patron_Data } from '../types';
 import { TransactionStatusChip } from '../components/transactions/TransactionStatusChip';
+import { BaseDataGrid } from '../components/common/BaseDataGrid';
+import { TransactionTypeChip } from '../components/transactions/TransactionTypeChip';
 
-// Helper Components
-interface InfoItemProps {
+interface Info_Item_Props {
   icon: ReactNode;
   value: string | ReactNode;
   label: string;
 }
 
-const InfoItem = ({ icon, value, label }: InfoItemProps) => (
+const InfoItem = ({ icon, value, label }: Info_Item_Props) => (
   <Stack gap={1} alignItems="center" direction="row">
     {icon}
     <Stack>
@@ -66,32 +70,38 @@ const InfoItem = ({ icon, value, label }: InfoItemProps) => (
   </Stack>
 );
 
-// interface StatCardProps {
-//   value: string | number;
-//   label: string;
-// }
+interface StatCardProps {
+  value: string | number;
+  label: string;
+}
 
-// const StatCard = ({ value, label }: StatCardProps) => (
-//   <Grid size={{ xs: 4 }}>
-//     <Box sx={{ p: { xs: 1, md: 2 }, textAlign: 'center' }}>
-//       <Typography
-//         variant="h4"
-//         sx={{
-//           fontWeight: 700,
-//           fontSize: { xs: '1.5rem', sm: '2rem', md: '2.125rem' },
-//         }}
-//       >
-//         {value}
-//       </Typography>
-//       <Typography
-//         variant="body2"
-//         sx={{ fontSize: { xs: '0.75rem', md: '0.875rem' } }}
-//       >
-//         {label}
-//       </Typography>
-//     </Box>
-//   </Grid>
-// );
+const StatCard = ({ value, label }: StatCardProps) => (
+  <Grid size={{ xs: 4 }}>
+    <Box
+      sx={{
+        p: 1,
+        textAlign: 'center',
+        borderRadius: 2,
+      }}
+    >
+      <Typography
+        variant="h4"
+        sx={{
+          fontWeight: 700,
+          fontSize: { xs: '1.5rem', sm: '2rem', md: '2.125rem' },
+        }}
+      >
+        {value}
+      </Typography>
+      <Typography
+        variant="body2"
+        sx={{ fontSize: { xs: '0.75rem', md: '0.875rem' } }}
+      >
+        {label}
+      </Typography>
+    </Box>
+  </Grid>
+);
 
 // Columns for patron's transaction history
 const cols: GridColDef[] = [
@@ -104,10 +114,9 @@ const cols: GridColDef[] = [
     field: 'transaction_type',
     headerName: 'Type',
     width: 120,
-    valueFormatter: (value) => {
-      const str = String(value);
-      return str.charAt(0).toUpperCase() + str.slice(1);
-    },
+    renderCell: (params) => (
+      <TransactionTypeChip transaction_type={params.value} />
+    ),
   },
   {
     field: 'checkout_date',
@@ -144,7 +153,9 @@ const cols: GridColDef[] = [
     headerName: 'Fine',
     width: 100,
     valueFormatter: (value) => {
-      return value ? `$${Number(value).toFixed(2)}` : '$0.00';
+      return value
+        ? `${Number(value) < 0 && '+'}$${Number(value).toFixed(2)}`
+        : '$0.00';
     },
   },
 ];
@@ -163,14 +174,7 @@ export const PatronPage = () => {
     message: '',
     severity: 'success',
   });
-  const [form_data, set_form_data] = useState({
-    first_name: '',
-    last_name: '',
-    email: '',
-    phone: '',
-    birthday: null as Dayjs | null,
-    card_expiration_date: null as Dayjs | null,
-  });
+  const [form_data, set_form_data] = useState<Update_Patron_Data>({});
 
   const open = Boolean(anchor_el);
 
@@ -204,7 +208,7 @@ export const PatronPage = () => {
       // Redirect to patrons list after showing success message
       setTimeout(() => {
         window.location.href = '/patrons';
-      }, 1500);
+      }, 500);
     },
     onError: (error) => {
       console.error('Failed to delete patron:', error);
@@ -231,8 +235,10 @@ export const PatronPage = () => {
         last_name: patron.last_name,
         email: patron.email || '',
         phone: patron.phone || '',
-        birthday: patron.birthday ? dayjs(patron.birthday) : null,
-        card_expiration_date: dayjs(patron.card_expiration_date),
+        birthday: patron.birthday ? patron.birthday : undefined,
+        card_expiration_date: patron.card_expiration_date,
+        image_url: patron.image_url || '',
+        balance: patron.balance,
       });
     }
     set_edit_modal_open(true);
@@ -254,18 +260,23 @@ export const PatronPage = () => {
 
   const handle_delete_confirm = () => {
     delete_patron_mutation.mutate(patron_id ? parseInt(patron_id) : 0);
-    console.log('Delete patron:', patron_id);
   };
 
   const handle_snackbar_close = () => {
     set_snackbar((prev) => ({ ...prev, open: false }));
   };
 
-  const handle_input_change = (field: string, value: string) => {
+  const handle_input_change = (
+    field: keyof Update_Patron_Data,
+    value: string | boolean
+  ) => {
     set_form_data((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handle_date_change = (field: string, value: Dayjs | null | Date) => {
+  const handle_date_change = (
+    field: keyof Update_Patron_Data,
+    value: Dayjs | null | Date
+  ) => {
     const dayjs_value = value instanceof Date ? dayjs(value) : value;
     set_form_data((prev) => ({ ...prev, [field]: dayjs_value }));
   };
@@ -273,15 +284,18 @@ export const PatronPage = () => {
   const handle_save = () => {
     if (!patron_id) return;
 
-    const updated_data: Partial<Patron_Form_Data> = {
+    const updated_data: Partial<Update_Patron_Data> = {
       first_name: form_data.first_name,
       last_name: form_data.last_name,
       email: form_data.email || undefined,
       phone: form_data.phone || undefined,
-      birthday: form_data.birthday ? form_data.birthday.toDate() : undefined,
+      birthday: form_data.birthday ? form_data.birthday : undefined,
       card_expiration_date: form_data.card_expiration_date
-        ? form_data.card_expiration_date.toDate()
+        ? form_data.card_expiration_date
         : new Date(),
+      image_url: form_data.image_url || undefined,
+      balance: form_data.balance !== undefined ? form_data.balance : undefined,
+      is_active: form_data.is_active !== undefined ? form_data.is_active : true,
     };
 
     update_patron_mutation.mutate({
@@ -290,11 +304,10 @@ export const PatronPage = () => {
     });
   };
 
-  // Fetch patron details using the hook
   const {
     data: patron,
-    isLoading: patronLoading,
-    error: patronError,
+    isLoading: patron_loading,
+    error: patron_error,
   } = usePatronById(parseInt(patron_id || '0'));
 
   const { data: pt, isLoading: transactions_loading } =
@@ -308,7 +321,7 @@ export const PatronPage = () => {
     );
   }
 
-  if (patronLoading) {
+  if (patron_loading) {
     return (
       <Container sx={{ p: 3, display: 'flex', justifyContent: 'center' }}>
         <CircularProgress />
@@ -316,11 +329,11 @@ export const PatronPage = () => {
     );
   }
 
-  if (patronError || !patron) {
+  if (patron_error || !patron) {
     return (
       <Container sx={{ p: 3 }}>
         <Alert severity="error">
-          {patronError ? 'Error loading patron data' : 'Patron not found'}
+          {patron_error ? 'Error loading patron data' : 'Patron not found'}
         </Alert>
         <Link to="/patrons" style={{ textDecoration: 'none' }}>
           <Button startIcon={<ArrowBack />} sx={{ mt: 2 }}>
@@ -332,14 +345,32 @@ export const PatronPage = () => {
   }
 
   const is_card_expired = new Date(patron.card_expiration_date) < new Date();
-  // const total_fines =
-  //   pt?.reduce((sum, t) => sum + (t.fine_amount || 0), 0) || 0;
+  const total_fines =
+    pt?.reduce((sum, t) => sum + (t.fine_amount || 0), 0) || 0;
+
+  const total_checkouts = pt?.reduce(
+    (count, t) =>
+      t.transaction_type.toUpperCase() === 'CHECKOUT' &&
+      t.status.toUpperCase() === 'ACTIVE'
+        ? count + 1
+        : count,
+    0
+  );
+
+  const total_returned = pt?.reduce(
+    (count, t) =>
+      t.transaction_type.toUpperCase() === 'CHECKIN' &&
+      t.status.toUpperCase() === 'COMPLETED'
+        ? count + 1
+        : count,
+    0
+  );
 
   return (
     <Container maxWidth="xl" sx={{ p: { xs: 1, sm: 2, md: 3 } }}>
       <Grid container spacing={{ xs: 2, md: 3 }}>
-        <Grid size={{ xs: 12, md: 9 }}>
-          <Card sx={{ borderRadius: 3 }}>
+        <Grid size={{ xs: 12, md: 6 }}>
+          <Card sx={{ borderRadius: 3, height: '-webkit-fill-available' }}>
             <CardHeader
               action={
                 <>
@@ -407,8 +438,9 @@ export const PatronPage = () => {
                   }}
                   src={patron.image_url}
                 >
-                  {patron.first_name[0]}
-                  {patron.last_name[0]}
+                  {patron?.image_url
+                    ? null
+                    : patron.first_name[0] + patron.last_name[0]}
                 </Avatar>
               }
               subheader={
@@ -450,7 +482,8 @@ export const PatronPage = () => {
                           fontWeight: 600,
                         }}
                       >
-                        ${patron.balance.toFixed(2)}
+                        {patron.balance < 0 ? '+' : ''}$
+                        {Math.abs(patron.balance).toFixed(2)}
                       </Typography>
                     }
                     label="Balance"
@@ -468,26 +501,30 @@ export const PatronPage = () => {
             />
           </Card>
         </Grid>
-        {/* <Grid size={{ xs: 12, md: 6 }}>
+        <Grid size={{ xs: 12, md: 6 }}>
           <Card
             sx={{
               borderRadius: 3,
+              height: '-webkit-fill-available',
             }}
           >
-            <CardContent>
+            <CardContent sx={{ p: 1.25 }}>
               <Typography
                 variant="h6"
                 sx={{
                   fontWeight: 600,
-                  mb: 2,
+                  mb: 1,
                   fontSize: { xs: '1rem', md: '1.25rem' },
                 }}
               >
                 Statistics
               </Typography>
               <Grid container spacing={1}>
-                <StatCard value={5} label="Active Checkouts" />
-                <StatCard value={5} label="Total Returns" />
+                <StatCard
+                  value={total_checkouts || 0}
+                  label="Active Checkouts"
+                />
+                <StatCard value={total_returned || 0} label="Total Returns" />
                 <StatCard
                   value={`$${total_fines.toFixed(2)}`}
                   label="Total Fines"
@@ -495,7 +532,7 @@ export const PatronPage = () => {
               </Grid>
             </CardContent>
           </Card>
-        </Grid> */}
+        </Grid>
         <Grid size={{ xs: 12 }}>
           <Card
             sx={{
@@ -504,16 +541,11 @@ export const PatronPage = () => {
               borderRadius: 3,
             }}
           >
-            <DataGrid
-              showToolbar
-              label="Transactions"
+            <BaseDataGrid
+              label={` ${patron.first_name} ${patron.last_name}'s Transactions`}
               rows={pt}
               columns={cols}
               loading={transactions_loading}
-              pageSizeOptions={[5, 10, 25]}
-              initialState={{
-                pagination: { paginationModel: { pageSize: 10 } },
-              }}
               disableRowSelectionOnClick
               sx={{
                 border: 'none',
@@ -586,7 +618,7 @@ export const PatronPage = () => {
               <Grid size={{ xs: 12, sm: 6 }}>
                 <DatePicker
                   label="Birthday"
-                  value={form_data.birthday}
+                  value={dayjs(form_data.birthday)}
                   onChange={(value) => handle_date_change('birthday', value)}
                   slotProps={{
                     textField: {
@@ -598,7 +630,7 @@ export const PatronPage = () => {
               <Grid size={{ xs: 12, sm: 6 }}>
                 <DatePicker
                   label="Card Expiration Date"
-                  value={form_data.card_expiration_date}
+                  value={dayjs(form_data.card_expiration_date)}
                   onChange={(value) =>
                     handle_date_change('card_expiration_date', value)
                   }
@@ -608,6 +640,43 @@ export const PatronPage = () => {
                       required: true,
                     },
                   }}
+                />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 5 }}>
+                <TextField
+                  label="Profile Image URL"
+                  type="url"
+                  value={form_data.image_url}
+                  onChange={(e) =>
+                    handle_input_change('image_url', e.target.value)
+                  }
+                  fullWidth
+                />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 5 }}>
+                <TextField
+                  label="Balance"
+                  type="number"
+                  value={
+                    form_data.balance === undefined ? 0 : form_data.balance
+                  }
+                  onChange={(e) =>
+                    handle_input_change('balance', e.target.value)
+                  }
+                  fullWidth
+                />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 2 }}>
+                <FormControlLabel
+                  control={
+                    <Switch
+                      checked={!!form_data.is_active}
+                      onChange={(e) =>
+                        handle_input_change('is_active', e.target.checked)
+                      }
+                    />
+                  }
+                  label="Active?"
                 />
               </Grid>
             </Grid>
@@ -633,7 +702,7 @@ export const PatronPage = () => {
         fullWidth
       >
         <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <Delete color="error" /> Delete Patron
+          <Delete /> Delete Patron
         </DialogTitle>
         <DialogContent>
           <Alert severity="warning" sx={{ mb: 2 }}>
@@ -650,8 +719,14 @@ export const PatronPage = () => {
             All associated transactions and reservations will be affected.
           </Typography>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={handle_delete_dialog_close}>Cancel</Button>
+        <DialogActions sx={{ justifyContent: 'space-between' }}>
+          <Button
+            onClick={handle_delete_dialog_close}
+            color="inherit"
+            variant="outlined"
+          >
+            Cancel
+          </Button>
           <Button
             onClick={handle_delete_confirm}
             variant="contained"
