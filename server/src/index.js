@@ -23,8 +23,6 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const api_base = process.env.API_BASE_URL || '/api/v1';
 
-const cors_origin = process.env.CORS_ORIGIN || 'http://localhost:5173';
-
 const is_dev =
   process.env.NODE_ENV === 'development' ||
   process.env.NODE_ENV !== 'production' ||
@@ -35,7 +33,6 @@ const url = is_dev ? '127.0.0.1' : '0.0.0.0';
 // CORS configuration
 app.use(
   cors({
-    origin: cors_origin,
     referredPolicy: 'no-referrer',
     credentials: false,
   })
@@ -123,7 +120,7 @@ const server = app.listen(PORT, url, function () {
   console.log(
     pico.bgGreen(
       pico.bold(
-        `🚀 Server running on http://${url}:${PORT} | 💻 Environment: ${!is_dev ? 'PROD' : 'DEV'} | CORS: ${cors_origin}`
+        `🚀 Server running on http://${url}:${PORT} | 💻 Environment: ${!is_dev ? 'PROD' : 'DEV'}`
       )
     )
   );
