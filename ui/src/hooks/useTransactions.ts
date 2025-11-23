@@ -30,13 +30,17 @@ export const useCheckoutBook = () => {
     mutationFn: ({
       patron_id,
       copy_id,
+      clear_fines = false,
     }: {
       patron_id: number;
       copy_id: number;
-    }) => data_service.check_out_item(patron_id, copy_id),
+      clear_fines?: boolean;
+    }) => data_service.check_out_item(patron_id, copy_id, clear_fines),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['books'] });
       queryClient.invalidateQueries({ queryKey: ['transactions'] });
+      queryClient.invalidateQueries({ queryKey: ['all_patrons'] });
+      queryClient.invalidateQueries({ queryKey: ['patron'] });
     },
   });
 };
@@ -73,5 +77,26 @@ export const useGetTransactionsByPatronId = (patron_id: number) => {
   return useQuery({
     queryKey: ['transactions', 'patron', patron_id],
     queryFn: () => data_service.getTransactionsByPatronId(patron_id),
+  });
+};
+
+export const useCheckedOutItems = (branch_id?: number) => {
+  return useQuery({
+    queryKey: ['transactions', 'checked-out', branch_id],
+    queryFn: () => data_service.getCheckedOutItems(branch_id),
+    refetchInterval: 30000, // Refetch every 30 seconds
+  });
+};
+
+export const useCheckOutDetails = (
+  copy_id: number | null,
+  options?: {
+    lazy?: boolean;
+  }
+) => {
+  return useQuery({
+    queryKey: ['transactions', 'checkout-details', copy_id],
+    queryFn: () => data_service.get_check_out_details(copy_id),
+    enabled: copy_id !== null && !options?.lazy,
   });
 };

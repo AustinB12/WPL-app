@@ -110,11 +110,12 @@ router.post(
   validate_library_item,
   handle_validation_errors,
   async (req, res) => {
+    const now = format_sql_datetime(new Date());
     try {
       const library_item_data = {
         ...req.body,
-        created_at: new Date(),
-        updated_at: new Date(),
+        created_at: now,
+        updated_at: now,
       };
 
       await db.create_record('LIBRARY_ITEMS', library_item_data);
@@ -150,7 +151,7 @@ router.put(
 
       const update_data = {
         ...req.body,
-        updated_at: new Date(),
+        updated_at: format_sql_datetime(new Date()),
       };
 
       const updated = await db.update_record(

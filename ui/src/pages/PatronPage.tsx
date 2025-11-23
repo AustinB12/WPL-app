@@ -16,20 +16,8 @@ import {
   IconButton,
   Menu,
   MenuItem,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  TextField,
-  Snackbar,
   CardContent,
-  Switch,
-  FormControlLabel,
 } from '@mui/material';
-import { DatePicker } from '@mui/x-date-pickers/DatePicker';
-import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
-import dayjs, { Dayjs } from 'dayjs';
 import {
   CreditCard,
   AccountBalance,
@@ -51,6 +39,10 @@ import type { Update_Patron_Data } from '../types';
 import { TransactionStatusChip } from '../components/transactions/TransactionStatusChip';
 import { BaseDataGrid } from '../components/common/BaseDataGrid';
 import { TransactionTypeChip } from '../components/transactions/TransactionTypeChip';
+import { EditPatronModal } from '../components/patrons/EditPatronModal';
+import { DeletePatronModal } from '../components/patrons/DeletePatronModal';
+import { PageContainer } from '../components/common/PageBuilders';
+import { useSnackbar } from '../hooks/useSnackbar';
 
 interface Info_Item_Props {
   icon: ReactNode;
@@ -111,6 +103,11 @@ const cols: GridColDef[] = [
     width: 250,
   },
   {
+    field: 'copy_label',
+    headerName: 'Copy',
+    width: 120,
+  },
+  {
     field: 'transaction_type',
     headerName: 'Type',
     width: 120,
@@ -162,37 +159,28 @@ const cols: GridColDef[] = [
 
 export const PatronPage = () => {
   const { patron_id } = useParams();
+  const { show_snackbar } = useSnackbar();
   const [anchor_el, set_anchor_el] = useState<null | HTMLElement>(null);
   const [edit_modal_open, set_edit_modal_open] = useState(false);
   const [delete_dialog_open, set_delete_dialog_open] = useState(false);
-  const [snackbar, set_snackbar] = useState<{
-    open: boolean;
-    message: string;
-    severity: 'success' | 'error';
-  }>({
-    open: false,
-    message: '',
-    severity: 'success',
-  });
-  const [form_data, set_form_data] = useState<Update_Patron_Data>({});
 
   const open = Boolean(anchor_el);
 
   const update_patron_mutation = useUpdatePatron({
     onSuccess: () => {
       set_edit_modal_open(false);
-      set_snackbar({
-        open: true,
+      show_snackbar({
         message: 'Patron updated successfully',
         severity: 'success',
+        title: 'Success!',
       });
     },
     onError: (error) => {
       console.error('Failed to update patron:', error);
-      set_snackbar({
-        open: true,
+      show_snackbar({
         message: `Failed to update patron: ${error.message}`,
         severity: 'error',
+        title: 'Error!',
       });
     },
   });
@@ -200,10 +188,10 @@ export const PatronPage = () => {
   const delete_patron_mutation = useDeletePatronById({
     onSuccess: () => {
       set_delete_dialog_open(false);
-      set_snackbar({
-        open: true,
+      show_snackbar({
         message: 'Patron deleted successfully',
         severity: 'success',
+        title: 'Success!',
       });
       // Redirect to patrons list after showing success message
       setTimeout(() => {
@@ -212,10 +200,10 @@ export const PatronPage = () => {
     },
     onError: (error) => {
       console.error('Failed to delete patron:', error);
-      set_snackbar({
-        open: true,
+      show_snackbar({
         message: `Failed to delete patron: ${error.message}`,
         severity: 'error',
+        title: 'Error!',
       });
     },
   });
@@ -229,24 +217,8 @@ export const PatronPage = () => {
   };
 
   const handle_edit_click = () => {
-    if (patron) {
-      set_form_data({
-        first_name: patron.first_name,
-        last_name: patron.last_name,
-        email: patron.email || '',
-        phone: patron.phone || '',
-        birthday: patron.birthday ? patron.birthday : undefined,
-        card_expiration_date: patron.card_expiration_date,
-        image_url: patron.image_url || '',
-        balance: patron.balance,
-      });
-    }
     set_edit_modal_open(true);
     handle_menu_close();
-  };
-
-  const handle_modal_close = () => {
-    set_edit_modal_open(false);
   };
 
   const handle_delete_click = () => {
@@ -254,54 +226,17 @@ export const PatronPage = () => {
     handle_menu_close();
   };
 
-  const handle_delete_dialog_close = () => {
-    set_delete_dialog_open(false);
+  const handle_save = (patron_data: Update_Patron_Data) => {
+    if (!patron_id) return;
+
+    update_patron_mutation.mutate({
+      patron_id: parseInt(patron_id),
+      patron_data,
+    });
   };
 
   const handle_delete_confirm = () => {
     delete_patron_mutation.mutate(patron_id ? parseInt(patron_id) : 0);
-  };
-
-  const handle_snackbar_close = () => {
-    set_snackbar((prev) => ({ ...prev, open: false }));
-  };
-
-  const handle_input_change = (
-    field: keyof Update_Patron_Data,
-    value: string | boolean
-  ) => {
-    set_form_data((prev) => ({ ...prev, [field]: value }));
-  };
-
-  const handle_date_change = (
-    field: keyof Update_Patron_Data,
-    value: Dayjs | null | Date
-  ) => {
-    const dayjs_value = value instanceof Date ? dayjs(value) : value;
-    set_form_data((prev) => ({ ...prev, [field]: dayjs_value }));
-  };
-
-  const handle_save = () => {
-    if (!patron_id) return;
-
-    const updated_data: Partial<Update_Patron_Data> = {
-      first_name: form_data.first_name,
-      last_name: form_data.last_name,
-      email: form_data.email || undefined,
-      phone: form_data.phone || undefined,
-      birthday: form_data.birthday ? form_data.birthday : undefined,
-      card_expiration_date: form_data.card_expiration_date
-        ? form_data.card_expiration_date
-        : new Date(),
-      image_url: form_data.image_url || undefined,
-      balance: form_data.balance !== undefined ? form_data.balance : undefined,
-      is_active: form_data.is_active !== undefined ? form_data.is_active : true,
-    };
-
-    update_patron_mutation.mutate({
-      patron_id: parseInt(patron_id),
-      patron_data: updated_data,
-    });
   };
 
   const {
@@ -367,7 +302,7 @@ export const PatronPage = () => {
   );
 
   return (
-    <Container maxWidth="xl" sx={{ p: { xs: 1, sm: 2, md: 3 } }}>
+    <PageContainer>
       <Grid container spacing={{ xs: 2, md: 3 }}>
         <Grid size={{ xs: 12, md: 6 }}>
           <Card sx={{ borderRadius: 3, height: '-webkit-fill-available' }}>
@@ -378,18 +313,16 @@ export const PatronPage = () => {
                     <MoreVert />
                   </IconButton>
                   <Menu
-                    id="demo-positioned-menu"
-                    aria-labelledby="demo-positioned-button"
                     anchorEl={anchor_el}
                     open={open}
                     onClose={handle_menu_close}
                     anchorOrigin={{
                       vertical: 'bottom',
-                      horizontal: 'right',
+                      horizontal: 'center',
                     }}
                     transformOrigin={{
                       vertical: 'top',
-                      horizontal: 'right',
+                      horizontal: 'center',
                     }}
                   >
                     <MenuItem sx={{ gap: 2 }} onClick={handle_edit_click}>
@@ -548,6 +481,7 @@ export const PatronPage = () => {
               loading={transactions_loading}
               disableRowSelectionOnClick
               sx={{
+                borderRadius: 3,
                 border: 'none',
                 '& .MuiDataGrid-columnHeaders': {
                   fontWeight: 600,
@@ -562,198 +496,21 @@ export const PatronPage = () => {
         </Grid>
       </Grid>
 
-      <Dialog
+      <EditPatronModal
         open={edit_modal_open}
-        onClose={handle_modal_close}
-        maxWidth="lg"
-        fullWidth
-      >
-        <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <Edit /> Edit Patron Information
-        </DialogTitle>
-        <DialogContent sx={{ p: 5 }}>
-          <LocalizationProvider dateAdapter={AdapterDayjs}>
-            <Grid container spacing={{ xs: 2, sm: 4 }} sx={{ mt: 2 }}>
-              <Grid size={{ xs: 12, sm: 6 }}>
-                <TextField
-                  label="First Name"
-                  value={form_data.first_name}
-                  onChange={(e) =>
-                    handle_input_change('first_name', e.target.value)
-                  }
-                  fullWidth
-                  required
-                />
-              </Grid>
-              <Grid size={{ xs: 12, sm: 6 }}>
-                <TextField
-                  label="Last Name"
-                  value={form_data.last_name}
-                  onChange={(e) =>
-                    handle_input_change('last_name', e.target.value)
-                  }
-                  fullWidth
-                  required
-                />
-              </Grid>
-              <Grid size={{ xs: 12, sm: 6 }}>
-                <TextField
-                  label="Email"
-                  type="email"
-                  value={form_data.email}
-                  onChange={(e) => handle_input_change('email', e.target.value)}
-                  fullWidth
-                />
-              </Grid>
-              <Grid size={{ xs: 12, sm: 6 }}>
-                <TextField
-                  label="Phone Number"
-                  type="tel"
-                  value={form_data.phone}
-                  onChange={(e) => handle_input_change('phone', e.target.value)}
-                  fullWidth
-                />
-              </Grid>
+        patron={patron}
+        on_close={() => set_edit_modal_open(false)}
+        on_save={handle_save}
+        is_loading={update_patron_mutation.isPending}
+      />
 
-              <Grid size={{ xs: 12, sm: 6 }}>
-                <DatePicker
-                  label="Birthday"
-                  value={dayjs(form_data.birthday)}
-                  onChange={(value) => handle_date_change('birthday', value)}
-                  slotProps={{
-                    textField: {
-                      fullWidth: true,
-                    },
-                  }}
-                />
-              </Grid>
-              <Grid size={{ xs: 12, sm: 6 }}>
-                <DatePicker
-                  label="Card Expiration Date"
-                  value={dayjs(form_data.card_expiration_date)}
-                  onChange={(value) =>
-                    handle_date_change('card_expiration_date', value)
-                  }
-                  slotProps={{
-                    textField: {
-                      fullWidth: true,
-                      required: true,
-                    },
-                  }}
-                />
-              </Grid>
-              <Grid size={{ xs: 12, sm: 5 }}>
-                <TextField
-                  label="Profile Image URL"
-                  type="url"
-                  value={form_data.image_url}
-                  onChange={(e) =>
-                    handle_input_change('image_url', e.target.value)
-                  }
-                  fullWidth
-                />
-              </Grid>
-              <Grid size={{ xs: 12, sm: 5 }}>
-                <TextField
-                  label="Balance"
-                  type="number"
-                  value={
-                    form_data.balance === undefined ? 0 : form_data.balance
-                  }
-                  onChange={(e) =>
-                    handle_input_change('balance', e.target.value)
-                  }
-                  fullWidth
-                />
-              </Grid>
-              <Grid size={{ xs: 12, sm: 2 }}>
-                <FormControlLabel
-                  control={
-                    <Switch
-                      checked={!!form_data.is_active}
-                      onChange={(e) =>
-                        handle_input_change('is_active', e.target.checked)
-                      }
-                    />
-                  }
-                  label="Active?"
-                />
-              </Grid>
-            </Grid>
-          </LocalizationProvider>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handle_modal_close}>Cancel</Button>
-          <Button
-            onClick={handle_save}
-            variant="contained"
-            disabled={update_patron_mutation.isPending}
-          >
-            {update_patron_mutation.isPending ? 'Saving...' : 'Save Changes'}
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* Delete Confirmation Dialog */}
-      <Dialog
+      <DeletePatronModal
         open={delete_dialog_open}
-        onClose={handle_delete_dialog_close}
-        maxWidth="sm"
-        fullWidth
-      >
-        <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <Delete /> Delete Patron
-        </DialogTitle>
-        <DialogContent>
-          <Alert severity="warning" sx={{ mb: 2 }}>
-            This action cannot be undone.
-          </Alert>
-          <Typography>
-            Are you sure you want to delete{' '}
-            <strong>
-              {patron?.first_name} {patron?.last_name}
-            </strong>
-            ?
-          </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
-            All associated transactions and reservations will be affected.
-          </Typography>
-        </DialogContent>
-        <DialogActions sx={{ justifyContent: 'space-between' }}>
-          <Button
-            onClick={handle_delete_dialog_close}
-            color="inherit"
-            variant="outlined"
-          >
-            Cancel
-          </Button>
-          <Button
-            onClick={handle_delete_confirm}
-            variant="contained"
-            color="error"
-            startIcon={<Delete />}
-          >
-            Delete Patron
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* Snackbar for success/error messages */}
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={6000}
-        onClose={handle_snackbar_close}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-      >
-        <Alert
-          onClose={handle_snackbar_close}
-          severity={snackbar.severity}
-          variant="filled"
-          sx={{ width: '100%' }}
-        >
-          {snackbar.message}
-        </Alert>
-      </Snackbar>
-    </Container>
+        patron={patron}
+        on_close={() => set_delete_dialog_open(false)}
+        on_confirm={handle_delete_confirm}
+        is_loading={delete_patron_mutation.isPending}
+      />
+    </PageContainer>
   );
 };

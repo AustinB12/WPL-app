@@ -1,26 +1,19 @@
-import { Container } from '@mui/material';
 import { useReservations } from '../hooks/useReservations';
 import { ReservationStatusChip } from '../components/reservations/ReservationStatusChip';
 import ItemTypeChip from '../components/library_items/ItemTypeChip';
 import type { ReservationStatus } from '../types';
 import { BaseDataGrid } from '../components/common/BaseDataGrid';
+import { EventNote } from '@mui/icons-material';
+import { PageContainer, PageTitle } from '../components/common/PageBuilders';
 
 export const ReservationsPage = () => {
   const { data: reservations = [], isLoading: loading } = useReservations();
 
   return (
-    <Container
-      maxWidth="lg"
-      sx={{
-        p: 3,
-        overflow: 'hidden',
-        height: 1,
-        maxHeight: '100%',
-        display: 'flex',
-        flexDirection: 'column',
-      }}
-    >
+    <PageContainer>
+      <PageTitle title="Reservations" Icon_Component={EventNote} />
       <BaseDataGrid
+        label="Reservations"
         rows={reservations}
         getRowId={(row) => row.id}
         columns={[
@@ -68,6 +61,6 @@ export const ReservationsPage = () => {
         ]}
         loading={loading}
       />
-    </Container>
+    </PageContainer>
   );
 };

@@ -9,18 +9,17 @@ import {
   Autocomplete,
   Box,
   Typography,
-  Snackbar,
-  Alert,
 } from '@mui/material';
 import { useState } from 'react';
 import type {
   Library_Item,
   Item_Condition,
-  Availability_Status,
+  Library_Copy_Status,
 } from '../../types';
 import { useLibraryItems } from '../../hooks/useLibraryItems';
 import { useBranches } from '../../hooks/useBranches';
 import { useCreateCopy } from '../../hooks/useCopies';
+import { useSnackbar } from '../../hooks/useSnackbar';
 
 interface Create_Copy_Dialog_Props {
   open: boolean;
@@ -31,17 +30,17 @@ interface Copy_Form_Data {
   library_item_id: number;
   branch_id: number | null;
   condition: Item_Condition;
-  status: Availability_Status;
+  status: Library_Copy_Status;
   cost: string;
   notes: string;
 }
 
 const INITIAL_FORM_STATE: Copy_Form_Data = {
   library_item_id: 0,
-  branch_id: null,
+  branch_id: 1,
   condition: 'Good',
   status: 'Available',
-  cost: '',
+  cost: '10.00',
   notes: '',
 };
 
@@ -53,7 +52,7 @@ const CONDITION_OPTIONS: Item_Condition[] = [
   'Poor',
 ];
 
-const STATUS_OPTIONS: Availability_Status[] = [
+const STATUS_OPTIONS: Library_Copy_Status[] = [
   'Available',
   'Checked Out',
   'Reserved',
@@ -72,15 +71,8 @@ export const CreateCopyDialog = ({
   const [selected_item, set_selected_item] = useState<Library_Item | null>(
     null
   );
-  const [snackbar, set_snackbar] = useState<{
-    open: boolean;
-    message: string;
-    severity: 'success' | 'error';
-  }>({
-    open: false,
-    message: '',
-    severity: 'success',
-  });
+
+  const { show_snackbar } = useSnackbar();
 
   const { data: library_items = [], isLoading: items_loading } =
     useLibraryItems();
@@ -88,17 +80,17 @@ export const CreateCopyDialog = ({
 
   const create_copy = useCreateCopy({
     onSuccess: () => {
-      set_snackbar({
-        open: true,
+      show_snackbar({
         message: 'Item copy created successfully!',
         severity: 'success',
+        title: 'Success!',
       });
       handle_close();
     },
     onError: (error: Error) => {
-      set_snackbar({
-        open: true,
-        message: `Failed to create copy: ${error.message}`,
+      show_snackbar({
+        title: 'Failed to create copy',
+        message: error.message,
         severity: 'error',
       });
     },
@@ -114,10 +106,9 @@ export const CreateCopyDialog = ({
     e.preventDefault();
 
     if (!form_data.library_item_id || !form_data.branch_id) {
-      set_snackbar({
-        open: true,
+      show_snackbar({
         message: 'Please select both a library item and a branch',
-        severity: 'error',
+        severity: 'warning',
       });
       return;
     }
@@ -135,178 +126,159 @@ export const CreateCopyDialog = ({
   };
 
   return (
-    <>
-      <Dialog open={open} onClose={handle_close} maxWidth="sm" fullWidth>
-        <DialogTitle>Create New Item Copy</DialogTitle>
-        <form onSubmit={handle_submit}>
-          <DialogContent>
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
-              {/* Library Item Selector */}
-              <Autocomplete
-                value={selected_item}
-                onChange={(_event, new_value) => {
-                  set_selected_item(new_value);
-                  set_form_data((prev) => ({
-                    ...prev,
-                    library_item_id: new_value?.id || 0,
-                  }));
-                }}
-                options={library_items}
-                getOptionLabel={(option) =>
-                  `${option.title} (${option.item_type}) - ${
-                    option.publication_year || 'N/A'
-                  }`
-                }
-                loading={items_loading}
-                renderInput={(params) => (
-                  <TextField
-                    {...params}
-                    label="Library Item *"
-                    placeholder="Search for a library item..."
-                    required
-                  />
-                )}
-                renderOption={(props, option) => (
-                  <li {...props} key={option.id}>
-                    <Box>
-                      <Typography variant="body1">{option.title}</Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        {option.item_type} • {option.publication_year || 'N/A'}
-                      </Typography>
-                    </Box>
-                  </li>
-                )}
-              />
+    <Dialog open={open} onClose={handle_close} maxWidth="sm" fullWidth>
+      <DialogTitle>Create New Item Copy</DialogTitle>
+      <form onSubmit={handle_submit}>
+        <DialogContent>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
+            {/* Library Item Selector */}
+            <Autocomplete
+              value={selected_item}
+              onChange={(_event, new_value) => {
+                set_selected_item(new_value);
+                set_form_data((prev) => ({
+                  ...prev,
+                  library_item_id: new_value?.id || 0,
+                }));
+              }}
+              options={library_items}
+              getOptionLabel={(option) =>
+                `${option.title} (${option.item_type}) - ${
+                  option.publication_year || 'N/A'
+                }`
+              }
+              loading={items_loading}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label="Library Item *"
+                  placeholder="Search for a library item..."
+                  required
+                />
+              )}
+              renderOption={(props, option) => (
+                <li {...props} key={option.id}>
+                  <Box>
+                    <Typography variant="body1">{option.title}</Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      {option.item_type} • {option.publication_year || 'N/A'}
+                    </Typography>
+                  </Box>
+                </li>
+              )}
+            />
 
-              {/* Branch Selector */}
-              <TextField
-                select
-                label="Owning Branch *"
-                value={form_data.branch_id || ''}
-                onChange={(e) =>
-                  set_form_data((prev) => ({
-                    ...prev,
-                    branch_id: parseInt(e.target.value),
-                  }))
-                }
-                disabled={branches_loading}
-                required
-              >
-                {branches.map((branch) => (
-                  <MenuItem key={branch.id} value={branch.id}>
-                    {branch.branch_name}
-                  </MenuItem>
-                ))}
-              </TextField>
+            {/* Branch Selector */}
+            <TextField
+              select
+              label="Owning Branch *"
+              value={form_data.branch_id || ''}
+              onChange={(e) =>
+                set_form_data((prev) => ({
+                  ...prev,
+                  branch_id: parseInt(e.target.value),
+                }))
+              }
+              disabled={branches_loading}
+              required
+            >
+              {branches.map((branch) => (
+                <MenuItem key={branch.id} value={branch.id}>
+                  {branch.branch_name}
+                </MenuItem>
+              ))}
+            </TextField>
 
-              {/* Condition Selector */}
-              <TextField
-                select
-                label="Condition"
-                value={form_data.condition}
-                onChange={(e) =>
-                  set_form_data((prev) => ({
-                    ...prev,
-                    condition: e.target.value as Item_Condition,
-                  }))
-                }
-              >
-                {CONDITION_OPTIONS.map((condition) => (
-                  <MenuItem key={condition} value={condition}>
-                    {condition}
-                  </MenuItem>
-                ))}
-              </TextField>
-
-              {/* Status Selector */}
-              <TextField
-                select
-                label="Status"
-                value={form_data.status}
-                onChange={(e) =>
-                  set_form_data((prev) => ({
-                    ...prev,
-                    status: e.target.value as Availability_Status,
-                  }))
-                }
-              >
-                {STATUS_OPTIONS.map((status) => (
-                  <MenuItem key={status} value={status}>
-                    {status}
-                  </MenuItem>
-                ))}
-              </TextField>
-
-              {/* Cost Input */}
-              <TextField
-                label="Cost"
-                type="number"
-                value={form_data.cost}
-                onChange={(e) =>
-                  set_form_data((prev) => ({
-                    ...prev,
-                    cost: e.target.value,
-                  }))
-                }
-                inputProps={{
-                  min: 0,
-                  step: '0.01',
-                }}
-                placeholder="0.00"
-              />
-
-              {/* Notes Input */}
-              <TextField
-                label="Notes"
-                multiline
-                rows={3}
-                value={form_data.notes}
-                onChange={(e) =>
-                  set_form_data((prev) => ({
-                    ...prev,
-                    notes: e.target.value,
-                  }))
-                }
-                placeholder="Add any additional notes about this copy..."
-              />
-            </Box>
-          </DialogContent>
-
-          <DialogActions sx={{ px: 3, pb: 2 }}>
-            <Button onClick={handle_close} disabled={create_copy.isPending}>
-              Cancel
-            </Button>
-            <Button
-              type="submit"
-              variant="contained"
-              disabled={
-                create_copy.isPending ||
-                !form_data.library_item_id ||
-                !form_data.branch_id
+            {/* Condition Selector */}
+            <TextField
+              select
+              label="Condition"
+              value={form_data.condition}
+              onChange={(e) =>
+                set_form_data((prev) => ({
+                  ...prev,
+                  condition: e.target.value as Item_Condition,
+                }))
               }
             >
-              {create_copy.isPending ? 'Creating...' : 'Create Copy'}
-            </Button>
-          </DialogActions>
-        </form>
-      </Dialog>
+              {CONDITION_OPTIONS.map((condition) => (
+                <MenuItem key={condition} value={condition}>
+                  {condition}
+                </MenuItem>
+              ))}
+            </TextField>
 
-      {/* Snackbar for notifications */}
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={4000}
-        onClose={() => set_snackbar((prev) => ({ ...prev, open: false }))}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-      >
-        <Alert
-          onClose={() => set_snackbar((prev) => ({ ...prev, open: false }))}
-          severity={snackbar.severity}
-          variant="filled"
-          sx={{ width: '100%' }}
-        >
-          {snackbar.message}
-        </Alert>
-      </Snackbar>
-    </>
+            {/* Status Selector */}
+            <TextField
+              select
+              label="Status"
+              value={form_data.status}
+              onChange={(e) =>
+                set_form_data((prev) => ({
+                  ...prev,
+                  status: e.target.value as Library_Copy_Status,
+                }))
+              }
+            >
+              {STATUS_OPTIONS.map((status) => (
+                <MenuItem key={status} value={status}>
+                  {status}
+                </MenuItem>
+              ))}
+            </TextField>
+
+            {/* Cost Input */}
+            <TextField
+              label="Cost"
+              type="number"
+              value={form_data.cost}
+              onChange={(e) =>
+                set_form_data((prev) => ({
+                  ...prev,
+                  cost: e.target.value,
+                }))
+              }
+              inputProps={{
+                min: 0,
+                step: '0.01',
+              }}
+              placeholder="0.00"
+            />
+
+            {/* Notes Input */}
+            <TextField
+              label="Notes"
+              multiline
+              rows={3}
+              value={form_data.notes}
+              onChange={(e) =>
+                set_form_data((prev) => ({
+                  ...prev,
+                  notes: e.target.value,
+                }))
+              }
+              placeholder="Add any additional notes about this copy..."
+            />
+          </Box>
+        </DialogContent>
+
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button onClick={handle_close} disabled={create_copy.isPending}>
+            Cancel
+          </Button>
+          <Button
+            type="submit"
+            variant="contained"
+            disabled={
+              create_copy.isPending ||
+              !form_data.library_item_id ||
+              !form_data.branch_id
+            }
+          >
+            {create_copy.isPending ? 'Creating...' : 'Create Copy'}
+          </Button>
+        </DialogActions>
+      </form>
+    </Dialog>
   );
 };

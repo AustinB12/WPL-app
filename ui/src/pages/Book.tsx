@@ -12,7 +12,7 @@ import {
 } from '@mui/material';
 import { useParams } from 'react-router-dom';
 import { useBook } from '../hooks/useBooks';
-import { useCopies } from '../hooks/useCopies';
+import { useCopiesOfLibraryItem } from '../hooks/useCopies';
 import { useBranchesContext } from '../hooks/useBranchHooks';
 import { CopiesTable } from '../components/library_items/LibraryItemCopiesTable';
 
@@ -28,7 +28,7 @@ export const BookPage = () => {
     data: copies,
     isLoading: copiesLoading,
     error: copiesError,
-  } = useCopies(book?.library_item_id ?? 0);
+  } = useCopiesOfLibraryItem(book?.library_item_id ?? 0);
   const { branches } = useBranchesContext();
 
   if (bookLoading) {

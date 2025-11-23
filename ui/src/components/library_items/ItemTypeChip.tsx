@@ -7,7 +7,7 @@ import {
   YouTube,
   Album,
 } from '@mui/icons-material';
-import { Chip, useTheme } from '@mui/material';
+import { Chip, useTheme, type ChipProps, type SxProps } from '@mui/material';
 import type { JSX } from 'react';
 import type { Library_Item_Type } from '../../types';
 import { mangoFusionPalette } from '@mui/x-charts/colorPalettes';
@@ -67,50 +67,58 @@ const ITEM_TYPE_MAP_DARK: Record<Library_Item_Type, Item_Type_Config> = {
 const ITEM_TYPE_MAP_LIGHT: Record<Library_Item_Type, Item_Type_Config> = {
   BOOK: {
     label: 'Book',
-    icon: <ChromeReaderMode sx={{ fill: light_colors[4] }} />,
+    icon: <ChromeReaderMode sx={{ fill: 'white' }} />,
     color: light_colors[4],
   },
   MAGAZINE: {
     label: 'Magazine',
-    icon: <MenuBook sx={{ fill: light_colors[1] }} />,
+    icon: <MenuBook sx={{ fill: 'white' }} />,
     color: light_colors[1],
   },
   PERIODICAL: {
     label: 'Periodical',
-    icon: <Newspaper sx={{ fill: light_colors[2] }} />,
+    icon: <Newspaper sx={{ fill: 'white' }} />,
     color: light_colors[2],
   },
   RECORDING: {
     label: 'Recording',
-    icon: <Mic sx={{ fill: light_colors[3] }} />,
+    icon: <Mic sx={{ fill: 'white' }} />,
     color: light_colors[3],
   },
   AUDIOBOOK: {
     label: 'Audiobook',
-    icon: <ChromeReaderMode sx={{ fill: light_colors[4] }} />,
+    icon: <ChromeReaderMode sx={{ fill: 'white' }} />,
     color: light_colors[4],
   },
   VIDEO: {
     label: 'Video',
-    icon: <YouTube sx={{ fill: light_colors[11] }} />,
-    color: light_colors[11],
+    icon: <YouTube sx={{ fill: 'white' }} />,
+    color: 'darkblue',
   },
   CD: {
     label: 'CD',
-    icon: <Album sx={{ fill: light_colors[3] }} />,
+    icon: <Album sx={{ fill: 'white' }} />,
     color: light_colors[3],
   },
   VINYL: {
     label: 'Vinyl',
-    icon: <Album sx={{ fill: light_colors[7] }} />,
+    icon: <Album sx={{ fill: 'white' }} />,
     color: light_colors[7],
   },
 };
 
-const ItemTypeChip = ({ item_type }: { item_type: Library_Item_Type }) => {
+const ItemTypeChip = ({
+  item_type,
+  size = 'medium',
+  sx,
+}: {
+  item_type: Library_Item_Type;
+  size?: ChipProps['size'];
+  sx?: SxProps;
+}) => {
   const theme = useTheme();
-  const ITEM_TYPE_MAP =
-    theme.palette.mode === 'dark' ? ITEM_TYPE_MAP_DARK : ITEM_TYPE_MAP_LIGHT;
+  const is_dark = theme.palette.mode === 'dark';
+  const ITEM_TYPE_MAP = is_dark ? ITEM_TYPE_MAP_DARK : ITEM_TYPE_MAP_LIGHT;
 
   const { label, icon, color } = ITEM_TYPE_MAP[item_type] ?? {
     label: 'Unknown',
@@ -119,8 +127,14 @@ const ItemTypeChip = ({ item_type }: { item_type: Library_Item_Type }) => {
 
   return (
     <Chip
-      variant="outlined"
-      sx={{ borderColor: color, color: color }}
+      size={size}
+      variant={is_dark ? 'outlined' : 'filled'}
+      sx={{
+        borderColor: color,
+        color: is_dark ? color : 'white',
+        bgcolor: is_dark ? 'transparent' : color,
+        ...sx,
+      }}
       label={label}
       icon={icon}
     />

@@ -41,6 +41,12 @@ export const BaseDataGrid = (props: BaseDataGridProps) => {
   return (
     <DataGrid
       {...props}
+      sx={{
+        ['& .MuiDataGrid-scrollbar--horizontal']: {
+          height: '8px',
+        },
+        ...props.sx,
+      }}
       pageSizeOptions={[10, 25, 50]}
       showToolbar
       slots={{ toolbar: CustomToolbar }}
@@ -167,7 +173,14 @@ export function CustomToolbar(props: CustomToolbarProps) {
         ))}
       </Menu>
 
-      <QuickFilter style={{ display: 'grid', alignItems: 'center' }}>
+      <QuickFilter
+        style={{
+          display: 'grid',
+          alignItems: 'center',
+          minWidth: 0,
+          flexShrink: 1,
+        }}
+      >
         <QuickFilterTrigger
           render={(triggerProps, state) => (
             <Tooltip title="Search" enterDelay={0}>
@@ -239,9 +252,10 @@ const StyledTextField = styled(TextField)<{
 }>(({ theme, ownerState }) => ({
   gridArea: '1 / 1',
   overflowX: 'clip',
-  width: ownerState.expanded ? 260 : 'var(--trigger-width)',
+  width: ownerState.expanded ? 220 : 'var(--trigger-width)',
   opacity: ownerState.expanded ? 1 : 0,
   transition: theme.transitions.create(['width', 'opacity']),
+  maxWidth: '100%',
 }));
 
 type OwnerState = {

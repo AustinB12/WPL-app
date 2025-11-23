@@ -2,7 +2,7 @@ import { Stack, Typography, Box, Paper } from '@mui/material';
 import type { Branch, Library_Item } from '../../types';
 import { Library_Item_Type } from '../../types';
 import { DetailsDrawer } from '../common/DetailsDrawer';
-import { useCopies } from '../../hooks/useCopies';
+import { useCopiesOfLibraryItem } from '../../hooks/useCopies';
 import { useBranches } from '../../hooks/useBranches';
 import { CopiesTable } from './LibraryItemCopiesTable';
 import HeadsetIcon from '@mui/icons-material/Headset';
@@ -181,7 +181,7 @@ const CopiesSection = ({
   item: Library_Item;
   branches: Branch[];
 }) => {
-  const { data: copies, isLoading: loading, error } = useCopies(item.id);
+  const { data: copies, isLoading: loading, error } = useCopiesOfLibraryItem(item.id);
 
   return (
     <Paper elevation={1} sx={{ py: 2, px: 0 }}>

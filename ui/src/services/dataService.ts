@@ -10,10 +10,16 @@ import type {
   Book_Form_Data,
   Create_Library_Item_Form_Data,
   Item_Condition,
-  Item_Copy_Results,
+  Item_Copy_Result,
   Checkin_Receipt,
   Update_Patron_Data,
   Create_Patron_Data,
+  Library_Copy_Status,
+  Check_Out_Details,
+  Checked_Out_Copy,
+  ReshelveAllResult,
+  Loan_Duration,
+  ReshelveResponseData,
 } from '../types';
 import { Genre } from '../types';
 
@@ -41,16 +47,46 @@ const api_request = async <T>(
   try {
     const response = await fetch(url, config);
 
-    if (!response.ok) {
-      const error_data = await response.json().catch(() => ({}));
+    // Get response as text first to check if it's JSON
+    const text = await response.text();
+
+    // Check if response is HTML (error page)
+    if (
+      text.trim().startsWith('<!DOCTYPE') ||
+      text.trim().startsWith('<html')
+    ) {
       throw new Error(
-        error_data.message ||
-          error_data.error ||
-          `HTTP ${response.status}: ${response.statusText}`
+        `Server returned HTML instead of JSON. HTTP ${response.status}: ${response.statusText}`
       );
     }
 
-    const data = await response.json();
+    // Try to parse as JSON
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let data: any;
+    try {
+      data = JSON.parse(text);
+    } catch {
+      throw new Error(
+        `Invalid JSON response from server. HTTP ${response.status}: ${
+          response.statusText
+        }. Response: ${text.substring(0, 200)}`
+      );
+    }
+
+    // Check if response indicates an error
+    if (!response.ok) {
+      const error_message =
+        data.message ||
+        data.error ||
+        `HTTP ${response.status}: ${response.statusText}`;
+      const error = new Error(error_message) as Error & { queue?: unknown };
+      // Attach additional error data (like queue information) to the error object
+      if (data.queue) {
+        error.queue = data.queue;
+      }
+      throw error;
+    }
+
     return data.data || data;
   } catch (error: Error | unknown) {
     if (error instanceof Error) {
@@ -209,11 +245,13 @@ export const data_service = {
   // Transaction operations
   async check_out_item(
     patron_id: number,
-    copy_id: number
+    copy_id: number,
+    clear_fines: boolean = false
   ): Promise<Transaction & Patron & Item_Copy & Library_Item> {
     const checkout_data = {
       copy_id,
       patron_id,
+      clear_fines,
     };
 
     const receipt = await api_request<
@@ -282,12 +320,34 @@ export const data_service = {
     return await api_request<Transaction[]>('/transactions?status=Active');
   },
 
-  async reshelve_item(copy_id: number): Promise<number | null> {
+  async getCheckedOutItems(branch_id?: number): Promise<Checked_Out_Copy[]> {
+    const url = branch_id
+      ? `/transactions/checked-out?branch_id=${branch_id}`
+      : '/transactions/checked-out';
+    return await api_request<Checked_Out_Copy[]>(url);
+  },
+
+  async get_check_out_details(
+    copy_id: number | null
+  ): Promise<Check_Out_Details | null> {
+    if (copy_id === null) {
+      return null;
+    }
+    return await api_request<Check_Out_Details>(
+      `/transactions/checkin-lookup/${copy_id}`
+    );
+  },
+
+  async reshelve_item(
+    copy_id: number,
+    branch_id?: number
+  ): Promise<ReshelveResponseData | null> {
     try {
-      const result = await api_request<number>(
-        `/transactions/reshelve/${copy_id}`,
+      const result = await api_request<ReshelveResponseData>(
+        `/transactions/reshelve`,
         {
-          method: 'PUT',
+          method: 'POST',
+          body: JSON.stringify({ copy_id, branch_id }),
         }
       );
       return result;
@@ -299,12 +359,38 @@ export const data_service = {
     }
   },
 
-  async reshelve_items(copy_ids: number[]): Promise<number | null> {
+  async reshelve_items(
+    copy_ids: number[],
+    branch_id?: number
+  ): Promise<ReshelveAllResult | null> {
     try {
-      const result = await api_request<number>(`/transactions/reshelve`, {
-        method: 'PUT',
-        body: JSON.stringify({ copy_ids }),
-      });
+      const result = await api_request<ReshelveAllResult>(
+        `/transactions/reshelve-all`,
+        {
+          method: 'POST',
+          body: JSON.stringify({ copy_ids, branch_id }),
+        }
+      );
+      return result;
+    } catch (error: Error | unknown) {
+      if (error instanceof Error && error.message.includes('404')) {
+        return null;
+      }
+      throw error;
+    }
+  },
+
+  async undo_reshelve(
+    copy_id: number
+  ): Promise<{ copy_id: number; status: string } | null> {
+    try {
+      const result = await api_request<{ copy_id: number; status: string }>(
+        `/transactions/reshelve/undo`,
+        {
+          method: 'POST',
+          body: JSON.stringify({ copy_id }),
+        }
+      );
       return result;
     } catch (error: Error | unknown) {
       if (error instanceof Error && error.message.includes('404')) {
@@ -372,8 +458,30 @@ export const data_service = {
     });
   },
 
-  async get_all_copies_by_item_id(item_id: number): Promise<Item_Copy[]> {
-    return await api_request<Item_Copy[]>(`/item-copies/item/${item_id}`);
+  async update_library_item(
+    item_id: number,
+    item: Create_Library_Item_Form_Data
+  ): Promise<Library_Item> {
+    return await api_request<Library_Item>(`/library-items/${item_id}`, {
+      method: 'PUT',
+      body: JSON.stringify(item),
+    });
+  },
+
+  async delete_library_item(item_id: number): Promise<void> {
+    return await api_request<void>(`/library-items/${item_id}`, {
+      method: 'DELETE',
+    });
+  },
+
+  async get_all_copies_by_item_id(
+    item_id: number,
+    branch_id?: number
+  ): Promise<Item_Copy[]> {
+    const url = branch_id
+      ? `/item-copies/item/${item_id}?branch_id=${branch_id}`
+      : `/item-copies/item/${item_id}`;
+    return await api_request<Item_Copy[]>(url);
   },
 
   async get_all_copy_ids(): Promise<number[]> {
@@ -381,16 +489,44 @@ export const data_service = {
     return copies.map((item: Item_Copy) => item.id);
   },
 
-  async get_all_copies(branch_id?: number): Promise<Item_Copy[]> {
-    const url = branch_id
-      ? `/item-copies?branch_id=${branch_id}`
-      : '/item-copies';
-    return await api_request<Item_Copy[]>(url);
+  async get_all_copies(
+    branch_id: number,
+    status?: Library_Copy_Status,
+    condition?: Item_Condition
+  ): Promise<Item_Copy_Result[]> {
+    let url = '/item-copies';
+    const params: string[] = [];
+
+    if (branch_id) {
+      params.push(`branch_id=${branch_id}`);
+    }
+
+    if (status) {
+      params.push(`status=${status}`);
+    }
+
+    if (condition) {
+      params.push(`condition=${condition}`);
+    }
+
+    if (params.length > 0) {
+      url += `?${params.join('&')}`;
+    }
+    return await api_request<Item_Copy_Result[]>(url);
   },
 
-  async get_copy_by_id(copy_id: number): Promise<Item_Copy | null> {
+  async get_all_item_copies(): Promise<Item_Copy_Result[]> {
+    return await api_request<Item_Copy_Result[]>('/item-copies');
+  },
+
+  async get_copy_by_id(
+    copy_id: number | null
+  ): Promise<Item_Copy_Result | null> {
+    if (copy_id === null) {
+      return null;
+    }
     try {
-      return await api_request<Item_Copy>(`/item-copies/${copy_id}`);
+      return await api_request<Item_Copy_Result>(`/item-copies/${copy_id}`);
     } catch (error: Error | unknown) {
       if (error instanceof Error && error.message.includes('404')) {
         return null;
@@ -399,18 +535,21 @@ export const data_service = {
     }
   },
 
-  async get_checked_out_copies(
-    branch_id: number
-  ): Promise<Item_Copy_Results[]> {
+  async get_checked_out_copies(branch_id: number): Promise<Item_Copy_Result[]> {
     const url = `/item-copies/checked-out?branch_id=${branch_id}`;
-    return await api_request<Item_Copy_Results[]>(url);
+    return await api_request<Item_Copy_Result[]>(url);
   },
 
-  async get_unshelved_copies(branch_id?: number): Promise<Item_Copy_Results[]> {
-    const url = branch_id
-      ? `/item-copies/unshelved?branch_id=${branch_id}`
-      : '/item-copies/unshelved';
-    return await api_request<Item_Copy_Results[]>(url);
+  async get_unshelved_copies(branch_id: number): Promise<Item_Copy_Result[]> {
+    const url = `/item-copies/unshelved?branch_id=${branch_id}`;
+    return await api_request<Item_Copy_Result[]>(url);
+  },
+
+  async get_copies_recently_reshelved(
+    branch_id: number
+  ): Promise<Item_Copy_Result[]> {
+    const url = `/item-copies/recently-reshelved?branch_id=${branch_id}`;
+    return await api_request<Item_Copy_Result[]>(url);
   },
 
   async create_copy(copy_data: {
@@ -427,6 +566,28 @@ export const data_service = {
     });
   },
 
+  async update_copy(
+    copy_id: number,
+    copy_data: {
+      condition?: string;
+      status?: string;
+      current_branch_id?: number;
+      cost?: number;
+      notes?: string;
+    }
+  ): Promise<Item_Copy> {
+    return await api_request<Item_Copy>(`/item-copies/${copy_id}`, {
+      method: 'PUT',
+      body: JSON.stringify(copy_data),
+    });
+  },
+
+  async delete_copy(copy_id: number): Promise<void> {
+    return await api_request<void>(`/item-copies/${copy_id}`, {
+      method: 'DELETE',
+    });
+  },
+
   async get_all_branches(): Promise<Branch[]> {
     return await api_request<Branch[]>('/branches');
   },
@@ -437,6 +598,9 @@ export const data_service = {
   },
 
   async get_patron_by_id(patron_id: number): Promise<Patron | null> {
+    if (patron_id <= 0) {
+      return null;
+    }
     try {
       return await api_request<Patron>(`/patrons/${patron_id}`);
     } catch (error: Error | unknown) {
@@ -478,15 +642,34 @@ export const data_service = {
       );
       return result.statistics;
     } catch (error: Error | unknown) {
-      if (error instanceof Error) {
-        throw error;
-      }
+      // Return fallback statistics on error instead of throwing
+      console.error('Failed to fetch stats:', error);
+      return {
+        total: 0,
+        checked_out: 0,
+        available: 0,
+        reserved: 0,
+      };
     }
-    return {
-      total: 0,
-      checked_out: 0,
-      available: 0,
-      reserved: 0,
-    };
+  },
+
+  async get_loan_durations(): Promise<Loan_Duration[] | null> {
+    try {
+      const result = await api_request<Loan_Duration[]>(
+        '/settings/loan_durations'
+      );
+      return result;
+    } catch (error: Error | unknown) {
+      // Return null on error instead of throwing
+      console.error('Failed to fetch loan durations:', error);
+      return null;
+    }
+  },
+
+  async update_loan_duration(id: number, duration: number): Promise<void> {
+    await api_request(`/settings/loan_durations/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify({ duration }),
+    });
   },
 };

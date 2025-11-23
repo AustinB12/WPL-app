@@ -1,366 +1,367 @@
 import React, { useState } from 'react';
 import {
-  Container,
   Typography,
   Button,
   Box,
   Alert,
   AlertTitle,
   Paper,
-  TextField,
-  CircularProgress,
-  List,
-  ListItem,
-  ListItemText,
   Chip,
-  Divider,
+  Stack,
+  Container,
 } from '@mui/material';
-import { CheckCircle, Warning } from '@mui/icons-material';
+import { CheckCircle, Loop, Undo } from '@mui/icons-material';
 import { useBranchContext } from '../contexts/Branch_Context';
-
-const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/api/v1';
-
-interface ReturnedItem {
-  id: number;
-  library_item_id: number;
-  title: string;
-  item_type: string;
-  branch_id: number;
-  return_branch_id: number | null;
-  status: string;
-  needs_transfer: boolean;
-  home_branch_name: string;
-}
+import { ItemCopyConditionChip } from '../components/copies/ItemCopyConditionChip';
+import {
+  useCopiesRecentlyReshelved,
+  useCopiesUnshelved,
+  useReshelveCopies,
+  useReshelveCopy,
+  useUndoReshelve,
+} from '../hooks/useCopies';
+import { PageContainer, PageTitle } from '../components/common/PageBuilders';
+import ItemTypeChip from '../components/library_items/ItemTypeChip';
+import { ItemCopyStatusChip } from '../components/copies/ItemCopyStatusChip';
+import { useSnackbar } from '../hooks/useSnackbar';
+import SimpleGrid from '../components/common/SimpleGrid';
+import {
+  type GridColDef,
+  GridActionsCell,
+  GridActionsCellItem,
+} from '@mui/x-data-grid';
+import { SearchWithNameOrId } from '../components/common/SearchWithNameOrId';
 
 export const MarkAvailablePage: React.FC = () => {
   const { selected_branch } = useBranchContext();
-  const [item_id_input, set_item_id_input] = useState<string>('');
-  const [returned_items, set_returned_items] = useState<ReturnedItem[]>([]);
-  const [loading, set_loading] = useState(false);
-  const [processing, set_processing] = useState(false);
-  const [error, set_error] = useState<string | null>(null);
-  const [success, set_success] = useState<string | null>(null);
+  const [search_term, set_search_term] = useState<string>('');
+  const { show_snackbar } = useSnackbar();
 
-  // Fetch items with 'returned' or 'damaged' status at this branch
-  const fetch_returned_items = async () => {
-    if (!selected_branch) return;
+  const { data: recently_reshelved_items = [], refetch: refetch_recents } =
+    useCopiesRecentlyReshelved(selected_branch?.id || 1);
 
-    set_loading(true);
-    set_error(null);
+  const {
+    data: returned_copies = [],
+    isLoading: copies_loading,
+    isRefetching: copies_refetching,
+    refetch,
+  } = useCopiesUnshelved(selected_branch?.id || 1);
 
-    try {
-      // Get all returned items
-      const returned_response = await fetch(
-        `${API_BASE_URL}/item-copies?status=returned`
-      );
-      const damaged_response = await fetch(
-        `${API_BASE_URL}/item-copies?status=damaged`
-      );
+  // Merge returned copies with recently reshelved items for display
+  // Recently reshelved items take precedence (they have status "Available" and show undo button)
+  const all_copies = [
+    ...recently_reshelved_items,
+    ...returned_copies.filter(
+      (item) =>
+        !recently_reshelved_items.some((reshelved) => reshelved.id === item.id)
+    ),
+  ];
 
-      if (!returned_response.ok || !damaged_response.ok) {
-        throw new Error('Failed to fetch items');
-      }
-
-      const returned_data = await returned_response.json();
-      const damaged_data = await damaged_response.json();
-
-      const returned_items = returned_data.data || returned_data;
-      const damaged_items = damaged_data.data || damaged_data;
-
-      // Combine both lists
-      const all_items = [...returned_items, ...damaged_items];
-
-      console.log('All returned/damaged items:', all_items);
-      console.log('Selected branch ID:', selected_branch.id);
-
-      set_returned_items(all_items);
-    } catch (err) {
-      set_error(
-        err instanceof Error ? err.message : 'Failed to load returned items'
-      );
-    } finally {
-      set_loading(false);
-    }
-  };
-
-  // Mark single item as available
-  const mark_available = async (copy_id: number) => {
-    if (!selected_branch) return;
-
-    set_processing(true);
-    set_error(null);
-    set_success(null);
-
-    try {
-      const response = await fetch(`${API_BASE_URL}/transactions/reshelve`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          copy_id: copy_id,
-          branch_id: selected_branch.id,
-        }),
-      });
-
-      if (!response.ok) {
-        const error_data = await response.json();
-        throw new Error(
-          error_data.message ||
-            error_data.error ||
-            'Failed to mark item as available'
-        );
-      }
-
-      set_success(`Item ${copy_id} marked as available!`);
-
-      // Refresh the list
-      await fetch_returned_items();
-
-      // Clear success message after 3 seconds
-      setTimeout(() => set_success(null), 3000);
-    } catch (err) {
-      set_error(
-        err instanceof Error ? err.message : 'Failed to mark item as available'
-      );
-    } finally {
-      set_processing(false);
-    }
-  };
-
-  // Mark item by manual ID entry
-  const mark_available_by_id = async () => {
-    if (!item_id_input.trim() || !selected_branch) return;
-
-    set_processing(true);
-    set_error(null);
-    set_success(null);
-
-    try {
-      const response = await fetch(`${API_BASE_URL}/transactions/reshelve`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          copy_id: parseInt(item_id_input),
-          branch_id: selected_branch.id,
-        }),
-      });
-
-      if (!response.ok) {
-        const error_data = await response.json();
-        throw new Error(
-          error_data.message ||
-            error_data.error ||
-            'Failed to mark item as available'
-        );
-      }
-
-      set_success(`Item ${item_id_input} marked as available!`);
-      set_item_id_input('');
-
-      // Refresh the list
-      await fetch_returned_items();
-
-      // Clear success message after 3 seconds
-      setTimeout(() => set_success(null), 3000);
-    } catch (err) {
-      set_error(
-        err instanceof Error ? err.message : 'Failed to mark item as available'
-      );
-    } finally {
-      set_processing(false);
-    }
-  };
-
-  React.useEffect(() => {
-    if (selected_branch) {
-      fetch_returned_items();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selected_branch]);
-
-  if (!selected_branch) {
+  // Filter copies based on search term (by copy ID or title)
+  const filtered_copies = all_copies.filter((copy) => {
+    if (search_term.trim().length === 0) return true;
+    const search = search_term.toLowerCase();
     return (
-      <Container maxWidth="md" sx={{ mt: 4 }}>
-        <Alert severity="warning">
-          <AlertTitle>No Branch Selected</AlertTitle>
-          Please select a branch to view items ready for reshelving.
-        </Alert>
-      </Container>
+      copy.id.toString().includes(search) ||
+      (copy.title && copy.title.toLowerCase().includes(search)) ||
+      (copy.item_type && copy.item_type.toLowerCase().includes(search))
     );
-  }
+  });
+
+  const { mutate: reshelve_copy, isPending: is_reshelving_copy } =
+    useReshelveCopy({
+      onSuccess: () => {
+        show_snackbar({
+          title: 'Success!',
+          message: 'Item successfully reshelved!',
+          severity: 'success',
+        });
+        refetch();
+        refetch_recents();
+      },
+      onError: (error: Error) => {
+        show_snackbar({
+          title: 'Error',
+          message: `Failed to reshelve item: ${error.message}`,
+          severity: 'error',
+        });
+      },
+    });
+
+  const undo_reshelve_mutation = useUndoReshelve({
+    onSuccess: () => {
+      show_snackbar({
+        title: 'Success!',
+        message: 'Reshelve undone successfully!',
+        severity: 'success',
+      });
+      refetch();
+      refetch_recents();
+    },
+    onError: (error: Error) => {
+      show_snackbar({
+        title: 'Error',
+        message: `Failed to undo reshelve: ${error.message}`,
+        severity: 'error',
+      });
+    },
+  });
+
+  const {
+    mutate: reshelve_copies,
+    isPending: is_reshelving_copies,
+    data: reshelve_all_response,
+  } = useReshelveCopies({
+    onSuccess: () => {
+      if (reshelve_all_response) {
+        show_snackbar({
+          title: 'Success!',
+          message: `All ${reshelve_all_response.total} items(s) successfully reshelved!'`,
+          severity: 'success',
+        });
+      }
+      refetch();
+      refetch_recents();
+    },
+    onError: (error: Error) => {
+      show_snackbar({
+        title: 'Error',
+        message: `Failed to reshelve items: ${error.message}`,
+        severity: 'error',
+      });
+    },
+  });
+
+  const handle_reshelve_all = () => {
+    const all_ids = returned_copies
+      .filter((item) => item.status !== 'Available')
+      .map((item) => item.id);
+    reshelve_copies(all_ids);
+  };
+
+  const something_loading =
+    copies_loading ||
+    copies_refetching ||
+    is_reshelving_copies ||
+    is_reshelving_copy ||
+    undo_reshelve_mutation.isPending;
+
+  // Mark item from list
+  const mark_available_from_list = (copy_id: number) => {
+    if (!selected_branch) return;
+
+    reshelve_copy({ copy_id, branch_id: selected_branch.id });
+  };
+
+  const handle_undo_reshelve = (copy_id: number) => {
+    undo_reshelve_mutation.mutate(copy_id, {
+      onSuccess: () => {
+        show_snackbar({
+          title: 'Success!',
+          message: 'Reshelve undone successfully!',
+          severity: 'success',
+        });
+        // Refetch to get the item back in returned_copies
+        refetch();
+        refetch_recents();
+      },
+      onError: (error: Error) => {
+        show_snackbar({
+          title: 'Error',
+          message: `Failed to undo reshelve: ${error.message}`,
+          severity: 'error',
+        });
+      },
+    });
+  };
+
+  const cols: GridColDef[] = [
+    { field: 'id', headerName: 'Copy ID', width: 90 },
+    {
+      field: 'title',
+      headerName: 'Title',
+      width: 150,
+      flex: 1,
+      // valueGetter: (_, row) => {
+      //   return row?.title || row?.title || 'Unknown Title';
+      // },
+    },
+    {
+      field: 'status',
+      headerName: 'Status',
+      width: 120,
+      renderCell: (params) => (
+        <ItemCopyStatusChip size="small" status={params.value} />
+      ),
+    },
+    {
+      field: 'condition',
+      headerName: 'Condition',
+      width: 120,
+      renderCell: (params) => (
+        <ItemCopyConditionChip size="small" condition={params.value} />
+      ),
+    },
+    {
+      field: 'item_type',
+      headerName: 'Type',
+      width: 150,
+      renderCell: (params) => (
+        <ItemTypeChip size="small" item_type={params.value} />
+      ),
+    },
+    {
+      field: 'actions',
+      headerName: 'Reshelve',
+      type: 'actions',
+      width: 160,
+      renderCell: (params) => (
+        <GridActionsCell {...params}>
+          {params.row.status.toUpperCase() === 'AVAILABLE' ? (
+            <GridActionsCellItem
+              label="Undo"
+              disabled={something_loading}
+              icon={
+                <Button
+                  size="small"
+                  variant="contained"
+                  color="info"
+                  startIcon={<Undo />}
+                >
+                  {'Undo'}
+                </Button>
+              }
+              onClick={() => handle_undo_reshelve(params.row.id)}
+              showInMenu={false}
+              title="Reshelve"
+            />
+          ) : (
+            <GridActionsCellItem
+              label="Reshelve"
+              disabled={something_loading}
+              icon={
+                <Button
+                  size="small"
+                  variant="contained"
+                  color="success"
+                  startIcon={<CheckCircle />}
+                >
+                  {'Reshelve'}
+                </Button>
+              }
+              onClick={() => mark_available_from_list(params.row.id)}
+              showInMenu={false}
+              title="Reshelve"
+            />
+          )}
+        </GridActionsCell>
+      ),
+    },
+  ];
 
   return (
-    <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-      <Box sx={{ mb: 4 }}>
-        <Typography variant="h4" gutterBottom fontWeight="bold">
-          Mark Items as Available
-        </Typography>
-        <Typography variant="body1" color="text.secondary">
-          Scan or select items from the reshelve bin to mark them as available
-          for checkout.
-        </Typography>
-        <Chip
-          label={`Current Branch: ${selected_branch.branch_name}`}
-          color="primary"
-          sx={{ mt: 2 }}
-        />
-      </Box>
-
-      {error && (
-        <Alert severity="error" sx={{ mb: 3 }} onClose={() => set_error(null)}>
-          {error}
-        </Alert>
-      )}
-
-      {success && (
-        <Alert
-          severity="success"
-          sx={{ mb: 3 }}
-          onClose={() => set_success(null)}
-        >
-          {success}
-        </Alert>
-      )}
-
-      {/* Manual ID Entry */}
-      <Paper elevation={2} sx={{ p: 3, mb: 4 }}>
-        <Typography variant="h6" gutterBottom fontWeight="bold">
-          Scan Item ID
-        </Typography>
-        <Box sx={{ display: 'flex', gap: 2 }}>
-          <TextField
-            fullWidth
-            label="Item Copy ID"
-            value={item_id_input}
-            onChange={(e) => set_item_id_input(e.target.value)}
-            onKeyPress={(e) => {
-              if (e.key === 'Enter' && item_id_input) {
-                mark_available_by_id();
-              }
-            }}
-            placeholder="Enter or scan item ID"
-            disabled={processing}
-          />
-          <Button
-            variant="contained"
-            onClick={mark_available_by_id}
-            disabled={!item_id_input || processing}
-            startIcon={
-              processing ? <CircularProgress size={20} /> : <CheckCircle />
-            }
-            sx={{ minWidth: 150 }}
-          >
-            Mark Available
-          </Button>
-        </Box>
-      </Paper>
+    <PageContainer>
+      <PageTitle title={'Reshelve'} Icon_Component={CheckCircle} />
+      <Typography variant="body1" color="text.secondary">
+        Select items from the reshelve bin to mark them as available for
+        checkout.
+      </Typography>
+      <Chip
+        onClick={() => console.log(all_copies, search_term)}
+        sx={{ maxWidth: 'min-content' }}
+        label={`Current Branch: ${selected_branch?.branch_name || ''}`}
+        color="primary"
+      />
 
       {/* List of Returned Items */}
-      <Paper elevation={2} sx={{ p: 3 }}>
-        <Box
-          sx={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            mb: 2,
-          }}
-        >
+      <Paper elevation={2} sx={{ p: 2, borderRadius: 3 }}>
+        <Stack spacing={2}>
           <Typography variant="h6" fontWeight="bold">
-            Items Ready for Reshelving ({returned_items.length})
+            {`Items Ready for Reshelving (${filtered_copies.length} of ${all_copies.length})`}
           </Typography>
-          <Button
-            variant="outlined"
-            onClick={fetch_returned_items}
-            disabled={loading}
-            startIcon={loading ? <CircularProgress size={20} /> : null}
+          <Stack
+            sx={{
+              flexDirection: 'row',
+              gap: 2,
+              alignItems: 'center',
+              flex: 1,
+            }}
           >
-            {loading ? 'Loading...' : 'Refresh'}
-          </Button>
-        </Box>
-
-        {loading && returned_items.length === 0 ? (
-          <Box sx={{ textAlign: 'center', py: 4 }}>
-            <CircularProgress />
+            <SearchWithNameOrId
+              search_term={search_term}
+              set_search_term={set_search_term}
+              full_width={false}
+              sx={{ width: 'clamp(200px, 30%, 400px)' }}
+            />
+            <Button
+              color="info"
+              variant="outlined"
+              loading={copies_loading || copies_refetching}
+              loadingPosition="start"
+              onClick={() => {
+                refetch();
+                refetch_recents();
+              }}
+              startIcon={<Loop />}
+            >
+              {'Refresh'}
+            </Button>
+            <Button
+              color="success"
+              variant="contained"
+              loading={something_loading}
+              loadingPosition="start"
+              disabled={returned_copies.length === 0}
+              onClick={() => handle_reshelve_all()}
+              startIcon={<CheckCircle />}
+            >
+              {'Reshelve All'}
+            </Button>
+          </Stack>
+          <Box sx={{ my: 1 }}>
+            <SimpleGrid
+              cols={cols}
+              rows={filtered_copies}
+              loading={copies_loading || copies_refetching}
+              overlay_height="125px"
+              no_rows_overlay={
+                all_copies.length === 0 ? (
+                  <NoItemsToReshelveOverlay />
+                ) : (
+                  <NoResultsToReshelveOverlay />
+                )
+              }
+            />
           </Box>
-        ) : returned_items.length === 0 ? (
-          <Alert severity="info">
-            <AlertTitle>No Items to Reshelve</AlertTitle>
-            All returned items at this branch have been reshelved. Great job!
-          </Alert>
-        ) : (
-          <List>
-            {returned_items.map((item, index) => (
-              <React.Fragment key={item.id}>
-                {index > 0 && <Divider />}
-                <ListItem
-                  secondaryAction={
-                    <Button
-                      variant="contained"
-                      color="success"
-                      onClick={() => mark_available(item.id)}
-                      disabled={processing}
-                      startIcon={<CheckCircle />}
-                    >
-                      Mark Available
-                    </Button>
-                  }
-                >
-                  <ListItemText
-                    primary={
-                      <Box
-                        sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
-                      >
-                        <Typography variant="body1" fontWeight="bold">
-                          {item.title || `Item ${item.id}`}
-                        </Typography>
-                        <Chip label={item.item_type} size="small" />
-                        {item.status === 'damaged' && (
-                          <Chip
-                            label="DAMAGED - REPAIRED"
-                            color="error"
-                            size="small"
-                          />
-                        )}
-                      </Box>
-                    }
-                    secondary={
-                      <Box sx={{ mt: 1 }}>
-                        <Typography variant="body2" color="text.secondary">
-                          Copy ID: {item.id}
-                        </Typography>
-                        {item.status === 'damaged' && (
-                          <Typography
-                            variant="body2"
-                            color="error.main"
-                            sx={{ mt: 0.5 }}
-                          >
-                            Damaged - Mark as available only after
-                            repair/replacement
-                          </Typography>
-                        )}
-                        {item.return_branch_id &&
-                          item.return_branch_id !== item.branch_id && (
-                            <Chip
-                              icon={<Warning />}
-                              label="Transferred from another branch"
-                              color="warning"
-                              size="small"
-                              sx={{ mt: 1 }}
-                            />
-                          )}
-                      </Box>
-                    }
-                  />
-                </ListItem>
-              </React.Fragment>
-            ))}
-          </List>
-        )}
+        </Stack>
       </Paper>
-    </Container>
+    </PageContainer>
   );
 };
+
+const overlay_sx = {
+  py: 3,
+  px: 1,
+};
+
+function NoItemsToReshelveOverlay() {
+  return (
+    <Container sx={overlay_sx}>
+      <Alert severity="info">
+        <AlertTitle>No Items to Reshelve</AlertTitle>
+        All returned items at this branch have been reshelved. Great job!
+      </Alert>
+    </Container>
+  );
+}
+
+function NoResultsToReshelveOverlay() {
+  return (
+    <Container sx={overlay_sx}>
+      <Alert severity="warning">
+        <AlertTitle>No Items Match Your Search</AlertTitle>
+        Try adjusting your search term or clearing the filter.
+      </Alert>
+    </Container>
+  );
+}

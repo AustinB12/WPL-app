@@ -1,6 +1,7 @@
 import express from 'express';
 import { body, validationResult } from 'express-validator';
 import * as db from '../config/database.js';
+import { format_sql_datetime } from '../utils.js';
 
 const router = express.Router();
 
@@ -120,7 +121,7 @@ router.post(
       const branch_data = {
         ...req.body,
         is_main: req.body.is_main || false,
-        created_at: new Date(),
+        created_at: format_sql_datetime(new Date()),
       };
 
       const branch_id = await db.create_record('BRANCHES', branch_data);

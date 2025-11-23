@@ -1,4 +1,4 @@
-import { Container, Fab, Snackbar, Alert } from '@mui/material';
+import { Fab, Snackbar, Alert } from '@mui/material';
 import {
   type GridColDef,
   type GridRowId,
@@ -15,6 +15,7 @@ import ItemTypeChip from '../components/library_items/ItemTypeChip';
 import { ItemCopyStatusChip } from '../components/copies/ItemCopyStatusChip';
 import { ItemCopyConditionChip } from '../components/copies/ItemCopyConditionChip';
 import { BaseDataGrid } from '../components/common/BaseDataGrid';
+import { PageContainer } from '../components/common/PageBuilders';
 
 const columns: GridColDef[] = [
   {
@@ -128,17 +129,7 @@ export const ReshelveItemsPageNew = () => {
     copies_loading || is_reshelving_copy || is_reshelving_copies;
 
   return (
-    <Container
-      maxWidth="lg"
-      sx={{
-        p: 3,
-        overflow: 'hidden',
-        height: 1,
-        maxHeight: '100%',
-        display: 'flex',
-        flexDirection: 'column',
-      }}
-    >
+    <PageContainer>
       <BaseDataGrid
         rows={data || []}
         getRowId={(row) => row.id}
@@ -156,7 +147,9 @@ export const ReshelveItemsPageNew = () => {
         aria-label="Add"
         disabled={selected_row.ids.size === 0 || something_loading}
         onClick={() =>
-          reshelve_copy(selected_row.ids.values().next().value as number)
+          reshelve_copy({
+            copy_id: selected_row.ids.values().next().value as number,
+          })
         }
         variant="extended"
         sx={{ position: 'absolute', bottom: 72, right: 16 }}
@@ -189,6 +182,6 @@ export const ReshelveItemsPageNew = () => {
           {snackbar.message}
         </Alert>
       </Snackbar>
-    </Container>
+    </PageContainer>
   );
 };

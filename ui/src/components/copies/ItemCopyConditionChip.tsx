@@ -1,24 +1,78 @@
-import { Chip } from '@mui/material';
+import { Chip, useTheme, type ChipProps } from '@mui/material';
 import type { JSX } from 'react';
 import type { Item_Condition } from '../../types';
 
 export function ItemCopyConditionChip({
   condition,
+  size = 'medium',
 }: {
   condition: Item_Condition;
+  size?: ChipProps['size'];
 }): JSX.Element {
+  const theme = useTheme();
+  const is_light = theme.palette.mode === 'light';
   switch (condition) {
     case 'New':
-      return <Chip variant="outlined" label="New" color="success" />;
+      return (
+        <Chip
+          size={size}
+          variant={is_light ? 'filled' : 'outlined'}
+          label="New"
+          color="success"
+        />
+      );
     case 'Excellent':
-      return <Chip variant="outlined" label="Excellent" color="success" />;
+      return (
+        <Chip
+          size={size}
+          variant={is_light ? 'filled' : 'outlined'}
+          label="Excellent"
+          color="success"
+        />
+      );
     case 'Good':
-      return <Chip variant="outlined" label="Good" color="primary" />;
+      return (
+        <Chip
+          size={size}
+          variant={is_light ? 'filled' : 'outlined'}
+          label="Good"
+          color="primary"
+        />
+      );
     case 'Fair':
-      return <Chip variant="outlined" label="Fair" color="secondary" />;
+      return (
+        <Chip
+          size={size}
+          variant={is_light ? 'filled' : 'outlined'}
+          label="Fair"
+          color="secondary"
+        />
+      );
     case 'Poor':
-      return <Chip variant="outlined" label="Poor" color="warning" />;
+      return (
+        <Chip
+          size={size}
+          variant={is_light ? 'filled' : 'outlined'}
+          label="Poor"
+          color="warning"
+        />
+      );
+    case 'Digital':
+      return (
+        <Chip
+          size={size}
+          variant={is_light ? 'filled' : 'outlined'}
+          label="Digital"
+          color="info"
+        />
+      );
     default:
-      return <Chip variant="outlined" label="Unknown" />;
+      return (
+        <Chip
+          size={size}
+          variant={is_light ? 'filled' : 'outlined'}
+          label="Unknown"
+        />
+      );
   }
 }

@@ -126,20 +126,17 @@ const New_Patron_Modal: FC<New_Patron_Modal_Props> = ({
   };
 
   const handle_close = () => {
-    if (!is_loading) {
-      // Reset form when closing
-      set_form_data({
-        first_name: '',
-        last_name: '',
-        balance: 0,
-        birthday: undefined,
-        card_expiration_date: addYears(new Date(), 1),
-        image_url: '',
-      });
-      set_errors({});
-      set_submit_error('');
-      on_close();
-    }
+    set_form_data({
+      first_name: '',
+      last_name: '',
+      balance: 0,
+      birthday: undefined,
+      card_expiration_date: addYears(new Date(), 1),
+      image_url: '',
+    });
+    set_errors({});
+    set_submit_error('');
+    on_close();
   };
 
   return (

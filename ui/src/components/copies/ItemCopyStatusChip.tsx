@@ -1,30 +1,114 @@
-import { Chip } from '@mui/material';
+import { Chip, useTheme, type ChipProps } from '@mui/material';
 import type { JSX } from 'react';
-import type { Availability_Status } from '../../types';
+import type { Library_Copy_Status } from '../../types';
 
 export function ItemCopyStatusChip({
   status,
+  size = 'medium',
 }: {
-  status: Availability_Status | 'Overdue';
+  status: Library_Copy_Status | 'Overdue';
+  size?: ChipProps['size'];
 }): JSX.Element {
+  const theme = useTheme();
+  const is_light = theme.palette.mode === 'light';
   switch (status) {
     case 'Available':
-      return <Chip variant="outlined" label="Available" color="info" />;
+      return (
+        <Chip
+          size={size}
+          variant={is_light ? 'filled' : 'outlined'}
+          label="Available"
+          color="info"
+        />
+      );
     case 'Checked Out':
-      return <Chip variant="outlined" label="Checked Out" color="primary" />;
+      return (
+        <Chip
+          size={size}
+          variant={is_light ? 'filled' : 'outlined'}
+          label="Checked Out"
+          color="primary"
+        />
+      );
     case 'Reserved':
-      return <Chip variant="outlined" label="Reserved" color="error" />;
+      return (
+        <Chip
+          size={size}
+          variant={is_light ? 'filled' : 'outlined'}
+          label="Reserved"
+          color="error"
+        />
+      );
     case 'Processing':
-      return <Chip variant="outlined" label="Processing" color="success" />;
+      return (
+        <Chip
+          size={size}
+          variant={is_light ? 'filled' : 'outlined'}
+          label="Processing"
+          color="success"
+        />
+      );
     case 'Unshelved':
-      return <Chip variant="outlined" label="Unshelved" color="warning" />;
+      return (
+        <Chip
+          size={size}
+          variant={is_light ? 'filled' : 'outlined'}
+          label="Unshelved"
+          color="warning"
+        />
+      );
+    case 'Ready For Pickup':
+      return (
+        <Chip
+          size={size}
+          variant={is_light ? 'filled' : 'outlined'}
+          label="Ready For Pickup"
+          color="success"
+        />
+      );
     case 'Overdue':
-      return <Chip variant="outlined" label="Overdue" color="warning" />;
+      return (
+        <Chip
+          size={size}
+          variant={is_light ? 'filled' : 'outlined'}
+          label="Overdue"
+          color="warning"
+        />
+      );
     case 'Damaged':
-      return <Chip variant="outlined" label="Damaged" color="secondary" />;
+      return (
+        <Chip
+          size={size}
+          variant={is_light ? 'filled' : 'outlined'}
+          label="Damaged"
+          color="secondary"
+        />
+      );
     case 'Lost':
-      return <Chip variant="outlined" label="Lost" color="default" />;
+      return (
+        <Chip
+          size={size}
+          variant={is_light ? 'filled' : 'outlined'}
+          label="Lost"
+          color="default"
+        />
+      );
+    case 'Returned (not yet available)':
+      return (
+        <Chip
+          size={size}
+          variant={is_light ? 'filled' : 'outlined'}
+          label="Returned"
+          color="warning"
+        />
+      );
     default:
-      return <Chip variant="outlined" label="Unknown" />;
+      return (
+        <Chip
+          size={size}
+          variant={is_light ? 'filled' : 'outlined'}
+          label="Unknown"
+        />
+      );
   }
 }

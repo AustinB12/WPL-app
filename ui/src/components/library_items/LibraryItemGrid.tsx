@@ -1,60 +1,197 @@
-import { useState } from 'react';
-import { type GridColDef } from '@mui/x-data-grid';
-import { type Library_Item } from '../../types';
-import { Snackbar, Alert, AlertTitle, Box } from '@mui/material';
+import { useState, useMemo, useCallback } from 'react';
+import {
+  GridActionsCellItem,
+  type GridColDef,
+  type GridRowId,
+} from '@mui/x-data-grid';
+import {
+  type Library_Item,
+  type Create_Library_Item_Form_Data,
+} from '../../types';
+import { Box } from '@mui/material';
 import { LibraryItemDetails } from './LibraryItemDetails';
-import { useLibraryItems } from '../../hooks/useLibraryItems';
+import { DeleteLibraryItem } from './DeleteLibraryItem';
+import { EditLibraryItem } from './EditLibraryItem';
+import {
+  useLibraryItems,
+  useDeleteLibraryItem,
+  useUpdateLibraryItem,
+} from '../../hooks/useLibraryItems';
 import ItemTypeChip from './ItemTypeChip';
 import { BaseDataGrid } from '../common/BaseDataGrid';
-
-const columns: GridColDef[] = [
-  {
-    field: 'id',
-    headerName: 'ID',
-    width: 90,
-    valueGetter: (value) => Number(value),
-  },
-  { field: 'title', headerName: 'Title', width: 150, editable: false },
-  {
-    field: 'item_type',
-    headerName: 'Type',
-    width: 100,
-    editable: false,
-    renderCell: (params) => {
-      return <ItemTypeChip item_type={params.value} />;
-    },
-  },
-  {
-    field: 'description',
-    headerName: 'Description',
-    width: 200,
-    editable: false,
-    flex: 1,
-  },
-  {
-    field: 'publication_year',
-    headerName: 'Publication Year',
-    width: 130,
-    editable: false,
-  },
-];
+import { Delete, Edit } from '@mui/icons-material';
+import { useSnackbar } from '../../hooks/useSnackbar';
 
 export const LibraryItemDataGrid = () => {
+  const { show_snackbar } = useSnackbar();
   const [details_open, set_details_open] = useState(false);
+  const [delete_dialog_open, set_delete_dialog_open] = useState(false);
+  const [edit_dialog_open, set_edit_dialog_open] = useState(false);
   const [selected_item, set_selected_item] = useState<Library_Item | null>(
     null
   );
+  const [item_to_delete, set_item_to_delete] = useState<Library_Item | null>(
+    null
+  );
+  const [item_to_edit, set_item_to_edit] = useState<Library_Item | null>(null);
   const { data: rows, isLoading: loading, error } = useLibraryItems();
 
-  const handle_item_selected = (item: Library_Item) => {
+  const delete_mutation = useDeleteLibraryItem({
+    onSuccess: () => {
+      set_delete_dialog_open(false);
+      set_item_to_delete(null);
+      show_snackbar({
+        message: 'Library item deleted successfully',
+        severity: 'success',
+        title: 'Success',
+      });
+    },
+    onError: (error) => {
+      set_delete_dialog_open(false);
+      show_snackbar({
+        message: error.message,
+        severity: 'error',
+        title: 'Error',
+      });
+    },
+  });
+
+  const update_mutation = useUpdateLibraryItem({
+    onSuccess: () => {
+      set_edit_dialog_open(false);
+      set_item_to_edit(null);
+      show_snackbar({
+        message: 'Library item updated successfully',
+        severity: 'success',
+        title: 'Success',
+      });
+    },
+    onError: (error) => {
+      show_snackbar({
+        message: error.message,
+        severity: 'error',
+        title: 'Error',
+      });
+    },
+  });
+
+  // Show error snackbar for query errors
+  if (error) {
+    show_snackbar({
+      message: error.message,
+      severity: 'error',
+      title: error.name || 'Error',
+    });
+  }
+
+  const handle_item_selected = useCallback((item: Library_Item) => {
     set_selected_item(item);
     set_details_open(true);
-  };
+  }, []);
+
+  const handle_delete_click = useCallback(
+    (id: GridRowId) => {
+      const item = rows?.find((row) => row.id === id);
+      if (item) {
+        set_item_to_delete(item);
+        set_delete_dialog_open(true);
+      }
+    },
+    [rows]
+  );
+
+  const handle_edit_click = useCallback(
+    (id: GridRowId) => {
+      const item = rows?.find((row) => row.id === id);
+      if (item) {
+        set_item_to_edit(item);
+        set_edit_dialog_open(true);
+      }
+    },
+    [rows]
+  );
+
+  const handle_delete_confirm = useCallback(
+    (item_id: number) => {
+      delete_mutation.mutate(item_id);
+    },
+    [delete_mutation]
+  );
+
+  const handle_edit_confirm = useCallback(
+    (item_id: number, data: Create_Library_Item_Form_Data) => {
+      update_mutation.mutate({ item_id, data });
+    },
+    [update_mutation]
+  );
+
+  const columns: GridColDef[] = useMemo(
+    () => [
+      {
+        field: 'id',
+        headerName: 'ID',
+        width: 90,
+        valueGetter: (value) => Number(value),
+      },
+      {
+        field: 'title',
+        headerName: 'Title',
+        width: 150,
+        editable: false,
+        flex: 1,
+      },
+      {
+        field: 'item_type',
+        headerName: 'Type',
+        width: 150,
+        editable: false,
+        renderCell: (params) => {
+          return <ItemTypeChip item_type={params.value} />;
+        },
+      },
+      {
+        field: 'description',
+        headerName: 'Description',
+        width: 200,
+        editable: false,
+        flex: 1,
+      },
+      {
+        field: 'publication_year',
+        headerName: 'Publication Year',
+        width: 130,
+        editable: false,
+      },
+      {
+        field: 'actions',
+        type: 'actions',
+        width: 60,
+        getActions: (params) => [
+          <GridActionsCellItem
+            key="delete"
+            icon={<Delete />}
+            label="Delete"
+            onClick={() => handle_delete_click(params.id)}
+            showInMenu
+          />,
+          <GridActionsCellItem
+            key="edit"
+            icon={<Edit />}
+            label="Edit"
+            onClick={() => handle_edit_click(params.id)}
+            showInMenu
+          />,
+        ],
+      },
+    ],
+    [handle_delete_click, handle_edit_click]
+  );
 
   return (
     <>
       <Box sx={{ overflow: 'hidden', maxHeight: 1 }}>
         <BaseDataGrid
+          label="Library Items"
           sx={{ height: 1 }}
           rows={rows}
           columns={columns}
@@ -70,16 +207,26 @@ export const LibraryItemDataGrid = () => {
         item={selected_item}
         onClose={() => set_details_open(false)}
       />
-      <Snackbar
-        anchorOrigin={{ horizontal: 'right', vertical: 'top' }}
-        open={Boolean(error)}
-        autoHideDuration={6000}
-      >
-        <Alert severity="error">
-          {error?.message}
-          <AlertTitle>{error?.name}</AlertTitle>
-        </Alert>
-      </Snackbar>
+      <EditLibraryItem
+        open={edit_dialog_open}
+        item={item_to_edit}
+        on_close={() => {
+          set_edit_dialog_open(false);
+          set_item_to_edit(null);
+        }}
+        on_confirm={handle_edit_confirm}
+        is_loading={update_mutation.isPending}
+      />
+      <DeleteLibraryItem
+        open={delete_dialog_open}
+        item={item_to_delete}
+        on_close={() => {
+          set_delete_dialog_open(false);
+          set_item_to_delete(null);
+        }}
+        on_confirm={handle_delete_confirm}
+        is_loading={delete_mutation.isPending}
+      />
     </>
   );
 };

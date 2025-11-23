@@ -1,5 +1,4 @@
 import {
-  Container,
   Typography,
   Box,
   Paper,
@@ -7,8 +6,11 @@ import {
   Divider,
   FormControlLabel,
   Switch,
+  TextField,
   type SxProps,
   type Theme,
+  Grid,
+  IconButton,
 } from '@mui/material';
 import {
   useState,
@@ -17,9 +19,18 @@ import {
   type FC,
   type JSX,
   type PropsWithChildren,
+  useEffect,
 } from 'react';
-import { useColorScheme } from '@mui/material';
-import { Info, NotificationsActive, Palette } from '@mui/icons-material';
+import {
+  AccessTime,
+  Info,
+  NotificationsActive,
+  Save,
+  Settings as SettingsIcon,
+} from '@mui/icons-material';
+import { PageContainer, PageTitle } from '../components/common/PageBuilders';
+import { useSettings, useUpdateSettings } from '../hooks/useSettings';
+import { useSnackbar } from '../hooks/useSnackbar';
 
 const SECTION_PAPER_SX: SxProps<Theme> = {
   p: 3,
@@ -27,14 +38,43 @@ const SECTION_PAPER_SX: SxProps<Theme> = {
   boxShadow: 4,
 };
 
+type Loan_Duration_Values = {
+  book: number;
+  audiobook: number;
+  cd: number;
+  magazine: number;
+  video: number;
+  new_video: number;
+  periodical: number;
+  recording: number;
+  vinyl: number;
+};
+
 export const SettingsPage: FC = () => {
-  const { mode, setMode } = useColorScheme();
   const [notifications_enabled, set_notifications_enabled] = useState(true);
   const [email_updates, set_email_updates] = useState(false);
 
-  const handle_theme_toggle = useCallback(() => {
-    setMode(mode === 'dark' ? 'light' : 'dark');
-  }, [mode, setMode]);
+  const { show_snackbar } = useSnackbar();
+
+  const [data, set_data] = useState<Loan_Duration_Values>({
+    audiobook: 28,
+    book: 21,
+    cd: 14,
+    magazine: 7,
+    video: 7,
+    new_video: 7,
+    periodical: 7,
+    recording: 7,
+    vinyl: 7,
+  });
+
+  const { data: loan_durations, isLoading } = useSettings();
+
+  const {
+    mutate: update_loan_duration,
+    isPending: update_loading,
+    variables,
+  } = useUpdateSettings();
 
   const handle_notifications_toggle = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -50,34 +90,126 @@ export const SettingsPage: FC = () => {
     []
   );
 
-  return (
-    <Container maxWidth="lg" sx={{ p: 4 }}>
-      <Paper elevation={0} sx={{ p: 2, borderRadius: 3, boxShadow: 4 }}>
-        <Typography
-          variant="h4"
-          component="h1"
-          gutterBottom
-          sx={{
-            fontWeight: '500',
-            mb: 3,
-            fontSize: { xs: '1.5rem', sm: '2rem', md: '2.5rem' },
-          }}
-        >
-          Settings
-        </Typography>
+  useEffect(() => {
+    if (loan_durations) {
+      const updated_values: Loan_Duration_Values = {} as Loan_Duration_Values;
+      loan_durations.forEach((setting) => {
+        updated_values[
+          setting.name.toLowerCase() as keyof Loan_Duration_Values
+        ] = setting.duration;
+      });
+      set_data(updated_values);
+    }
+  }, [loan_durations]);
 
+  const handle_days_change = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+    which: string
+  ) => {
+    const value = parseInt(e.target.value);
+    if (!isNaN(value) && value > 0) {
+      set_data((prev) => ({
+        ...prev,
+        [which]: value,
+      }));
+    } else if (e.target.value === '') {
+      set_data((prev) => ({
+        ...prev,
+        [which]: 0,
+      }));
+    }
+  };
+
+  const handle_update_duration = (id: number, days: number) => {
+    update_loan_duration(
+      { id, duration: days },
+      {
+        onSuccess: () => {
+          const name = loan_durations?.find((ld) => ld.id === id)?.name || '';
+          show_snackbar({
+            message: name + ' loan duration now set to ' + days + ' days',
+            title: 'Loan Duration Updated',
+            severity: 'success',
+          });
+        },
+        onError: (error: Error) => {
+          show_snackbar({
+            title: 'Failed: ' + error.name,
+            message: error.message,
+            severity: 'error',
+          });
+        },
+      }
+    );
+  };
+
+  return (
+    <PageContainer>
+      <PageTitle title="Settings" Icon_Component={SettingsIcon} />
+      <Paper
+        elevation={0}
+        sx={{ p: 4, borderRadius: 3, boxShadow: 4, overflowY: 'auto' }}
+      >
         <Stack spacing={3}>
           <Paper elevation={1} sx={SECTION_PAPER_SX}>
-            <SectionHeader icon={<Palette />}>Appearance</SectionHeader>
-            <Divider sx={{ my: 2 }} />
-            <SettingItem
-              label="Dark Mode"
-              description="Toggle between light and dark themes"
-              checked={mode === 'dark'}
-              onChange={handle_theme_toggle}
-            />
+            <SectionHeader icon={<AccessTime />}>Loan Durations</SectionHeader>
+            <Typography sx={{ pt: 1 }} variant="body2" color="text.secondary">
+              {
+                'Set the default loan durations for different item types. (Days)'
+              }
+            </Typography>
+            <Divider sx={{ my: 3 }} />
+            <Grid container spacing={2} rowSpacing={4}>
+              {loan_durations &&
+                !isLoading &&
+                loan_durations.map((setting) => {
+                  return (
+                    <Grid size={{ xs: 12, sm: 6, md: 4 }} key={setting.id}>
+                      <Stack direction="row" alignItems="center">
+                        <TextField
+                          key={setting.id}
+                          disabled={isLoading}
+                          label={`${setting.name.toUpperCase()}`}
+                          type="number"
+                          value={
+                            data[
+                              setting.name.toLowerCase() as keyof Loan_Duration_Values
+                            ] || ''
+                          }
+                          onChange={(e) =>
+                            handle_days_change(e, setting.name.toLowerCase())
+                          }
+                          slotProps={{
+                            htmlInput: {
+                              min: 1,
+                              max: 365,
+                              step: 1,
+                            },
+                          }}
+                          fullWidth
+                          sx={{ maxWidth: 400, minWidth: 200 }}
+                        />
+                        <IconButton
+                          loading={
+                            update_loading && variables?.id === setting.id
+                          }
+                          onClick={() =>
+                            handle_update_duration(
+                              setting.id,
+                              data[
+                                setting.name.toLowerCase() as keyof Loan_Duration_Values
+                              ] || 28
+                            )
+                          }
+                        >
+                          <Save fontSize="large" />
+                        </IconButton>
+                      </Stack>
+                    </Grid>
+                  );
+                })}
+            </Grid>
           </Paper>
-
           <Paper elevation={1} sx={SECTION_PAPER_SX}>
             <SectionHeader icon={<NotificationsActive />}>
               Notifications
@@ -99,7 +231,6 @@ export const SettingsPage: FC = () => {
               />
             </Stack>
           </Paper>
-
           <Paper elevation={1} sx={SECTION_PAPER_SX}>
             <SectionHeader icon={<Info />}>System Information</SectionHeader>
             <Divider sx={{ my: 2 }} />
@@ -124,7 +255,7 @@ export const SettingsPage: FC = () => {
           </Paper>
         </Stack>
       </Paper>
-    </Container>
+    </PageContainer>
   );
 };
 

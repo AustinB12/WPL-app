@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { type FC } from 'react';
 import {
   Dialog,
@@ -10,10 +11,17 @@ import {
   Divider,
   Paper,
   IconButton,
+  Alert,
+  AlertTitle,
+  Chip,
 } from '@mui/material';
-import { CheckCircle, Close } from '@mui/icons-material';
+import {
+  CheckCircle,
+  Close,
+  EventNote,
+  PersonRemove,
+} from '@mui/icons-material';
 import type { Item_Copy, Library_Item, Patron, Transaction } from '../../types';
-import { format_date } from '../../utils/dateUtils';
 import { useSelectedBranch } from '../../hooks/useBranchHooks';
 
 interface CheckoutReceiptProps {
@@ -55,9 +63,28 @@ export const CheckoutReceipt: FC<CheckoutReceiptProps> = ({
         >
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <CheckCircle sx={{ color: 'success.main', fontSize: 32 }} />
-            <Typography variant="h5" fontWeight="bold">
-              Checkout Receipt
-            </Typography>
+            <Box>
+              <Typography variant="h5" fontWeight="bold">
+                Checkout Receipt
+              </Typography>
+              {receipt &&
+                receipt.reservation &&
+                (receipt.reservation as any).was_reserved && (
+                  <Typography
+                    variant="caption"
+                    color="success.main"
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 0.5,
+                      mt: 0.5,
+                    }}
+                  >
+                    <EventNote fontSize="small" />
+                    Reservation Fulfilled
+                  </Typography>
+                )}
+            </Box>
           </Box>
           <IconButton onClick={handle_close} size="small">
             <Close />
@@ -66,6 +93,53 @@ export const CheckoutReceipt: FC<CheckoutReceiptProps> = ({
       </DialogTitle>
 
       <DialogContent>
+        {receipt &&
+          receipt.reservation &&
+          (receipt as any).reservation.was_reserved && (
+            <Alert
+              severity="success"
+              icon={<EventNote />}
+              sx={{
+                mb: 3,
+                border: '2px solid',
+                borderColor: 'success.main',
+                bgcolor: 'success.50',
+              }}
+            >
+              <AlertTitle sx={{ fontWeight: 'bold', fontSize: '1.1rem' }}>
+                ✓ Reservation Fulfilled - Patron Left Queue
+              </AlertTitle>
+              <Typography variant="body1" sx={{ mb: 1, fontWeight: 500 }}>
+                This checkout fulfilled an active reservation.
+              </Typography>
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 1,
+                  flexWrap: 'wrap',
+                  mt: 1,
+                }}
+              >
+                <Chip
+                  icon={<EventNote />}
+                  label={`Queue Position: #${
+                    (receipt as any).reservation.queue_position
+                  }`}
+                  color="info"
+                  size="small"
+                  sx={{ fontWeight: 600 }}
+                />
+                <Chip
+                  icon={<PersonRemove />}
+                  label="Removed from Queue"
+                  color="success"
+                  size="small"
+                  sx={{ fontWeight: 600 }}
+                />
+              </Box>
+            </Alert>
+          )}
         <Paper
           elevation={0}
           sx={{
@@ -174,7 +248,9 @@ export const CheckoutReceipt: FC<CheckoutReceiptProps> = ({
                   fontWeight="bold"
                   sx={{ mb: 1 }}
                 >
-                  {receipt?.due_date ? format_date(receipt.due_date) : 'N/A'}
+                  {receipt?.due_date
+                    ? new Date(receipt.due_date).toLocaleDateString()
+                    : 'N/A'}
                 </Typography>
                 <Typography
                   variant="body2"
@@ -194,6 +270,23 @@ export const CheckoutReceipt: FC<CheckoutReceiptProps> = ({
           )}
 
           <Divider sx={{ my: 2 }} />
+
+          {/* Item Availability Notice */}
+          {(receipt as any)?.reservation?.was_reserved && (
+            <Alert
+              severity="warning"
+              sx={{ mb: 2, border: '1px solid', borderColor: 'warning.main' }}
+            >
+              <AlertTitle sx={{ fontWeight: 'bold' }}>
+                ⚠️ Item No Longer Available
+              </AlertTitle>
+              <Typography variant="body2" sx={{ mt: 1 }}>
+                This item was reserved and is now checked out. It is{' '}
+                <strong>no longer available</strong> for other patrons until it
+                is returned.
+              </Typography>
+            </Alert>
+          )}
 
           {/* Footer Message */}
           <Box sx={{ textAlign: 'center', py: 1 }}>

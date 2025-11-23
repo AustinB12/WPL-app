@@ -8,23 +8,24 @@ import {
   ListItemText,
   Box,
   Divider,
+  Toolbar,
   useMediaQuery,
   useTheme,
-  Toolbar,
 } from '@mui/material';
 import {
   Home,
-  Dashboard,
   SsidChart,
   Groups2,
   Book,
   Output,
   Input,
-  Shelves,
-  Event,
+  Autorenew,
   TableRows,
-  Sync,
   Settings,
+  CheckCircle,
+  BookmarkAdd,
+  EventNote,
+  Dashboard,
 } from '@mui/icons-material';
 
 export const drawerWidth = 240;
@@ -37,7 +38,6 @@ export const Sidebar = ({
   setSidebarOpen: (open: boolean) => void;
 }) => {
   const location = useLocation();
-
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
@@ -50,12 +50,11 @@ export const Sidebar = ({
 
   const collection_items = [
     { text: 'Home', path: '/', icon: <Home /> },
-    { text: 'Dashboard', path: '/dashboard', icon: <Dashboard /> },
     { text: 'Library Items', path: '/library-items', icon: <Book /> },
     { text: 'All Copies', path: '/library-item-copies', icon: <TableRows /> },
     { text: 'Patrons', path: '/patrons', icon: <Groups2 /> },
     { text: 'Transactions', path: '/transactions', icon: <SsidChart /> },
-    { text: 'Reservations', path: '/reservations', icon: <Event /> },
+    { text: 'Reservations', path: '/reservations', icon: <EventNote /> },
   ];
 
   const action_items = [
@@ -65,11 +64,13 @@ export const Sidebar = ({
       path: '/check-out',
       icon: <Output sx={{ transform: 'rotate(180deg)' }} />,
     },
-    { text: 'Reshelve', path: '/reshelve-new', icon: <Shelves /> },
-    { text: 'Renewals', path: '/renewals', icon: <Sync /> },
+    { text: 'Reserve', path: '/reserve', icon: <BookmarkAdd /> },
+    { text: 'Renew', path: '/renew', icon: <Autorenew /> },
+    { text: 'Reshelve', path: '/available', icon: <CheckCircle /> },
   ];
 
   const bottom_items = [
+    { text: 'Dashboard', path: '/dashboard', icon: <Dashboard /> },
     { text: 'Settings', path: '/settings', icon: <Settings /> },
   ];
 
@@ -159,42 +160,44 @@ export const Sidebar = ({
           ))}
           <Divider sx={{ my: 1, mx: 2 }} />
         </Box>
-        {bottom_items.map((item) => (
-          <ListItem key={item.text} disablePadding>
-            <ListItemButton
-              component={Link}
-              to={item.path}
-              selected={isActive(item.path)}
-              onClick={() => isMobile && setSidebarOpen(false)}
-              sx={{
-                mx: 1,
-                borderRadius: 1,
-                '&.Mui-selected': {
-                  backgroundColor: 'primary.50',
-                  color: 'primary.main',
-                  '&:hover': {
-                    backgroundColor: 'primary.100',
-                  },
-                },
-              }}
-            >
-              <ListItemIcon
+        <Box>
+          {bottom_items.map((item) => (
+            <ListItem key={item.text} disablePadding>
+              <ListItemButton
+                component={Link}
+                to={item.path}
+                selected={isActive(item.path)}
+                onClick={() => isMobile && setSidebarOpen(false)}
                 sx={{
-                  color: isActive(item.path) ? 'primary.main' : 'inherit',
-                  minWidth: 40,
+                  mx: 1,
+                  borderRadius: 1,
+                  '&.Mui-selected': {
+                    backgroundColor: 'primary.50',
+                    color: 'primary.main',
+                    '&:hover': {
+                      backgroundColor: 'primary.100',
+                    },
+                  },
                 }}
               >
-                {item.icon}
-              </ListItemIcon>
-              <ListItemText
-                primary={item.text}
-                slotProps={{
-                  primary: { fontWeight: isActive(item.path) ? 600 : 400 },
-                }}
-              />
-            </ListItemButton>
-          </ListItem>
-        ))}
+                <ListItemIcon
+                  sx={{
+                    color: isActive(item.path) ? 'primary.main' : 'inherit',
+                    minWidth: 40,
+                  }}
+                >
+                  {item.icon}
+                </ListItemIcon>
+                <ListItemText
+                  primary={item.text}
+                  slotProps={{
+                    primary: { fontWeight: isActive(item.path) ? 600 : 400 },
+                  }}
+                />
+              </ListItemButton>
+            </ListItem>
+          ))}
+        </Box>
       </List>
     </Box>
   );
