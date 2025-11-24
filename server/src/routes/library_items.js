@@ -1,7 +1,6 @@
 import express from 'express';
 import { body, validationResult } from 'express-validator';
 import * as db from '../config/database.js';
-import { format_sql_datetime } from '../utils.js';
 
 const router = express.Router();
 
@@ -111,12 +110,11 @@ router.post(
   validate_library_item,
   handle_validation_errors,
   async (req, res) => {
-    const now = format_sql_datetime(new Date());
     try {
       const library_item_data = {
         ...req.body,
-        created_at: now,
-        updated_at: now,
+        created_at: new Date(),
+        updated_at: new Date(),
       };
 
       await db.create_record('LIBRARY_ITEMS', library_item_data);
@@ -152,7 +150,7 @@ router.put(
 
       const update_data = {
         ...req.body,
-        updated_at: format_sql_datetime(new Date()),
+        updated_at: new Date(),
       };
 
       const updated = await db.update_record(

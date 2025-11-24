@@ -2,12 +2,6 @@ import { format, isAfter, parseISO } from 'date-fns';
 import type { Library_Item_Type } from '../types';
 import dayjs from 'dayjs';
 
-export function format_sql_datetime(date: string | Date): string {
-  const date_obj = typeof date === 'string' ? new Date(date) : date;
-  const js_date = dayjs(date_obj);
-  return js_date.format('YYYY-MM-DD HH:mm:ss');
-}
-
 export const format_date = (date: string | Date): string => {
   const dateObj = typeof date === 'string' ? parseISO(date) : date;
   return format(dateObj, 'MMM dd, yyyy');

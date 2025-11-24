@@ -10,11 +10,6 @@ import {
   Stack,
   IconButton,
   Alert,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  FormHelperText,
 } from '@mui/material';
 import {
   Close as CloseIcon,
@@ -25,7 +20,6 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { addYears } from 'date-fns';
 import { validate_required } from '../../utils/validators';
-import { useBranchesContext } from '../../hooks/useBranchHooks';
 import type { Create_Patron_Data } from '../../types';
 
 export interface Patron_Form_Errors {
@@ -35,7 +29,6 @@ export interface Patron_Form_Errors {
   birthday?: string;
   card_expiration_date: string;
   image_url?: string;
-  local_branch_id?: string;
 }
 
 interface New_Patron_Modal_Props {
@@ -51,16 +44,13 @@ const New_Patron_Modal: FC<New_Patron_Modal_Props> = ({
   on_submit,
   is_loading = false,
 }) => {
-  const { branches, loading: branches_loading } = useBranchesContext();
-
   const [form_data, set_form_data] = useState<Create_Patron_Data>({
     first_name: '',
     last_name: '',
     balance: 0,
     birthday: undefined,
-    card_expiration_date: addYears(new Date(), 1).toLocaleDateString(), // Default to 1 year from now
+    card_expiration_date: addYears(new Date(), 1), // Default to 1 year from now
     image_url: '',
-    local_branch_id: 1,
   });
 
   const [errors, set_errors] = useState<Partial<Patron_Form_Errors>>({});
@@ -78,7 +68,7 @@ const New_Patron_Modal: FC<New_Patron_Modal_Props> = ({
     }
     if (!form_data.card_expiration_date) {
       new_errors.card_expiration_date = 'Card expiration date is required';
-    } else if (new Date(form_data.card_expiration_date) <= new Date()) {
+    } else if (form_data.card_expiration_date <= new Date()) {
       new_errors.card_expiration_date =
         'Card expiration date must be in the future';
     }
@@ -88,12 +78,8 @@ const New_Patron_Modal: FC<New_Patron_Modal_Props> = ({
       new_errors.balance = 'Balance cannot be negative';
     }
 
-    if (form_data.birthday && new Date(form_data.birthday) > new Date()) {
+    if (form_data.birthday && form_data.birthday > new Date()) {
       new_errors.birthday = 'Birthday cannot be in the future';
-    }
-
-    if (!form_data.local_branch_id) {
-      new_errors.local_branch_id = 'Branch selection is required';
     }
 
     set_errors(new_errors);
@@ -117,26 +103,11 @@ const New_Patron_Modal: FC<New_Patron_Modal_Props> = ({
       set_submit_error('');
     };
 
-  const handle_select_change =
-    (field: keyof Create_Patron_Data) =>
-    (event: { target: { value: unknown } }) => {
-      set_form_data((prev) => ({
-        ...prev,
-        [field]: event.target.value,
-      }));
-
-      // Clear error for this field when user changes selection
-      if (errors[field as keyof Patron_Form_Errors]) {
-        set_errors((prev) => ({ ...prev, [field]: undefined }));
-      }
-      set_submit_error('');
-    };
-
   const handle_date_change =
     (field: 'birthday' | 'card_expiration_date') => (date: Date | null) => {
       set_form_data((prev) => ({
         ...prev,
-        [field]: date ? date.toLocaleDateString() : undefined,
+        [field]: date,
       }));
 
       // Clear error for this field when user changes date
@@ -160,9 +131,8 @@ const New_Patron_Modal: FC<New_Patron_Modal_Props> = ({
       last_name: '',
       balance: 0,
       birthday: undefined,
-      card_expiration_date: addYears(new Date(), 1).toLocaleDateString(),
+      card_expiration_date: addYears(new Date(), 1),
       image_url: '',
-      local_branch_id: 1,
     });
     set_errors({});
     set_submit_error('');
@@ -245,12 +215,10 @@ const New_Patron_Modal: FC<New_Patron_Modal_Props> = ({
             >
               <DatePicker
                 label="Birthday (Optional)"
-                value={form_data.birthday ? new Date(form_data.birthday) : null}
-                onChange={(date) =>
-                  handle_date_change('birthday')(date as Date | null)
-                }
+                value={form_data.birthday}
+                onChange={() => handle_date_change('birthday')}
                 disabled={is_loading}
-                disableFuture
+                maxDate={new Date()}
                 slotProps={{
                   textField: {
                     fullWidth: true,
@@ -261,14 +229,10 @@ const New_Patron_Modal: FC<New_Patron_Modal_Props> = ({
               />
               <DatePicker
                 label="Card Expiration Date"
-                value={new Date(form_data.card_expiration_date)}
-                onChange={(date) =>
-                  handle_date_change('card_expiration_date')(
-                    date as Date | null
-                  )
-                }
+                value={form_data.card_expiration_date}
+                onChange={() => handle_date_change('card_expiration_date')}
                 disabled={is_loading}
-                disablePast
+                minDate={new Date()}
                 slotProps={{
                   textField: {
                     fullWidth: true,
@@ -310,33 +274,6 @@ const New_Patron_Modal: FC<New_Patron_Modal_Props> = ({
                 placeholder="https://example.com/image.jpg"
               />
             </Box>
-            <FormControl
-              fullWidth
-              error={!!errors.local_branch_id}
-              disabled={is_loading || branches_loading}
-            >
-              <InputLabel id="branch-select-label">Local Branch *</InputLabel>
-              <Select
-                labelId="branch-select-label"
-                id="branch-select"
-                value={form_data.local_branch_id}
-                label="Local Branch *"
-                onChange={handle_select_change('local_branch_id')}
-              >
-                {branches?.map((branch) => (
-                  <MenuItem key={branch.id} value={branch.id}>
-                    {branch.branch_name}
-                    {branch.is_main ? ' (Main Branch)' : ''}
-                  </MenuItem>
-                ))}
-              </Select>
-              {errors.local_branch_id && (
-                <FormHelperText>{errors.local_branch_id}</FormHelperText>
-              )}
-              {!errors.local_branch_id && (
-                <FormHelperText>Select the patron's home branch</FormHelperText>
-              )}
-            </FormControl>
           </Stack>
         </DialogContent>
 

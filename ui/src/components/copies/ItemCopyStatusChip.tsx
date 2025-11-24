@@ -1,13 +1,11 @@
-import { Chip, useTheme, type ChipProps } from '@mui/material';
+import { Chip, useTheme } from '@mui/material';
 import type { JSX } from 'react';
 import type { Library_Copy_Status } from '../../types';
 
 export function ItemCopyStatusChip({
   status,
-  size = 'medium',
 }: {
   status: Library_Copy_Status | 'Overdue';
-  size?: ChipProps['size'];
 }): JSX.Element {
   const theme = useTheme();
   const is_light = theme.palette.mode === 'light';
@@ -15,7 +13,6 @@ export function ItemCopyStatusChip({
     case 'Available':
       return (
         <Chip
-          size={size}
           variant={is_light ? 'filled' : 'outlined'}
           label="Available"
           color="info"
@@ -24,7 +21,6 @@ export function ItemCopyStatusChip({
     case 'Checked Out':
       return (
         <Chip
-          size={size}
           variant={is_light ? 'filled' : 'outlined'}
           label="Checked Out"
           color="primary"
@@ -33,7 +29,6 @@ export function ItemCopyStatusChip({
     case 'Reserved':
       return (
         <Chip
-          size={size}
           variant={is_light ? 'filled' : 'outlined'}
           label="Reserved"
           color="error"
@@ -42,7 +37,6 @@ export function ItemCopyStatusChip({
     case 'Processing':
       return (
         <Chip
-          size={size}
           variant={is_light ? 'filled' : 'outlined'}
           label="Processing"
           color="success"
@@ -51,7 +45,6 @@ export function ItemCopyStatusChip({
     case 'Unshelved':
       return (
         <Chip
-          size={size}
           variant={is_light ? 'filled' : 'outlined'}
           label="Unshelved"
           color="warning"
@@ -60,7 +53,6 @@ export function ItemCopyStatusChip({
     case 'Ready For Pickup':
       return (
         <Chip
-          size={size}
           variant={is_light ? 'filled' : 'outlined'}
           label="Ready For Pickup"
           color="success"
@@ -69,7 +61,6 @@ export function ItemCopyStatusChip({
     case 'Overdue':
       return (
         <Chip
-          size={size}
           variant={is_light ? 'filled' : 'outlined'}
           label="Overdue"
           color="warning"
@@ -78,7 +69,6 @@ export function ItemCopyStatusChip({
     case 'Damaged':
       return (
         <Chip
-          size={size}
           variant={is_light ? 'filled' : 'outlined'}
           label="Damaged"
           color="secondary"
@@ -87,28 +77,14 @@ export function ItemCopyStatusChip({
     case 'Lost':
       return (
         <Chip
-          size={size}
           variant={is_light ? 'filled' : 'outlined'}
           label="Lost"
           color="default"
         />
       );
-    case 'Returned (not yet available)':
-      return (
-        <Chip
-          size={size}
-          variant={is_light ? 'filled' : 'outlined'}
-          label="Returned"
-          color="warning"
-        />
-      );
     default:
       return (
-        <Chip
-          size={size}
-          variant={is_light ? 'filled' : 'outlined'}
-          label="Unknown"
-        />
+        <Chip variant={is_light ? 'filled' : 'outlined'} label="Unknown" />
       );
   }
 }

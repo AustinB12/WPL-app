@@ -1,4 +1,11 @@
-import { useMediaQuery, useTheme, Fab, Stack } from '@mui/material';
+import {
+  useMediaQuery,
+  useTheme,
+  Box,
+  Fab,
+  Alert,
+  Snackbar,
+} from '@mui/material';
 import { PatronsDataGrid } from '../components/patrons/PatronsDataGrid';
 import PatronsList from '../components/patrons/PatronsList';
 import { Add, Groups2 } from '@mui/icons-material';
@@ -7,30 +14,27 @@ import { useState } from 'react';
 import { useCreatePatron } from '../hooks/usePatrons';
 import type { Create_Patron_Data } from '../types';
 import { PageContainer, PageTitle } from '../components/common/PageBuilders';
-import { useSnackbar } from '../hooks/useSnackbar';
 
 export const Patrons = () => {
   const theme = useTheme();
   const xsUp = useMediaQuery(theme.breakpoints.up('sm'));
-  const { show_snackbar } = useSnackbar();
 
   const [dialog_open, set_dialog_open] = useState(false);
+
+  const [success_snackbar_open, set_success_snackbar_open] = useState(false);
+  const [error_snackbar_open, set_error_snackbar_open] = useState(false);
+  const [snackbar_message, set_snackbar_message] = useState('');
 
   const { mutate: create_patron, isPending: create_patron_loading } =
     useCreatePatron({
       onSuccess: () => {
-        show_snackbar({
-          message: 'Patron created successfully!',
-          severity: 'success',
-        });
+        set_snackbar_message('Patron created successfully!');
+        set_success_snackbar_open(true);
         set_dialog_open(false);
       },
       onError: (error: Error) => {
-        show_snackbar({
-          message: error.message || 'Failed to create patron',
-          severity: 'error',
-          title: 'Error!',
-        });
+        set_snackbar_message(error.message || 'Failed to create patron');
+        set_error_snackbar_open(true);
       },
     });
 
@@ -39,24 +43,19 @@ export const Patrons = () => {
   };
 
   return (
-    <PageContainer width="xl">
+    <PageContainer>
       <PageTitle title="Patrons" Icon_Component={Groups2} sx={{ mb: 0 }} />
-      <Stack sx={{ flex: 1, overflow: 'hidden' }}>
+      <Box sx={{ flex: 1, overflow: 'hidden' }}>
         {xsUp ? (
           <PatronsDataGrid
             check_card_and_balance={false}
             just_active={false}
-            hidden_columns={[
-              'patron_name',
-              'phone',
-              'birthday',
-              'local_branch_id',
-            ]}
+            hidden_columns={['patron_name', 'phone', 'birthday']}
           />
         ) : (
           <PatronsList />
         )}
-      </Stack>
+      </Box>
       <Fab
         color="primary"
         onClick={() => set_dialog_open(true)}
@@ -76,6 +75,32 @@ export const Patrons = () => {
         on_close={() => set_dialog_open(false)}
         on_submit={handle_create_patron}
       />
+      {/* Success snackbar for patron creation */}
+      <Snackbar
+        anchorOrigin={{ horizontal: 'center', vertical: 'top' }}
+        open={success_snackbar_open}
+        onClose={() => set_success_snackbar_open(false)}
+        autoHideDuration={6000}
+      >
+        <Alert
+          severity="success"
+          onClose={() => set_success_snackbar_open(false)}
+        >
+          {snackbar_message}
+        </Alert>
+      </Snackbar>
+
+      {/* Error snackbar for patron creation */}
+      <Snackbar
+        anchorOrigin={{ horizontal: 'center', vertical: 'top' }}
+        open={error_snackbar_open}
+        onClose={() => set_error_snackbar_open(false)}
+        autoHideDuration={6000}
+      >
+        <Alert severity="error" onClose={() => set_error_snackbar_open(false)}>
+          {snackbar_message}
+        </Alert>
+      </Snackbar>
     </PageContainer>
   );
 };

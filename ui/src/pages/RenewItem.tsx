@@ -15,13 +15,8 @@ import {
   CardActionArea,
 } from '@mui/material';
 import { useState, type FC } from 'react';
-import {
-  ArrowBack,
-  Refresh,
-  CalendarToday,
-  Autorenew,
-} from '@mui/icons-material';
-import { PageContainer, PageTitle } from '../components/common/PageBuilders';
+import { ArrowBack, Refresh, CalendarToday, Autorenew } from '@mui/icons-material';
+import { format_date } from '../utils/dateUtils';
 
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api/v1';
@@ -224,7 +219,7 @@ export const RenewItem: FC = () => {
     }
 
     // Check if patron's card is expired
-    const current_date = new Date().toLocaleString().split('T')[0];
+    const current_date = new Date().toISOString().split('T')[0];
     if (patron_info.card_expiration_date < current_date) {
       return false;
     }
@@ -235,10 +230,7 @@ export const RenewItem: FC = () => {
     }
 
     // Check if patron has more than 20 books checked out
-    if (
-      patron_info.active_checkout_count !== undefined &&
-      patron_info.active_checkout_count >= 20
-    ) {
+    if (patron_info.active_checkout_count !== undefined && patron_info.active_checkout_count >= 20) {
       return false;
     }
 
@@ -259,23 +251,18 @@ export const RenewItem: FC = () => {
     }
 
     // Check if patron's card is expired
-    const current_date = new Date().toLocaleString().split('T')[0];
+    const current_date = new Date().toISOString().split('T')[0];
     if (patron_info.card_expiration_date < current_date) {
       return "Patron's library card is expired";
     }
 
     // Check if patron has ANY fines
     if (patron_info.balance > 0) {
-      return `Patron has outstanding fines of $${patron_info.balance.toFixed(
-        2
-      )}`;
+      return `Patron has outstanding fines of $${patron_info.balance.toFixed(2)}`;
     }
 
     // Check if patron has more than 20 books checked out
-    if (
-      patron_info.active_checkout_count !== undefined &&
-      patron_info.active_checkout_count >= 20
-    ) {
+    if (patron_info.active_checkout_count !== undefined && patron_info.active_checkout_count >= 20) {
       return `Patron has ${patron_info.active_checkout_count} books checked out (maximum is 20)`;
     }
 
@@ -285,9 +272,25 @@ export const RenewItem: FC = () => {
   // Screen 1: Search Screen
   if (current_screen === 'search') {
     return (
-      <PageContainer>
-        <PageTitle title={'Renew Item'} Icon_Component={Autorenew} />
-        <Paper elevation={3} sx={{ p: 2 }}>
+      <Container maxWidth="xl" sx={{ py: 4, pt: 10 }}>
+        <Typography
+          variant="h3"
+          component="h1"
+          gutterBottom
+          sx={{
+            fontWeight: 'bold',
+            mb: 4,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 2,
+            fontSize: { xs: '1.5rem', sm: '2rem', md: '2.5rem' },
+          }}
+        >
+          <Autorenew color="primary" fontSize="large" />
+          Renew
+        </Typography>
+
+        <Paper elevation={3} sx={{ p: 4, mt: 3 }}>
           <Typography variant="h6" gutterBottom>
             Enter Patron ID or Name
           </Typography>
@@ -329,7 +332,7 @@ export const RenewItem: FC = () => {
             Demo credentials: Use "1" or "John Doe" to test the system
           </Alert>
         </Paper>
-      </PageContainer>
+      </Container>
     );
   }
 
@@ -440,7 +443,7 @@ export const RenewItem: FC = () => {
                               verticalAlign: 'middle',
                             }}
                           />
-                          Due: {item.due_date}
+                          Due: {format_date(item.due_date)}
                         </Typography>
                         <Chip
                           label={item.renewal_status}
@@ -538,7 +541,7 @@ export const RenewItem: FC = () => {
                   Current Due Date
                 </Typography>
                 <Typography variant="body1">
-                  {selected_item.due_date}
+                  {format_date(selected_item.due_date)}
                 </Typography>
               </Box>
               <Box sx={{ flex: 1 }}>
@@ -638,19 +641,15 @@ export const RenewItem: FC = () => {
                   Previous Due Date
                 </Typography>
                 <Typography variant="body1">
-                  {selected_item.due_date}
+                  {format_date(selected_item.due_date)}
                 </Typography>
               </Box>
               <Box sx={{ flex: 1 }}>
                 <Typography variant="body2" color="text.secondary">
                   New Due Date
                 </Typography>
-                <Typography
-                  variant="body1"
-                  fontWeight={500}
-                  color="success.main"
-                >
-                  {renewal_result.new_due_date}
+                <Typography variant="body1" fontWeight={500} color="success.main">
+                  {format_date(renewal_result.new_due_date)}
                 </Typography>
               </Box>
             </Stack>
@@ -670,9 +669,7 @@ export const RenewItem: FC = () => {
                 </Typography>
                 <Chip
                   label={renewal_result.renewal_status}
-                  color={get_renewal_status_color(
-                    renewal_result.renewal_status
-                  )}
+                  color={get_renewal_status_color(renewal_result.renewal_status)}
                   size="small"
                 />
               </Box>
@@ -714,10 +711,18 @@ export const RenewItem: FC = () => {
         </Paper>
 
         <Stack direction="row" spacing={2}>
-          <Button variant="outlined" onClick={back_to_list} sx={{ flex: 1 }}>
+          <Button
+            variant="outlined"
+            onClick={back_to_list}
+            sx={{ flex: 1 }}
+          >
             Back to Items List
           </Button>
-          <Button variant="contained" onClick={new_search} sx={{ flex: 1 }}>
+          <Button
+            variant="contained"
+            onClick={new_search}
+            sx={{ flex: 1 }}
+          >
             New Renewal
           </Button>
         </Stack>

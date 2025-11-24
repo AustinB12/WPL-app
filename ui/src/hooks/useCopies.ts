@@ -2,7 +2,6 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect } from 'react';
 import { data_service } from '../services/dataService';
 import type { Library_Copy_Status, Item_Condition } from '../types';
-import type { Edit_Copy_Form_Data } from '../components/copies/EditCopyModal';
 
 export const useCopies = (
   branch_id: number,
@@ -31,17 +30,16 @@ export const useAllCopyIds = () => {
 };
 
 export const useCopyById = (
-  copy_id: number | null,
+  copy_id: number,
   options?: {
-    lazy?: boolean;
     onSuccess?: () => void;
     onError?: (error: Error) => void;
   }
 ) => {
   const query = useQuery({
     queryKey: ['item_copy', copy_id],
-    enabled: !!copy_id && !options?.lazy,
-    queryFn: () => data_service.get_copy_by_id(copy_id || null),
+    queryFn: () => data_service.get_copy_by_id(copy_id),
+    enabled: !!copy_id,
   });
 
   useEffect(() => {
@@ -63,13 +61,6 @@ export const useCopiesUnshelved = (branch_id: number) => {
   return useQuery({
     queryKey: ['unshelved_item_copies', branch_id],
     queryFn: () => data_service.get_unshelved_copies(branch_id),
-  });
-};
-
-export const useCopiesRecentlyReshelved = (branch_id: number) => {
-  return useQuery({
-    queryKey: ['recently_reshelved_item_copies', branch_id],
-    queryFn: () => data_service.get_copies_recently_reshelved(branch_id),
   });
 };
 
@@ -112,6 +103,7 @@ export const useReshelveCopies = (options?: {
     onSuccess: () => {
       query_client.invalidateQueries({ queryKey: ['all_item_copies'] });
       query_client.invalidateQueries({ queryKey: ['item_copies'] });
+      query_client.invalidateQueries({ queryKey: ['unshelved_item_copies'] });
       options?.onSuccess?.();
     },
     onError: options?.onError,
@@ -172,7 +164,13 @@ export const useUpdateCopy = (options?: {
       copy_data,
     }: {
       copy_id: number;
-      copy_data: Edit_Copy_Form_Data;
+      copy_data: {
+        condition?: string;
+        status?: string;
+        current_branch_id?: number;
+        cost?: number;
+        notes?: string;
+      };
     }) => data_service.update_copy(copy_id, copy_data),
     onSuccess: () => {
       // Invalidate all item_copies queries (with any branch_id, status, condition filters)

@@ -13,7 +13,6 @@ export const usePatronById = (patron_id: number) => {
   return useQuery({
     queryKey: ['patron', patron_id],
     queryFn: () => data_service.get_patron_by_id(patron_id),
-    enabled: patron_id > 0,
   });
 };
 

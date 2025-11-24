@@ -65,11 +65,7 @@ async function create_tables() {
         address TEXT,
         phone TEXT,
         is_main BOOLEAN NOT NULL DEFAULT 0,
-        created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-        cover_image TEXT,
-        primary_color TEXT,
-        secondary_color TEXT,
-        description TEXT
+        created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
       );
     `);
 
@@ -101,9 +97,7 @@ async function create_tables() {
         birthday DATE,
         card_expiration_date DATE NOT NULL DEFAULT CURRENT_DATE,
         is_active BOOLEAN NOT NULL DEFAULT 1,
-        image_url TEXT,
-        local_branch_id INTEGER DEFAULT 1,
-        FOREIGN KEY (local_branch_id) REFERENCES BRANCHES(id) ON DELETE SET NULL
+        image_url TEXT
       )
     `);
 
@@ -232,6 +226,7 @@ async function create_tables() {
         FOREIGN KEY (owning_branch_id) REFERENCES BRANCHES(id) ON DELETE SET NULL,
         FOREIGN KEY (current_branch_id) REFERENCES BRANCHES(id) ON DELETE SET NULL,
         FOREIGN KEY (checked_out_by) REFERENCES PATRONS(id) ON DELETE SET NULL
+        FOREIGN KEY (reserved_by) REFERENCES PATRONS(id) ON DELETE SET NULL
       );
     `);
 
@@ -254,55 +249,16 @@ async function create_tables() {
       )
     `);
 
-    // Create Loan Durations table
-    await db.exec(`
-      CREATE TABLE IF NOT EXISTS LOAN_DURATIONS (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT UNIQUE NOT NULL,
-        duration INTEGER NOT NULL
-      );`);
-
     // Migration: Add fulfillment_date column if it doesn't exist (for existing databases)
     try {
-      await db.exec(
-        'ALTER TABLE RESERVATIONS ADD COLUMN fulfillment_date DATETIME'
-      );
-      console.log(
-        pico.green('✓ Added fulfillment_date column to RESERVATIONS table')
-      );
+      await db.exec('ALTER TABLE RESERVATIONS ADD COLUMN fulfillment_date DATETIME');
+      console.log(pico.green('✓ Added fulfillment_date column to RESERVATIONS table'));
     } catch (error) {
       // Column already exists, which is fine
       if (error.message && error.message.includes('duplicate column name')) {
         // Silently ignore - column already exists
       } else {
-        console.warn(
-          pico.yellow(
-            '⚠ Could not add fulfillment_date column (may already exist):'
-          ),
-          error.message
-        );
-      }
-    }
-
-    // Migration: Add local_branch_id column to PATRONS if it doesn't exist (for existing databases)
-    try {
-      await db.exec(
-        'ALTER TABLE PATRONS ADD COLUMN local_branch_id INTEGER DEFAULT 1'
-      );
-      console.log(
-        pico.green('✓ Added local_branch_id column to PATRONS table')
-      );
-    } catch (error) {
-      // Column already exists, which is fine
-      if (error.message && error.message.includes('duplicate column name')) {
-        // Silently ignore - column already exists
-      } else {
-        console.warn(
-          pico.yellow(
-            '⚠ Could not add local_branch_id column (may already exist):'
-          ),
-          error.message
-        );
+        console.warn(pico.yellow('⚠ Could not add fulfillment_date column (may already exist):'), error.message);
       }
     }
 
@@ -553,23 +509,6 @@ async function get_by_id(table_name, id) {
 }
 
 /**
- * Generic function to get multiple records by their IDs
- * @param {string} table_name - Name of the database table
- * @param {Array<string|number>} ids - Array of IDs to retrieve
- * @returns {Promise<Array>} Array of record objects (empty array if none found)
- */
-async function get_by_ids(table_name, ids) {
-  if (!Array.isArray(ids) || ids.length === 0) {
-    return [];
-  }
-
-  const placeholders = ids.map(() => '?').join(', ');
-  const query = `SELECT * FROM ${table_name} WHERE id IN (${placeholders})`;
-  const results = await execute_query(query, ids);
-  return Array.isArray(results) ? results : [];
-}
-
-/**
  * Generic function to create a new record
  * @param {string} table_name - Name of the database table
  * @param {Object} data - Object containing the record data
@@ -773,7 +712,6 @@ export {
   execute_query,
   get_all,
   get_by_id,
-  get_by_ids,
   create_record,
   update_record,
   delete_record,

@@ -9,10 +9,6 @@ import {
   Grid,
   Switch,
   FormControlLabel,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
 } from '@mui/material';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -20,7 +16,6 @@ import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import dayjs, { Dayjs } from 'dayjs';
 import { Edit } from '@mui/icons-material';
 import type { Update_Patron_Data, Patron } from '../../types';
-import { useBranchesContext } from '../../hooks/useBranchHooks';
 
 interface Edit_Patron_Modal_Props {
   open: boolean;
@@ -37,7 +32,6 @@ export const EditPatronModal: FC<Edit_Patron_Modal_Props> = ({
   on_save,
   is_loading = false,
 }) => {
-  const { branches, loading: branches_loading } = useBranchesContext();
   const [form_data, set_form_data] = useState<Update_Patron_Data>({});
 
   // Initialize form data when patron changes
@@ -51,9 +45,8 @@ export const EditPatronModal: FC<Edit_Patron_Modal_Props> = ({
         birthday: patron.birthday ? patron.birthday : undefined,
         card_expiration_date: patron.card_expiration_date,
         image_url: patron.image_url || '',
-        balance: Number.isNaN(patron.balance) ? 0 : patron.balance,
+        balance: patron.balance,
         is_active: patron.is_active,
-        local_branch_id: patron.local_branch_id,
       });
     }
   }, [patron]);
@@ -79,16 +72,13 @@ export const EditPatronModal: FC<Edit_Patron_Modal_Props> = ({
       last_name: form_data.last_name,
       email: form_data.email || undefined,
       phone: form_data.phone || undefined,
-      birthday: form_data.birthday
-        ? new Date(form_data.birthday).toLocaleDateString()
-        : undefined,
+      birthday: form_data.birthday ? form_data.birthday : undefined,
       card_expiration_date: form_data.card_expiration_date
-        ? new Date(form_data.card_expiration_date).toLocaleDateString()
-        : new Date().toLocaleDateString(),
+        ? form_data.card_expiration_date
+        : new Date(),
       image_url: form_data.image_url || undefined,
       balance: form_data.balance !== undefined ? form_data.balance : undefined,
       is_active: form_data.is_active !== undefined ? form_data.is_active : true,
-      local_branch_id: form_data.local_branch_id,
     };
 
     on_save(updated_data);
@@ -148,31 +138,6 @@ export const EditPatronModal: FC<Edit_Patron_Modal_Props> = ({
             </Grid>
 
             <Grid size={{ xs: 12, sm: 6 }}>
-              <FormControl fullWidth disabled={is_loading || branches_loading}>
-                <InputLabel id="branch-select-label">Local Branch</InputLabel>
-                <Select
-                  labelId="branch-select-label"
-                  id="branch-select"
-                  value={form_data.local_branch_id || ''}
-                  label="Local Branch"
-                  onChange={(e) =>
-                    handle_input_change(
-                      'local_branch_id',
-                      e.target.value.toString()
-                    )
-                  }
-                >
-                  {branches?.map((branch) => (
-                    <MenuItem key={branch.id} value={branch.id}>
-                      {branch.branch_name}
-                      {branch.is_main ? ' (Main Branch)' : ''}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Grid>
-
-            <Grid size={{ xs: 12, sm: 6 }}>
               <DatePicker
                 label="Birthday"
                 value={dayjs(form_data.birthday)}
@@ -201,7 +166,7 @@ export const EditPatronModal: FC<Edit_Patron_Modal_Props> = ({
                 }}
               />
             </Grid>
-            <Grid size={{ xs: 12, sm: 6 }}>
+            <Grid size={{ xs: 12, sm: 5 }}>
               <TextField
                 label="Profile Image URL"
                 type="url"
@@ -217,7 +182,7 @@ export const EditPatronModal: FC<Edit_Patron_Modal_Props> = ({
               <TextField
                 label="Balance"
                 type="number"
-                value={form_data.balance}
+                value={form_data.balance === undefined ? 0 : form_data.balance}
                 onChange={(e) => handle_input_change('balance', e.target.value)}
                 fullWidth
                 disabled={is_loading}

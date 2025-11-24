@@ -79,42 +79,12 @@ const transaction_cols: GridColDef[] = [
       return value ? `$${Number(value).toFixed(2)}` : '$0.00';
     },
   },
-  {
-    field: 'owning_branch_name',
-    headerName: 'Owning Branch',
-    width: 200,
-    editable: false,
-  },
-  {
-    field: 'owning_branch_id',
-    headerName: 'Owning Branch ID',
-    width: 90,
-    editable: false,
-    type: 'number',
-  },
-  {
-    field: 'current_branch_id',
-    headerName: 'Current Branch ID',
-    width: 90,
-    editable: false,
-    type: 'number',
-  },
-  {
-    field: 'current_branch_name',
-    headerName: 'Current Location',
-    width: 200,
-    editable: false,
-    type: 'string',
-  },
-  { field: 'notes', headerName: 'Notes', width: 200 },
 ];
 
 export const TransactionsDataGrid = ({
   label = 'Transactions',
-  hidden_columns = [],
 }: {
   label?: string;
-  hidden_columns?: string[];
 }) => {
   const { data: transactions, isLoading: loading } = useTransactions();
 
@@ -124,12 +94,7 @@ export const TransactionsDataGrid = ({
       columns={transaction_cols}
       label={label}
       loading={loading}
-      hidden_columns={[
-        ...hidden_columns,
-        'id',
-        'current_branch_id',
-        'owning_branch_id',
-      ]}
+      hidden_columns={['id']}
     />
   );
 };

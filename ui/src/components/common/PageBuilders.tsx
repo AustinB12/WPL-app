@@ -2,16 +2,12 @@ import { Container, Typography, type SxProps, type Theme } from '@mui/material';
 import { type PropsWithChildren } from 'react';
 
 export const PageContainer = ({
-  width = 'lg',
   children,
   sx,
-}: PropsWithChildren<{
-  sx?: SxProps<Theme>;
-  width?: 'xl' | 'lg' | 'md' | 'sm';
-}>) => {
+}: PropsWithChildren<{ sx?: SxProps<Theme> }>) => {
   return (
     <Container
-      maxWidth={width}
+      maxWidth="xl"
       sx={{
         py: 3,
         height: 1,

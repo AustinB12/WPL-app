@@ -112,19 +112,17 @@ export interface Book_Form_Data {
 }
 
 export interface Patron {
+  active_checkout_count?: number; // Number of books currently checked out
   id: number;
   first_name: string;
   last_name: string;
   balance: number;
-  birthday?: string;
+  birthday?: Date;
   email?: string;
   phone?: string;
-  card_expiration_date: string;
+  card_expiration_date: Date;
   image_url?: string;
   is_active?: boolean;
-  local_branch_id: number;
-  active_checkouts?: number;
-  active_checkout_count?: number; // Number of books currently checked out
 }
 
 export type Update_Patron_Data = Partial<Omit<Patron, 'id'>>;
@@ -137,42 +135,7 @@ export interface Branch {
   address: string;
   phone: string;
   is_main: boolean;
-  cover_image?: string;
-  description?: string;
-  primary_color?: string;
-  secondary_color?: string;
 }
-
-export interface CheckInFormData {
-  copy_id: number | null;
-  new_condition?: Item_Condition;
-  new_location_id?: number;
-  notes?: string;
-}
-
-export type Checked_Out_Copy = {
-  transaction_id: number;
-  copy_id: number;
-  patron_id: number;
-  due_date: string;
-  checkout_date: string;
-  copy_status: string;
-  condition: string;
-  library_item_id: number;
-  owning_branch_id: number;
-  current_branch_id: number;
-  title: string;
-  item_type: string;
-  first_name: string;
-  last_name: string;
-  email: string;
-  is_overdue: number;
-  days_overdue: number;
-  copy_label: string;
-  copy_number: number;
-  total_copies: number;
-  patron_name: string;
-};
 
 export enum Library_Item_Type {
   Audiobook = 'AUDIOBOOK',
@@ -284,42 +247,16 @@ export interface Audiobook extends Library_Item, Book {
   duration_hours?: number;
 }
 
-export interface Item_Copy_Result extends Item_Copy {
-  title: string;
+export interface Item_Copy_Results extends Item_Copy {
+  library_item_title: string;
   item_type: Library_Item_Type;
   description: string;
   publication_year: number;
-  owning_branch_name: string;
-  current_branch_name: string;
-  owning_branch_id: number;
-  current_branch_id: number;
+  branch_name: string;
   patron_id: number;
   patron_first_name: string;
   patron_last_name: string;
-  copy_label: string;
-  copy_number: number;
-  total_copies: number;
-  transaction_time?: string;
-  due_date?: string;
 }
-
-interface Check_Out_Transaction extends Transaction {
-  is_overdue: boolean;
-  days_overdue: number;
-  fine_amount: number;
-}
-interface Check_Out_Copy extends Item_Copy {
-  copy_label: string;
-  copy_number: number;
-  total_copies: number;
-}
-
-export type Check_Out_Details = {
-  transaction: Check_Out_Transaction;
-  patron: Patron;
-  item_copy: Check_Out_Copy;
-  library_item: Library_Item;
-};
 
 export interface Checkin_Receipt {
   reservation_fulfilled?: {
@@ -352,65 +289,4 @@ export interface Checkin_Receipt {
   title: string;
   item_type: Library_Item_Type;
   branch_name: string;
-}
-
-export interface ReshelveResponse {
-  success: boolean;
-  message: string;
-  data: ReshelveResponseData;
-}
-
-export interface ReshelveResponseData {
-  copy_id: number;
-  status: 'Available' | 'Reserved';
-  branch_id: number;
-  reservation_promoted: boolean;
-}
-
-export interface ReshelveResult {
-  copy_id: number;
-  status: 'Available' | 'Reserved';
-  branch_id: number;
-  reservation_promoted: boolean;
-}
-
-export interface ReshelveError {
-  copy_id: number;
-  error: string;
-  message?: string;
-}
-
-export interface ReshelveAllResponse {
-  success: boolean;
-  message: string;
-  data: ReshelveAllResult;
-}
-
-export interface ReshelveAllResult {
-  total: number;
-  success: number;
-  errors: number;
-  reservations_promoted: number;
-  results: ReshelveResult[];
-  failed: ReshelveError[];
-}
-
-//! == SNACKBAR TYPES == //
-
-export interface Snackbar_Options {
-  message: string;
-  severity?: 'success' | 'error' | 'warning' | 'info';
-  variant?: 'filled' | 'outlined' | 'standard';
-  title?: string;
-  duration?: number;
-}
-
-export interface Snackbar_State extends Snackbar_Options {
-  open: boolean;
-}
-
-export interface Loan_Duration {
-  id: number;
-  name: Library_Item_Type | 'NEW_VIDEO';
-  duration: number;
 }

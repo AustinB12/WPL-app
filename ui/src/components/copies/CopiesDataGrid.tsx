@@ -4,64 +4,67 @@ import {
   type GridRowId,
   type GridRowParams,
 } from '@mui/x-data-grid';
-import { useState, useMemo } from 'react';
+import {
+  Alert,
+  Snackbar,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
+  Button,
+  TextField,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Grid,
+  Chip,
+} from '@mui/material';
+import { useState } from 'react';
 import ItemTypeChip from '../library_items/ItemTypeChip';
 import { ItemCopyStatusChip } from './ItemCopyStatusChip';
 import { ItemCopyConditionChip } from './ItemCopyConditionChip';
-import type { Item_Copy, Item_Copy_Result } from '../../types';
+import type {
+  Item_Copy,
+  Item_Condition,
+  Library_Copy_Status,
+} from '../../types';
 import { Delete, Edit } from '@mui/icons-material';
+import { get_condition_color } from '../../utils/colors';
 import {
   useBranchesContext,
   useSelectedBranch,
 } from '../../hooks/useBranchHooks';
 import { BaseDataGrid } from '../common/BaseDataGrid';
 import { useCopies, useDeleteCopy, useUpdateCopy } from '../../hooks/useCopies';
-import { EditCopyModal, type Edit_Copy_Form_Data } from './EditCopyModal';
-import { DeleteCopyModal } from './DeleteCopyModal';
-import { useSnackbar } from '../../hooks/useSnackbar';
 
 export const CopiesDataGrid = ({
   on_copy_selected,
   just_available = false,
-  hidden_columns = [
-    'created_at',
-    'updated_at',
-    'branch_id',
-    'description',
-    'publication_year',
-    'owning_branch_id',
-    'current_branch_id',
-  ],
-  filter,
 }: {
   on_copy_selected?: (copy_id: Item_Copy) => void;
   just_available?: boolean;
   hidden_columns?: string[];
-  filter?: string;
 }) => {
   const { branches } = useBranchesContext();
   const { selected_branch } = useSelectedBranch();
   const { data: copies, isLoading: loading } = useCopies(
     selected_branch?.id || 1
   );
-  const { show_snackbar } = useSnackbar();
+  const [snack, set_snack] = useState<boolean>(false);
+  const [snack_message, set_snack_message] = useState<string>('');
 
   const update_copy_mutation = useUpdateCopy({
     onSuccess: () => {
       set_edit_dialog_open(false);
       set_copy_to_edit(null);
-      show_snackbar({
-        message: 'Copy updated successfully!',
-        severity: 'success',
-      });
+      set_snack_message('Copy updated successfully!');
+      set_snack(true);
     },
     onError: (error) => {
       console.error('Failed to update copy:', error);
-      show_snackbar({
-        title: 'Failed to update copy',
-        message: error.message,
-        severity: 'error',
-      });
+      alert('Failed to update copy: ' + error.message);
     },
   });
 
@@ -69,19 +72,12 @@ export const CopiesDataGrid = ({
     onSuccess: () => {
       set_delete_dialog_open(false);
       set_copy_to_delete(null);
-      show_snackbar({
-        title: 'Success!',
-        message: 'Copy deleted successfully!',
-        severity: 'success',
-      });
+      set_snack_message('Copy deleted successfully!');
+      set_snack(true);
     },
     onError: (error) => {
       console.error('Failed to delete copy:', error);
-      show_snackbar({
-        title: 'Failed to delete copy',
-        message: error.message,
-        severity: 'error',
-      });
+      alert('Failed to delete copy: ' + error.message);
     },
   });
 
@@ -94,9 +90,40 @@ export const CopiesDataGrid = ({
 
   // Edit dialog state
   const [edit_dialog_open, set_edit_dialog_open] = useState(false);
-  const [copy_to_edit, set_copy_to_edit] = useState<Item_Copy_Result | null>(
-    null
-  );
+  const [copy_to_edit, set_copy_to_edit] = useState<Record<
+    string,
+    unknown
+  > | null>(null);
+  const [edit_form_data, set_edit_form_data] = useState<{
+    condition: Item_Condition;
+    status: Library_Copy_Status;
+    branch_id: number;
+    cost: number;
+    notes: string;
+  }>({
+    condition: 'Excellent',
+    status: 'Available',
+    branch_id: 1,
+    cost: 0,
+    notes: '',
+  });
+
+  const conditions: Item_Condition[] = [
+    'New',
+    'Excellent',
+    'Good',
+    'Fair',
+    'Poor',
+  ];
+  const statuses: Library_Copy_Status[] = [
+    'Available',
+    'Checked Out',
+    'Reserved',
+    'Processing',
+    'Unshelved',
+    'Damaged',
+    'Lost',
+  ];
 
   const columns: GridColDef[] = [
     {
@@ -150,17 +177,8 @@ export const CopiesDataGrid = ({
       ),
     },
     {
-      field: 'cost',
-      headerName: 'Price',
-      width: 100,
-      editable: false,
-      type: 'number',
-      valueFormatter: (value) =>
-        '$' + (value as number).toFixed(2).toString() || 'N/A',
-    },
-    {
-      field: 'owning_branch_name',
-      headerName: 'Owning Branch',
+      field: 'branch_name',
+      headerName: 'Belongs To',
       width: 250,
       editable: false,
     },
@@ -177,13 +195,6 @@ export const CopiesDataGrid = ({
       width: 90,
       editable: false,
       type: 'number',
-    },
-    {
-      field: 'current_branch_name',
-      headerName: 'Current Location',
-      width: 250,
-      editable: false,
-      type: 'string',
     },
     {
       field: 'actions',
@@ -214,20 +225,6 @@ export const CopiesDataGrid = ({
         />,
       ],
     },
-    {
-      field: 'updated_at',
-      headerName: 'Last Updated',
-      width: 180,
-      valueFormatter: (value) =>
-        value ? new Date(value).toLocaleString() : '-',
-    },
-    {
-      field: 'created_at',
-      headerName: 'Created At',
-      width: 180,
-      valueFormatter: (value) =>
-        value ? new Date(value).toLocaleString() : '-',
-    },
   ];
 
   const delete_copy = (id: GridRowId) => {
@@ -247,36 +244,58 @@ export const CopiesDataGrid = ({
   const edit_copy = (id: GridRowId) => {
     const copy = copies?.find((c) => c.id === id);
     if (copy) {
-      set_copy_to_edit(copy);
+      set_copy_to_edit(copy as unknown as Record<string, unknown>);
+      // Get branch_id from copy - prioritize current_branch_id (where copy currently is)
+      const branch_id =
+        copy.branch_id ||
+        (branches && branches.length > 0 ? branches[0].id : 1);
+      set_edit_form_data({
+        condition: copy.condition || 'Excellent',
+        status: copy.status,
+        branch_id:
+          branch_id || (branches && branches.length > 0 ? branches[0].id : 1),
+        cost: copy.cost || 0,
+        notes: copy.notes || '',
+      });
       set_edit_dialog_open(true);
     }
   };
 
-  const handle_save_copy = (copy_data: Edit_Copy_Form_Data) => {
-    if (copy_to_edit) {
+  const confirm_edit = () => {
+    if (copy_to_edit && edit_form_data.branch_id !== 0) {
       update_copy_mutation.mutate({
         copy_id: copy_to_edit.id as number,
-        copy_data,
+        copy_data: {
+          condition: edit_form_data.condition,
+          status: edit_form_data.status,
+          current_branch_id: Number(edit_form_data.branch_id),
+          cost: edit_form_data.cost,
+          notes: edit_form_data.notes,
+        },
       });
     }
   };
-
-  const filtered_copies = useMemo(() => {
-    if (!filter) return copies;
-    return copies?.filter((copy) =>
-      Object.values(copy).some((value) =>
-        String(value).toLowerCase().includes(filter.toLowerCase())
-      )
-    );
-  }, [copies, filter]);
   return (
     <>
       <BaseDataGrid
-        rows={filtered_copies}
+        onRowDoubleClick={(params) =>
+          params.row.status !== 'Available' && set_snack(true)
+        }
+        rows={copies}
         columns={columns}
         loading={loading}
-        hidden_columns={hidden_columns}
+        pageSizeOptions={[10, 25, 50]}
         initialState={{
+          columns: {
+            columnVisibilityModel: {
+              branch_id: false,
+              description: false,
+              publication_year: false,
+              owning_branch_id: false,
+              current_branch_id: false,
+            },
+          },
+          pagination: { paginationModel: { pageSize: 25 } },
           filter: {
             filterModel: {
               items: just_available
@@ -305,24 +324,228 @@ export const CopiesDataGrid = ({
           }
         }}
       />
-      {/* Delete Copy Modal */}
-      <DeleteCopyModal
-        open={delete_dialog_open}
-        copy={copy_to_delete}
-        on_close={() => set_delete_dialog_open(false)}
-        on_confirm={confirm_delete}
-        is_loading={delete_copy_mutation.isPending}
-      />
+      <Snackbar
+        open={snack}
+        autoHideDuration={6000}
+        onClose={() => {
+          set_snack(false);
+          set_snack_message('');
+        }}
+        anchorOrigin={{ horizontal: 'center', vertical: 'bottom' }}
+      >
+        <Alert
+          severity={snack_message.includes('successfully') ? 'success' : 'info'}
+        >
+          {snack_message ||
+            'Only copies of status "Available" can be selected.'}
+        </Alert>
+      </Snackbar>
 
-      {/* Edit Copy Modal */}
-      <EditCopyModal
+      {/* Delete Confirmation Dialog */}
+      <Dialog
+        open={delete_dialog_open}
+        onClose={() => set_delete_dialog_open(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>Delete Copy</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Are you sure you want to delete this copy? This action cannot be
+            undone.
+          </DialogContentText>
+          {copy_to_delete && (
+            <Grid container spacing={2} sx={{ mt: 2 }}>
+              <Grid size={{ xs: 6 }}>
+                <DialogContentText variant="body2" color="text.secondary">
+                  Copy ID:
+                </DialogContentText>
+                <DialogContentText variant="body1" fontWeight={500}>
+                  #{String(copy_to_delete.id)}
+                </DialogContentText>
+              </Grid>
+              <Grid size={{ xs: 6 }}>
+                <DialogContentText variant="body2" color="text.secondary">
+                  Title:
+                </DialogContentText>
+                <DialogContentText variant="body1" fontWeight={500}>
+                  {String(
+                    copy_to_delete.title ||
+                      copy_to_delete.library_item_title ||
+                      'N/A'
+                  )}
+                </DialogContentText>
+              </Grid>
+              <Grid size={{ xs: 6 }}>
+                <DialogContentText variant="body2" color="text.secondary">
+                  Status:
+                </DialogContentText>
+                <ItemCopyStatusChip
+                  status={copy_to_delete.status as Library_Copy_Status}
+                />
+              </Grid>
+              <Grid size={{ xs: 6 }}>
+                <DialogContentText variant="body2" color="text.secondary">
+                  Condition:
+                </DialogContentText>
+                <ItemCopyConditionChip
+                  condition={
+                    (copy_to_delete.condition as Item_Condition) || 'Good'
+                  }
+                />
+              </Grid>
+            </Grid>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => set_delete_dialog_open(false)}>Cancel</Button>
+          <Button onClick={confirm_delete} color="error" variant="contained">
+            Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Edit Copy Dialog */}
+      <Dialog
         open={edit_dialog_open}
-        copy={copy_to_edit}
-        branches={branches}
-        on_close={() => set_edit_dialog_open(false)}
-        on_save={handle_save_copy}
-        is_loading={update_copy_mutation.isPending}
-      />
+        onClose={() => set_edit_dialog_open(false)}
+        maxWidth="md"
+        fullWidth
+      >
+        <DialogTitle>Edit Copy #{String(copy_to_edit?.id || '')}</DialogTitle>
+        <DialogContent>
+          <Grid container spacing={2} sx={{ mt: 1 }}>
+            <Grid size={{ xs: 12 }}>
+              <DialogContentText variant="body2" color="text.secondary">
+                Title:{' '}
+                <strong>
+                  {String(
+                    copy_to_edit?.title ||
+                      copy_to_edit?.library_item_title ||
+                      'N/A'
+                  )}
+                </strong>
+              </DialogContentText>
+            </Grid>
+            <Grid size={{ xs: 12, sm: 6 }}>
+              <FormControl fullWidth>
+                <InputLabel id="edit-status-label">Status</InputLabel>
+                <Select
+                  labelId="edit-status-label"
+                  value={edit_form_data.status}
+                  label="Status"
+                  onChange={(e) =>
+                    set_edit_form_data({
+                      ...edit_form_data,
+                      status: e.target.value as Library_Copy_Status,
+                    })
+                  }
+                >
+                  {statuses.map((status) => (
+                    <MenuItem key={status} value={status}>
+                      <ItemCopyStatusChip status={status} />
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid size={{ xs: 12, sm: 6 }}>
+              <FormControl fullWidth>
+                <InputLabel id="edit-condition-label">Condition</InputLabel>
+                <Select
+                  labelId="edit-condition-label"
+                  value={edit_form_data.condition}
+                  label="Condition"
+                  onChange={(e) =>
+                    set_edit_form_data({
+                      ...edit_form_data,
+                      condition: e.target.value as Item_Condition,
+                    })
+                  }
+                >
+                  {conditions.map((condition) => (
+                    <MenuItem key={condition} value={condition}>
+                      <Chip
+                        label={condition}
+                        color={get_condition_color(condition)}
+                        variant="outlined"
+                        size="small"
+                      />
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid size={{ xs: 12, sm: 6 }}>
+              <FormControl fullWidth>
+                <InputLabel id="edit-branch-label">Current Branch</InputLabel>
+                <Select
+                  labelId="edit-branch-label"
+                  value={
+                    edit_form_data.branch_id === 0
+                      ? ''
+                      : String(edit_form_data.branch_id)
+                  }
+                  label="Current Branch"
+                  onChange={(e) =>
+                    set_edit_form_data({
+                      ...edit_form_data,
+                      branch_id:
+                        e.target.value === '' ? 0 : Number(e.target.value),
+                    })
+                  }
+                >
+                  {branches?.map((branch) => (
+                    <MenuItem key={branch.id} value={branch.id}>
+                      {branch.branch_name}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid size={{ xs: 12, sm: 6 }}>
+              <TextField
+                fullWidth
+                label="Cost"
+                type="number"
+                value={edit_form_data.cost}
+                onChange={(e) =>
+                  set_edit_form_data({
+                    ...edit_form_data,
+                    cost: Number(e.target.value),
+                  })
+                }
+                slotProps={{
+                  input: {
+                    startAdornment: '$',
+                  },
+                }}
+              />
+            </Grid>
+            <Grid size={{ xs: 12 }}>
+              <TextField
+                fullWidth
+                label="Notes"
+                multiline
+                rows={3}
+                value={edit_form_data.notes}
+                onChange={(e) =>
+                  set_edit_form_data({
+                    ...edit_form_data,
+                    notes: e.target.value,
+                  })
+                }
+              />
+            </Grid>
+          </Grid>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => set_edit_dialog_open(false)}>Cancel</Button>
+          <Button onClick={confirm_edit} variant="contained" color="primary">
+            Save Changes
+          </Button>
+        </DialogActions>
+      </Dialog>
     </>
   );
 };

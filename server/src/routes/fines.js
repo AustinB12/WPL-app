@@ -1,7 +1,6 @@
 import express from 'express';
 import { body, validationResult } from 'express-validator';
 import * as db from '../config/database.js';
-import { format_sql_datetime } from '../utils.js';
 
 var router = express.Router();
 
@@ -92,7 +91,7 @@ router.post(
         paid_date: null,
         payment_method: null,
         notes: req.body.notes || null,
-        created_at: format_sql_datetime(new Date()),
+        created_at: new Date().toISOString(),
       };
 
       await db.create_record('FINES', fine_data);
@@ -136,7 +135,7 @@ router.put('/:id/pay', async function (req, res) {
 
     var update_data = {
       is_paid: true,
-      paid_date: format_sql_datetime(new Date()),
+      paid_date: new Date().toISOString().split('T')[0],
       payment_method: req.body.payment_method || 'Cash',
     };
 

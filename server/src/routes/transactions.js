@@ -1,7 +1,6 @@
 import express from 'express';
 import { body, validationResult } from 'express-validator';
 import * as db from '../config/database.js';
-import { format_sql_datetime } from '../utils.js';
 
 const router = express.Router();
 
@@ -30,7 +29,6 @@ const handle_validation_errors = (req, res, next) => {
 
 // PUT /api/v1/reshelve - Mark item copies as reshelved
 router.put('/reshelve', async (req, res) => {
-  const now = format_sql_datetime(new Date());
   try {
     const { copy_ids } = req.body;
     if (!copy_ids || !Array.isArray(copy_ids)) {
@@ -54,8 +52,10 @@ router.put('/reshelve', async (req, res) => {
 
         await db.update_record('LIBRARY_ITEM_COPIES', item_copy.id, {
           status: 'Available',
-          updated_at: now,
+          updated_at: new Date().toISOString(),
         });
+
+        const now = new Date().toISOString();
 
         const reshelve_transaction_data = {
           copy_id: item_copy.id,
@@ -115,20 +115,16 @@ router.get('/', async (req, res) => {
         t.*,
         p.first_name,
         p.last_name,
-        li.title,
-        li.item_type,
+        ci.title,
+        ci.item_type,
         ic.library_item_id,
         ic.condition,
-        b.id as current_branch_id,
-        b.branch_name as current_branch_name,
-        bb.id as owning_branch_id,
-        bb.branch_name as owning_branch_name
+        b.branch_name
       FROM TRANSACTIONS t
       LEFT JOIN PATRONS p ON t.patron_id = p.id
       LEFT JOIN LIBRARY_ITEM_COPIES ic ON t.copy_id = ic.id
-      LEFT JOIN LIBRARY_ITEMS li ON ic.library_item_id = li.id
-      LEFT JOIN BRANCHES b ON ic.current_branch_id = b.id
-      LEFT JOIN BRANCHES bb ON ic.owning_branch_id = bb.id
+      LEFT JOIN LIBRARY_ITEMS ci ON ic.library_item_id = ci.id
+      LEFT JOIN BRANCHES b ON ic.owning_branch_id = b.id
       ${conditions}
       ORDER BY ${order_by || 't.created_at'} DESC
     `;
@@ -302,13 +298,19 @@ router.get('/checkin-lookup/:copy_id', async (req, res) => {
           copy_label: `Copy ${copy_number} of ${all_copies.length}`,
           copy_number,
           total_copies: all_copies.length,
-          ...copy,
+          status: copy.status,
+          condition: copy.condition,
         },
         patron: {
-          ...patron,
+          id: patron.id,
+          first_name: patron.first_name,
+          last_name: patron.last_name,
+          patron_name: `${patron.first_name} ${patron.last_name}`,
         },
         transaction: {
-          ...checkout_transaction,
+          id: checkout_transaction.id,
+          due_date: checkout_transaction.due_date,
+          checkout_date: checkout_transaction.checkout_date,
           is_overdue,
           days_overdue,
           fine_amount,
@@ -349,11 +351,11 @@ router.get('/checked-out', async (req, res) => {
         p.last_name,
         p.email,
         CASE 
-           WHEN t.due_date < DATETIME('now', 'localtime') THEN 1  
+          WHEN t.due_date < date('now') THEN 1 
           ELSE 0 
         END as is_overdue,
         CASE 
-          WHEN t.due_date > DATETIME('now', 'localtime') THEN 
+          WHEN t.due_date < date('now') THEN 
             CAST(julianday('now') - julianday(t.due_date) AS INTEGER)
           ELSE 0 
         END as days_overdue
@@ -373,60 +375,26 @@ router.get('/checked-out', async (req, res) => {
     const params = branch_id ? [branch_id, branch_id] : [];
     const results = await db.execute_query(query, params);
 
-    if (results.length === 0) {
-      return res.json({
-        success: true,
-        count: 0,
-        data: [],
-      });
-    }
+    // Add copy labels
+    const results_with_labels = await Promise.all(
+      results.map(async (item) => {
+        const all_copies = await db.execute_query(
+          'SELECT id FROM LIBRARY_ITEM_COPIES WHERE library_item_id = ? ORDER BY id',
+          [item.library_item_id]
+        );
+        const copy_index = all_copies.findIndex((c) => c.id === item.copy_id);
+        const copy_number = copy_index >= 0 ? copy_index + 1 : 1;
+        const copy_label = `Copy ${copy_number} of ${all_copies.length}`;
 
-    // Get unique library item IDs to fetch copy counts efficiently
-    const library_item_ids = [
-      ...new Set(results.map((r) => r.library_item_id)),
-    ];
-
-    // Fetch all copies for all library items in a single query
-    const copy_counts_query = `
-      SELECT 
-        library_item_id,
-        id as copy_id,
-        ROW_NUMBER() OVER (PARTITION BY library_item_id ORDER BY id) as copy_position,
-        COUNT(*) OVER (PARTITION BY library_item_id) as total_copies
-      FROM LIBRARY_ITEM_COPIES
-      WHERE library_item_id IN (${library_item_ids.map(() => '?').join(', ')})
-      ORDER BY library_item_id, id
-    `;
-
-    const copy_info = await db.execute_query(
-      copy_counts_query,
-      library_item_ids
+        return {
+          ...item,
+          copy_label,
+          copy_number,
+          total_copies: all_copies.length,
+          patron_name: `${item.first_name} ${item.last_name}`,
+        };
+      })
     );
-
-    // Create a lookup map for O(1) access
-    const copy_lookup = new Map();
-    copy_info.forEach((info) => {
-      copy_lookup.set(info.copy_id, {
-        copy_number: info.copy_position,
-        total_copies: info.total_copies,
-      });
-    });
-
-    // Add copy labels using the lookup map
-    const results_with_labels = results.map((item) => {
-      const copy_data = copy_lookup.get(item.copy_id) || {
-        copy_number: 1,
-        total_copies: 1,
-      };
-
-      return {
-        ...item,
-        copy_label: `Copy ${copy_data.copy_number} of ${copy_data.total_copies}`,
-        copy_number: copy_data.copy_number,
-        total_copies: copy_data.total_copies,
-        patron_name: `${item.first_name} ${item.last_name}`,
-      };
-    });
 
     res.json({
       success: true,
@@ -524,7 +492,6 @@ router.post(
   handle_validation_errors,
   async (req, res) => {
     try {
-      const now = format_sql_datetime(new Date());
       const { copy_id, patron_id, clear_fines = false } = req.body;
 
       // Process expired reservations before checkout
@@ -532,13 +499,13 @@ router.post(
       // For now, we'll inline the expiry check
       const expired_reservations = await db.execute_query(
         'SELECT * FROM RESERVATIONS WHERE status = "ready" AND expiry_date < ?',
-        [now]
+        [new Date().toISOString()]
       );
 
       for (const reservation of expired_reservations) {
         await db.update_record('RESERVATIONS', reservation.id, {
           status: 'expired',
-          updated_at: now,
+          updated_at: new Date().toISOString(),
         });
 
         const copies = await db.execute_query(
@@ -549,7 +516,7 @@ router.post(
         if (copies.length > 0) {
           await db.update_record('LIBRARY_ITEM_COPIES', copies[0].id, {
             status: 'returned',
-            updated_at: now,
+            updated_at: new Date().toISOString(),
           });
 
           const next_in_queue = await db.execute_query(
@@ -563,13 +530,13 @@ router.post(
 
             await db.update_record('RESERVATIONS', next_in_queue[0].id, {
               status: 'ready',
-              expiry_date: format_sql_datetime(new_expiry),
-              updated_at: now,
+              expiry_date: new_expiry.toISOString(),
+              updated_at: new Date().toISOString(),
             });
 
             await db.update_record('LIBRARY_ITEM_COPIES', copies[0].id, {
               status: 'Reserved',
-              updated_at: now,
+              updated_at: new Date().toISOString(),
             });
           }
         }
@@ -700,7 +667,7 @@ router.post(
       }
 
       // Check patron eligibility (per acceptance criteria)
-      const current_date = new Date();
+      const current_date = new Date().toISOString().split('T')[0];
 
       // 1. Check if patron's card is expired
       if (
@@ -768,14 +735,16 @@ router.post(
             : new Date(checkout_date.getTime() + 7 * 24 * 60 * 60 * 1000) // Movies: 1 week (7 days)
           : new Date(checkout_date.getTime() + 28 * 24 * 60 * 60 * 1000); // Books: 4 weeks (28 days)
 
+      const now = new Date().toISOString();
+
       // Create transaction
       const transaction_data = {
         copy_id,
         patron_id,
         location_id: item_copy.current_branch_id,
         transaction_type: 'checkout',
-        checkout_date: format_sql_datetime(checkout_date),
-        due_date: format_sql_datetime(calculated_due_date),
+        checkout_date: checkout_date.toISOString(),
+        due_date: calculated_due_date.toISOString(),
         status: 'Active',
         fine_amount: 0,
         created_at: now,
@@ -788,7 +757,7 @@ router.post(
       await db.update_record('LIBRARY_ITEM_COPIES', copy_id, {
         status: 'Checked Out',
         checked_out_by: patron_id,
-        due_date: format_sql_datetime(calculated_due_date),
+        due_date: calculated_due_date.toISOString(),
         updated_at: now,
       });
 
@@ -815,8 +784,8 @@ router.post(
           transaction_type: 'Reservation Fulfilled',
           status: 'Completed',
           notes: `Reservation #${reservation_to_fulfill.id} fulfilled via checkout`,
-          created_at: now,
-          updated_at: now,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
         });
 
         // Get reservation info for response
@@ -975,15 +944,16 @@ router.post(
           fine_amount = item_copy.cost;
         }
       }
-      const now = format_sql_datetime(new Date());
+      const now = new Date().toISOString();
 
       //!! == Execute all database operations in a transaction  == !!
-      await db.execute_transaction(async () => {
+      const checkin_trans_id = await db.execute_transaction(async () => {
         // Update checkout transaction
         await db.update_record('TRANSACTIONS', transaction.id, {
-          return_date: format_sql_datetime(return_date),
+          return_date: return_date.toISOString(),
           fine_amount,
           status: 'Completed',
+          notes: notes || null,
           updated_at: now,
         });
 
@@ -995,10 +965,9 @@ router.post(
           transaction_type: 'checkin',
           checkout_date: transaction.checkout_date,
           due_date: transaction.due_date,
-          return_date: format_sql_datetime(return_date),
+          return_date: return_date.toISOString(),
           status: 'Completed',
-          notes: notes || null,
-          fine_amount: fine_amount,
+          fine_amount,
           created_at: now,
           updated_at: now,
         };
@@ -1026,53 +995,56 @@ router.post(
           );
         }
 
-        // Check if there are any "waiting" reservations for this library item
-        const waiting_reservations = await db.execute_query(
-          'SELECT * FROM RESERVATIONS WHERE library_item_id = ? AND status = "waiting" ORDER BY queue_position ASC LIMIT 1',
-          [item_copy.library_item_id]
-        );
+        return trans_id;
+      });
 
-        let reservation_fulfilled = null;
-        let final_status = 'Returned (not yet available)';
+      // Check if there are any "waiting" reservations for this library item
+      const waiting_reservations = await db.execute_query(
+        'SELECT * FROM RESERVATIONS WHERE library_item_id = ? AND status = "waiting" ORDER BY queue_position ASC LIMIT 1',
+        [item_copy.library_item_id]
+      );
 
-        // If there's a waiting reservation, fulfill it automatically
-        if (waiting_reservations.length > 0) {
-          const next_reservation = waiting_reservations[0];
+      let reservation_fulfilled = null;
+      let final_status = 'Returned (not yet available)';
 
-          // Update reservation to "ready" status
-          const expiry_date = new Date();
-          expiry_date.setDate(expiry_date.getDate() + 5); // 5 days from now
+      // If there's a waiting reservation, fulfill it automatically
+      if (waiting_reservations.length > 0) {
+        const next_reservation = waiting_reservations[0];
 
-          await db.update_record('RESERVATIONS', next_reservation.id, {
-            status: 'ready',
-            expiry_date: format_sql_datetime(expiry_date),
-            updated_at: now,
-          });
+        // Update reservation to "ready" status
+        const expiry_date = new Date();
+        expiry_date.setDate(expiry_date.getDate() + 5); // 5 days from now
 
-          // Update queue positions for remaining reservations
-          await db.execute_query(
-            'UPDATE RESERVATIONS SET queue_position = queue_position - 1 WHERE library_item_id = ? AND queue_position > ? AND status = "waiting"',
-            [item_copy.library_item_id, next_reservation.queue_position]
-          );
-
-          // Mark the copy as "Reserved" (ready for the reserved patron to pick up)
-          final_status = 'Reserved';
-          reservation_fulfilled = {
-            reservation_id: next_reservation.id,
-            patron_id: next_reservation.patron_id,
-            queue_position: next_reservation.queue_position,
-          };
-        }
-
-        // Update item copy - set status based on whether there's a reservation
-        // (other fields already updated in transaction block above)
-        await db.update_record('LIBRARY_ITEM_COPIES', copy_id, {
-          status: final_status,
+        await db.update_record('RESERVATIONS', next_reservation.id, {
+          status: 'ready',
+          expiry_date: expiry_date.toISOString(),
           updated_at: now,
         });
 
-        // Get enriched data for response (patron, item, branch info)
-        const enriched_query = `
+        // Update queue positions for remaining reservations
+        await db.execute_query(
+          'UPDATE RESERVATIONS SET queue_position = queue_position - 1 WHERE library_item_id = ? AND queue_position > ? AND status = "waiting"',
+          [item_copy.library_item_id, next_reservation.queue_position]
+        );
+
+        // Mark the copy as "Reserved" (ready for the reserved patron to pick up)
+        final_status = 'Reserved';
+        reservation_fulfilled = {
+          reservation_id: next_reservation.id,
+          patron_id: next_reservation.patron_id,
+          queue_position: next_reservation.queue_position,
+        };
+      }
+
+      // Update item copy - set status based on whether there's a reservation
+      // (other fields already updated in transaction block above)
+      await db.update_record('LIBRARY_ITEM_COPIES', copy_id, {
+        status: final_status,
+        updated_at: new Date().toISOString(),
+      });
+
+      // Get enriched data for response (patron, item, branch info)
+      const enriched_query = `
         SELECT 
           t.id,
           t.copy_id,
@@ -1096,53 +1068,49 @@ router.post(
         LEFT JOIN BRANCHES b ON ic.current_branch_id = b.id
         WHERE t.id = ?
       `;
-        const enriched_results = await db.execute_query(enriched_query, [
-          trans_id,
-        ]);
-        const enriched_transaction = enriched_results[0] || {};
+      const enriched_results = await db.execute_query(enriched_query, [
+        checkin_trans_id,
+      ]);
+      const enriched_transaction = enriched_results[0] || {};
 
-        // Get reserved patron info if reservation was fulfilled
-        let reserved_patron_info = null;
-        if (reservation_fulfilled) {
-          const reserved_patron = await db.get_by_id(
-            'PATRONS',
-            reservation_fulfilled.patron_id
-          );
-          if (reserved_patron) {
-            reserved_patron_info = {
-              id: reserved_patron.id,
-              name: `${reserved_patron.first_name} ${reserved_patron.last_name}`,
-              email: reserved_patron.email,
-            };
-          }
-        }
-
-        // Get updated item copy for response
-        const updated_item_copy = await db.get_by_id(
-          'LIBRARY_ITEM_COPIES',
-          copy_id
+      // Get reserved patron info if reservation was fulfilled
+      let reserved_patron_info = null;
+      if (reservation_fulfilled) {
+        const reserved_patron = await db.get_by_id(
+          'PATRONS',
+          reservation_fulfilled.patron_id
         );
+        if (reserved_patron) {
+          reserved_patron_info = {
+            id: reserved_patron.id,
+            name: `${reserved_patron.first_name} ${reserved_patron.last_name}`,
+            email: reserved_patron.email,
+          };
+        }
+      }
 
-        res.json({
-          success: true,
-          message: reservation_fulfilled
-            ? 'Item checked in successfully and reserved for patron'
-            : 'Item checked in successfully',
-          data: {
-            ...enriched_transaction,
-            id: trans_id,
-            transaction_id: trans_id,
-            fine_amount,
-            days_overdue,
-            updated_item_copy: updated_item_copy || null,
-            reservation_fulfilled: reservation_fulfilled
-              ? {
-                  ...reservation_fulfilled,
-                  patron: reserved_patron_info,
-                }
-              : null,
-          },
-        });
+      // Get updated item copy for response
+      const updated_item_copy = await db.get_by_id('LIBRARY_ITEM_COPIES', copy_id);
+
+      res.json({
+        success: true,
+        message: reservation_fulfilled
+          ? 'Item checked in successfully and reserved for patron'
+          : 'Item checked in successfully',
+        data: {
+          ...enriched_transaction,
+          id: checkin_trans_id,
+          transaction_id: checkin_trans_id,
+          fine_amount,
+          days_overdue,
+          updated_item_copy: updated_item_copy || null,
+          reservation_fulfilled: reservation_fulfilled
+            ? {
+                ...reservation_fulfilled,
+                patron: reserved_patron_info,
+              }
+            : null,
+        },
       });
     } catch (error) {
       res.status(500).json({
@@ -1218,7 +1186,7 @@ router.put('/:id/renew', async (req, res) => {
     }
 
     // Check if patron's card is expired
-    const now = format_sql_datetime(new Date());
+    const current_date = new Date().toISOString().split('T')[0];
     if (patron.card_expiration_date < current_date) {
       return res.status(400).json({
         error: "Patron's card is expired",
@@ -1272,9 +1240,9 @@ router.put('/:id/renew', async (req, res) => {
       }
     }
 
-    const new_due_date = format_sql_datetime(
-      new Date(current_date_obj.getTime() + days_to_add * 24 * 60 * 60 * 1000)
-    );
+    const new_due_date = new Date(
+      current_date_obj.getTime() + days_to_add * 24 * 60 * 60 * 1000
+    ).toISOString();
 
     // Update renewal status
     let new_renewal_status = 'Renewed Once';
@@ -1286,10 +1254,11 @@ router.put('/:id/renew', async (req, res) => {
     await db.update_record('TRANSACTIONS', req.params.id, {
       due_date: new_due_date,
       renewal_status: new_renewal_status,
-      updated_at: now,
+      updated_at: new Date().toISOString(),
     });
 
     // Create a new transaction record for the renewal
+    const now = new Date().toISOString();
     const renewal_transaction = {
       copy_id: transaction.copy_id,
       patron_id: transaction.patron_id,
@@ -1441,8 +1410,6 @@ router.post(
     try {
       const { copy_id, branch_id } = req.body;
 
-      const now = format_sql_datetime(new Date());
-
       // Get item copy
       const item_copy = await db.get_by_id('LIBRARY_ITEM_COPIES', copy_id);
       if (!item_copy) {
@@ -1477,8 +1444,8 @@ router.post(
 
         await db.update_record('RESERVATIONS', next_reservation.id, {
           status: 'ready',
-          expiry_date: format_sql_datetime(new_expiry),
-          updated_at: now,
+          expiry_date: new_expiry.toISOString(),
+          updated_at: new Date().toISOString(),
         });
 
         // Set copy to Reserved for the patron
@@ -1486,24 +1453,13 @@ router.post(
         promotion_message = ' and reservation promoted to ready for pickup';
       }
 
-      const was_reshelved = final_status === 'Available';
-
-      await db.create_record('TRANSACTIONS', {
-        copy_id,
-        patron_id: was_reshelved ? null : waiting_reservations[0].patron_id,
-        transaction_type: was_reshelved ? 'Reshelve' : 'Reservation Promotion',
-        status: was_reshelved ? 'Completed' : 'Pending',
-        created_at: now,
-        updated_at: now,
-      });
-
       // Update item copy status
       await db.update_record('LIBRARY_ITEM_COPIES', copy_id, {
         status: final_status,
         current_branch_id: branch_id || item_copy.owning_branch_id,
         checked_out_by: null,
         due_date: null,
-        updated_at: now,
+        updated_at: new Date(),
       });
 
       res.json({
@@ -1519,151 +1475,6 @@ router.post(
     } catch (error) {
       res.status(500).json({
         error: 'Failed to reshelve item copy',
-        message: error.message,
-      });
-    }
-  }
-);
-
-// POST /api/v1/transactions/reshelve-all - Mark multiple items as available (bulk reshelve process)
-router.post(
-  '/reshelve-all',
-  [
-    body('copy_ids')
-      .isArray({ min: 1 })
-      .withMessage('copy_ids must be a non-empty array'),
-    body('copy_ids.*')
-      .isNumeric()
-      .withMessage('Each copy_id must be a valid number'),
-  ],
-  handle_validation_errors,
-  async (req, res) => {
-    try {
-      const { copy_ids, branch_id } = req.body;
-
-      const now = format_sql_datetime(new Date());
-
-      const results = [];
-      const errors = [];
-      let reservations_promoted = 0;
-
-      // Get all item copies at once for efficiency
-      const item_copies = await db.get_by_ids('LIBRARY_ITEM_COPIES', copy_ids);
-      const item_copies_map = new Map(item_copies.map((ic) => [ic.id, ic]));
-
-      await db.execute_transaction(async () => {
-        for (const copy_id of copy_ids) {
-          try {
-            // Get item copy from our fetched data
-            const item_copy = item_copies_map.get(copy_id);
-            if (!item_copy) {
-              errors.push({
-                copy_id,
-                error: 'Item copy not found',
-              });
-              continue;
-            }
-
-            // Verify the item is in the correct status for reshelving
-            const status_upper = (item_copy.status || '').trim().toUpperCase();
-            if (status_upper !== 'RETURNED (NOT YET AVAILABLE)') {
-              errors.push({
-                copy_id,
-                error: 'Item cannot be reshelved',
-                message: `Item status must be "Returned (not yet available)" to reshelve. Current status: ${item_copy.status || 'null'}`,
-              });
-              continue;
-            }
-
-            // Check if there are "waiting" reservations for this item
-            const waiting_reservations = await db.execute_query(
-              'SELECT * FROM RESERVATIONS WHERE library_item_id = ? AND status = "waiting" ORDER BY queue_position LIMIT 1',
-              [item_copy.library_item_id]
-            );
-
-            let final_status = 'Available';
-            let reservation_promoted = false;
-
-            if (waiting_reservations.length > 0) {
-              // Promote first waiting reservation to "ready"
-              const next_reservation = waiting_reservations[0];
-              const new_expiry = new Date();
-              new_expiry.setDate(new_expiry.getDate() + 5);
-
-              await db.update_record('RESERVATIONS', next_reservation.id, {
-                status: 'ready',
-                expiry_date: format_sql_datetime(new_expiry),
-                updated_at: now,
-              });
-
-              // Set copy to Reserved for the patron
-              final_status = 'Reserved';
-              reservation_promoted = true;
-              reservations_promoted++;
-            }
-
-            // Update item copy status
-            await db.update_record('LIBRARY_ITEM_COPIES', copy_id, {
-              status: final_status,
-              current_branch_id: branch_id || item_copy.owning_branch_id,
-              checked_out_by: null,
-              due_date: null,
-              updated_at: now,
-            });
-
-            const was_reshelved = final_status === 'Available';
-
-            await db.create_record('TRANSACTIONS', {
-              copy_id,
-              patron_id: was_reshelved
-                ? null
-                : waiting_reservations[0].patron_id,
-              transaction_type: was_reshelved
-                ? 'Reshelve'
-                : 'Reservation Promotion',
-              status: was_reshelved ? 'Completed' : 'Pending',
-              created_at: now,
-              updated_at: now,
-            });
-
-            results.push({
-              copy_id,
-              status: final_status,
-              branch_id: branch_id || item_copy.owning_branch_id,
-              reservation_promoted,
-            });
-          } catch (error) {
-            errors.push({
-              copy_id,
-              error: 'Failed to reshelve item',
-              message: error.message,
-            });
-          }
-        }
-      });
-
-      const success_count = results.length;
-      const error_count = errors.length;
-      const total_count = copy_ids.length;
-
-      res.json({
-        success: error_count === 0,
-        message:
-          error_count === 0
-            ? `Successfully reshelved ${success_count} item${success_count !== 1 ? 's' : ''}${reservations_promoted > 0 ? ` (${reservations_promoted} reservation${reservations_promoted !== 1 ? 's' : ''} promoted)` : ''}`
-            : `Reshelved ${success_count} of ${total_count} items with ${error_count} error${error_count !== 1 ? 's' : ''}`,
-        data: {
-          total: total_count,
-          success: success_count,
-          errors: error_count,
-          reservations_promoted,
-          results,
-          failed: errors,
-        },
-      });
-    } catch (error) {
-      res.status(500).json({
-        error: 'Failed to reshelve item copies',
         message: error.message,
       });
     }
@@ -1698,7 +1509,7 @@ router.post(
 
       // Check if there's an active reservation for this item
       const active_reservation = await db.execute_query(
-        'SELECT id FROM RESERVATIONS WHERE library_item_id = ? AND status IN ("ready", "waiting") ORDER BY queue_position LIMIT 1',
+        'SELECT * FROM RESERVATIONS WHERE library_item_id = ? AND status IN ("ready", "waiting") ORDER BY queue_position LIMIT 1',
         [item_copy.library_item_id]
       );
 
@@ -1710,32 +1521,10 @@ router.post(
         });
       }
 
-      // Find the most recent reshelve transaction
-      const transaction_results = await db.execute_query(
-        `SELECT id FROM TRANSACTIONS 
-         WHERE copy_id = ? AND UPPER(transaction_type) IN ('RESHELVE', 'RESERVATION PROMOTION') 
-         ORDER BY created_at DESC LIMIT 1`,
-        [copy_id]
-      );
-
-      if (transaction_results.length === 0) {
-        return res.status(404).json({
-          error: 'No reshelve transaction found to undo',
-        });
-      }
-
-      const transaction_id = transaction_results[0].id;
-
-      // Wrap both operations in a transaction for atomicity
-      await db.execute_transaction(async () => {
-        // Update status back to "Returned (not yet available)"
-        await db.update_record('LIBRARY_ITEM_COPIES', copy_id, {
-          status: 'Returned (not yet available)',
-          updated_at: format_sql_datetime(new Date()),
-        });
-
-        // Delete the reshelve transaction
-        await db.delete_record('TRANSACTIONS', transaction_id);
+      // Update status back to "Returned (not yet available)"
+      await db.update_record('LIBRARY_ITEM_COPIES', copy_id, {
+        status: 'Returned (not yet available)',
+        updated_at: new Date().toISOString(),
       });
 
       res.json({

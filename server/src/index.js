@@ -15,7 +15,6 @@ import videos_routes from './routes/videos.js';
 import books_routes from './routes/books.js';
 import audiobooks_routes from './routes/audiobooks.js';
 import reports_routes from './routes/reports.js';
-import settings_routes from './routes/settings.js';
 
 // Load environment variables
 dotenv.config();
@@ -72,7 +71,6 @@ app.get('/', function (_req, res) {
       reservations: api_base + '/reservations',
       branches: api_base + '/branches',
       item_copies: api_base + '/item-copies',
-      settings: api_base + '/settings',
     },
   });
 });
@@ -81,7 +79,7 @@ app.get('/health', function (req, res) {
   res.status(200).json({
     status: 'healthy',
     uptime: process.uptime(),
-    timestamp: new Date().toLocaleString(),
+    timestamp: new Date().toISOString(),
   });
 });
 
@@ -96,7 +94,6 @@ app.use(api_base + '/videos', videos_routes);
 app.use(api_base + '/books', books_routes);
 app.use(api_base + '/audiobooks', audiobooks_routes);
 app.use(api_base + '/reports', reports_routes);
-app.use(api_base + '/settings', settings_routes);
 
 // 404 handler (must come after routes)
 app.use(function (req, res) {

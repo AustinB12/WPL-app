@@ -17,6 +17,7 @@ import {
   CardContent,
   CardActionArea,
   Chip,
+  Snackbar,
   Tooltip,
 } from '@mui/material';
 import {
@@ -24,17 +25,15 @@ import {
   BookmarkAdd as ReserveIcon,
   BookmarkAdd,
 } from '@mui/icons-material';
-// import { ReservationDialog } from '../components/reservations/ReservationDialog';
+import { ReservationDialog } from '../components/reservations/ReservationDialog';
 import {
   Library_Item_Type,
   type Library_Copy_Status,
   type Item_Condition,
 } from '../types';
 import { PageContainer } from '../components/common/PageBuilders';
-// import { useSnackbar } from '../hooks/useSnackbar';
 
-const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api/v1';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api/v1';
 
 interface ItemCopyWithDetails {
   id: number;
@@ -99,14 +98,14 @@ export function ReservePage() {
   );
   const [loading, setLoading] = useState(false);
 
-  // const { show_snackbar } = useSnackbar();
-
   // Reservation dialog state
-  // const [reservationDialogOpen, setReservationDialogOpen] = useState(false);
-  // const [reservationItem, setReservationItem] = useState<{
-  //   id: number;
-  //   name: string;
-  // } | null>(null);
+  const [reservationDialogOpen, setReservationDialogOpen] = useState(false);
+  const [reservationItem, setReservationItem] = useState<{
+    id: number;
+    name: string;
+  } | null>(null);
+  const [successMessage, setSuccessMessage] = useState('');
+  const [showSuccessSnackbar, setShowSuccessSnackbar] = useState(false);
 
   const validateSearchCriteria = (): boolean => {
     if (!searchInput.trim()) {
@@ -156,7 +155,7 @@ export function ReservePage() {
         const items = itemsData.data || itemsData;
 
         // Filter items by partial name match (case insensitive)
-        const matchingItems = items.filter((item: { title: string }) =>
+        const matchingItems = items.filter((item: any) =>
           item.title.toLowerCase().includes(searchInput.toLowerCase())
         );
 
@@ -175,7 +174,6 @@ export function ReservePage() {
             const copiesData = await copiesResponse.json();
             const itemCopies = copiesData.data || copiesData;
             copies.push(
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
               ...itemCopies.map((copy: any) => ({
                 ...copy,
                 title: item.title,
@@ -211,7 +209,7 @@ export function ReservePage() {
                 const transactionsData = await transactionsResponse.json();
                 const transactions = transactionsData.data || transactionsData;
                 const transaction = transactions.find(
-                  (t: { copy_id: number; transaction_type: string }) =>
+                  (t: any) =>
                     t.copy_id === copy.id && t.transaction_type === 'checkout'
                 );
 
@@ -281,8 +279,8 @@ export function ReservePage() {
         setSearchResults(results);
         setStep('Search Results');
       }
-    } catch {
-      setValidationError('Failed to search items');
+    } catch (error: any) {
+      setValidationError(error.message || 'Failed to search items');
     } finally {
       setLoading(false);
     }
@@ -313,7 +311,7 @@ export function ReservePage() {
 
       const totalCopies = copies.length;
       const availableCopies = copies.filter(
-        (c: { status: string }) => c.status === 'Available'
+        (c: any) => c.status === 'Available'
       ).length;
 
       setSelectedItem({
@@ -322,8 +320,8 @@ export function ReservePage() {
         totalCopies,
       });
       setStep('Full Item Record');
-    } catch {
-      setValidationError('Failed to load full item details');
+    } catch (error: any) {
+      setValidationError(error.message || 'Failed to load full item details');
     } finally {
       setLoading(false);
     }
@@ -338,24 +336,21 @@ export function ReservePage() {
   };
 
   // Step 1: Click reserve button - opens dialog with item pre-filled
-  // const handleReserveClick = (itemId: number, itemName: string) => {
-  // setReservationItem({ id: itemId, name: itemName });
-  // setReservationDialogOpen(true);
-  // };
+  const handleReserveClick = (itemId: number, itemName: string) => {
+    setReservationItem({ id: itemId, name: itemName });
+    setReservationDialogOpen(true);
+  };
 
-  // const handleReservationSuccess = async (message: string) => {
-  //   show_snackbar({
-  //     message,
-  //     severity: 'success',
-  //     title: 'Success!',
-  //   });
-  //   setReservationDialogOpen(false);
+  const handleReservationSuccess = async (message: string, _onWaitlist: boolean) => {
+    setSuccessMessage(message);
+    setShowSuccessSnackbar(true);
+    setReservationDialogOpen(false);
 
-  //   // Refresh search results to get updated copy statuses
-  //   if (searchInput) {
-  //     await executeItemSearch();
-  //   }
-  // };
+    // Refresh search results to get updated copy statuses
+    if (searchInput) {
+      await executeItemSearch();
+    }
+  };
 
   const renderContent = () => {
     if (step === 'Display search options') {
@@ -376,7 +371,7 @@ export function ReservePage() {
               }}
             >
               <BookmarkAdd color="primary" fontSize="large" />
-              Reserve {searchInput}
+              Reserve
             </Typography>
 
             <FormControl component="fieldset" sx={{ mb: 3 }}>
@@ -556,9 +551,9 @@ export function ReservePage() {
                                 }
                                 size="small"
                                 startIcon={<ReserveIcon />}
-                                // onClick={() =>
-                                //   handleReserveClick(item.itemId, item.itemName)
-                                // }
+                                onClick={() =>
+                                  handleReserveClick(item.itemId, item.itemName)
+                                }
                                 color={
                                   item.status === 'Reserved'
                                     ? 'success'
@@ -591,14 +586,14 @@ export function ReservePage() {
     if (step === 'Full Item Record' && selectedItem) {
       return (
         <PageContainer>
-          <Paper
-            elevation={3}
-            sx={{
+          <Paper 
+            elevation={3} 
+            sx={{ 
               p: 4,
               maxHeight: 'calc(100vh - 200px)',
               display: 'flex',
               flexDirection: 'column',
-              overflow: 'hidden',
+              overflow: 'hidden'
             }}
           >
             <Typography
@@ -613,144 +608,142 @@ export function ReservePage() {
 
             <Box sx={{ overflowY: 'auto', flex: 1, pr: 1 }}>
               <Stack spacing={3}>
-                <Box>
-                  <Typography
-                    variant="subtitle2"
-                    color="text.secondary"
-                    gutterBottom
-                  >
-                    ITEM NAME
-                  </Typography>
-                  <Typography variant="h6" fontWeight="600">
-                    {selectedItem.itemName}
-                  </Typography>
-                </Box>
+              <Box>
+                <Typography
+                  variant="subtitle2"
+                  color="text.secondary"
+                  gutterBottom
+                >
+                  ITEM NAME
+                </Typography>
+                <Typography variant="h6" fontWeight="600">
+                  {selectedItem.itemName}
+                </Typography>
+              </Box>
 
-                <Divider />
+              <Divider />
 
-                <Box>
-                  <Typography
-                    variant="subtitle2"
-                    color="text.secondary"
-                    gutterBottom
-                  >
-                    ITEM ID (Title ID)
-                  </Typography>
-                  <Typography variant="body1" fontWeight="bold">
-                    {selectedItem.itemId}
-                  </Typography>
-                  <Typography
-                    variant="caption"
-                    color="text.secondary"
-                    sx={{ display: 'block', mt: 0.5 }}
-                  >
-                    ⓘ Reservations use this Item ID (the title), not a specific
-                    copy
-                  </Typography>
-                </Box>
+              <Box>
+                <Typography
+                  variant="subtitle2"
+                  color="text.secondary"
+                  gutterBottom
+                >
+                  ITEM ID (Title ID)
+                </Typography>
+                <Typography variant="body1" fontWeight="bold">
+                  {selectedItem.itemId}
+                </Typography>
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  sx={{ display: 'block', mt: 0.5 }}
+                >
+                  ⓘ Reservations use this Item ID (the title), not a specific
+                  copy
+                </Typography>
+              </Box>
 
-                <Divider />
+              <Divider />
 
-                <Box>
-                  <Typography
-                    variant="subtitle2"
-                    color="text.secondary"
-                    gutterBottom
-                  >
-                    COPY ID (Specific Copy)
-                  </Typography>
-                  <Typography variant="body1">
-                    {selectedItem.copyLabel}
-                  </Typography>
-                  <Typography
-                    variant="caption"
-                    color="text.secondary"
-                    sx={{ display: 'block', mt: 0.5 }}
-                  >
-                    ⓘ This is the specific physical copy shown in search results
-                  </Typography>
-                </Box>
+              <Box>
+                <Typography
+                  variant="subtitle2"
+                  color="text.secondary"
+                  gutterBottom
+                >
+                  COPY ID (Specific Copy)
+                </Typography>
+                <Typography variant="body1">
+                  {selectedItem.copyLabel}
+                </Typography>
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  sx={{ display: 'block', mt: 0.5 }}
+                >
+                  ⓘ This is the specific physical copy shown in search results
+                </Typography>
+              </Box>
 
-                <Divider />
+              <Divider />
 
-                <Box>
-                  <Typography
-                    variant="subtitle2"
-                    color="text.secondary"
-                    gutterBottom
-                  >
-                    TYPE
-                  </Typography>
-                  <Typography variant="body1">
-                    {selectedItem.itemType}
-                  </Typography>
-                </Box>
+              <Box>
+                <Typography
+                  variant="subtitle2"
+                  color="text.secondary"
+                  gutterBottom
+                >
+                  TYPE
+                </Typography>
+                <Typography variant="body1">{selectedItem.itemType}</Typography>
+              </Box>
 
-                <Divider />
+              <Divider />
 
-                <Box>
-                  <Typography
-                    variant="subtitle2"
-                    color="text.secondary"
-                    gutterBottom
-                  >
-                    STATUS INFORMATION
-                  </Typography>
-                  <Stack spacing={1}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <Typography variant="body2" color="text.secondary">
-                        Current Status:
-                      </Typography>
-                      <Chip
-                        label={selectedItem.status}
-                        size="small"
-                        color={
-                          selectedItem.status === 'Available'
-                            ? 'success'
-                            : selectedItem.status === 'Checked Out'
-                            ? 'warning'
-                            : 'default'
-                        }
-                      />
-                    </Box>
-                    {selectedItem.dueDate && (
+              <Box>
+                <Typography
+                  variant="subtitle2"
+                  color="text.secondary"
+                  gutterBottom
+                >
+                  STATUS INFORMATION
+                </Typography>
+                <Stack spacing={1}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Typography variant="body2" color="text.secondary">
+                      Current Status:
+                    </Typography>
+                    <Chip
+                      label={selectedItem.status}
+                      size="small"
+                      color={
+                        selectedItem.status === 'Available'
+                          ? 'success'
+                          : selectedItem.status === 'Checked Out'
+                          ? 'warning'
+                          : 'default'
+                      }
+                    />
+                  </Box>
+                  {selectedItem.dueDate && (
+                    <Typography variant="body2">
+                      Due Date:{' '}
+                      {new Date(selectedItem.dueDate).toLocaleDateString()}
+                    </Typography>
+                  )}
+                  {selectedItem.patronName && selectedItem.patronId && (
+                    <>
                       <Typography variant="body2">
-                        Due Date:{' '}
-                        {new Date(selectedItem.dueDate).toLocaleDateString()}
+                        Current Patron: {selectedItem.patronName}
                       </Typography>
-                    )}
-                    {selectedItem.patronName && selectedItem.patronId && (
-                      <>
-                        <Typography variant="body2">
-                          Current Patron: {selectedItem.patronName}
-                        </Typography>
-                        <Typography variant="body2" sx={{ ml: 15 }}>
-                          Patron ID: {selectedItem.patronId}
-                        </Typography>
-                      </>
-                    )}
-                    {selectedItem.condition && (
-                      <Typography variant="body2">
-                        Condition: {selectedItem.condition}
+                      <Typography variant="body2" sx={{ ml: 15 }}>
+                        Patron ID: {selectedItem.patronId}
                       </Typography>
-                    )}
-                  </Stack>
-                </Box>
+                    </>
+                  )}
+                  {selectedItem.condition && (
+                    <Typography variant="body2">
+                      Condition: {selectedItem.condition}
+                    </Typography>
+                  )}
+                </Stack>
+              </Box>
 
-                <Divider />
+              <Divider />
 
-                <Box>
-                  <Typography
-                    variant="subtitle2"
-                    color="text.secondary"
-                    gutterBottom
-                  >
-                    COPY AVAILABILITY
-                  </Typography>
-                  <Typography variant="body1">
-                    Available copies: {selectedItem.availableCopies}
-                  </Typography>
-                </Box>
+              <Box>
+                <Typography
+                  variant="subtitle2"
+                  color="text.secondary"
+                  gutterBottom
+                >
+                  COPY AVAILABILITY
+                </Typography>
+                <Typography variant="body1">
+                  Available copies: {selectedItem.availableCopies}
+                </Typography>
+              </Box>
               </Stack>
             </Box>
 
@@ -761,9 +754,9 @@ export function ReservePage() {
               <Button
                 variant="contained"
                 startIcon={<ReserveIcon />}
-                // onClick={() =>
-                //   handleReserveClick(selectedItem.itemId, selectedItem.itemName)
-                // }
+                onClick={() =>
+                  handleReserveClick(selectedItem.itemId, selectedItem.itemName)
+                }
                 color={
                   selectedItem.status === 'Reserved' ? 'success' : 'primary'
                 }
@@ -787,7 +780,7 @@ export function ReservePage() {
       {renderContent()}
 
       {/* Reservation Dialog */}
-      {/* {reservationItem && (
+      {reservationItem && (
         <ReservationDialog
           open={reservationDialogOpen}
           onClose={() => {
@@ -798,7 +791,23 @@ export function ReservePage() {
           initialItemName={reservationItem?.name}
           onSuccess={handleReservationSuccess}
         />
-      )} */}
+      )}
+
+      {/* Success Snackbar */}
+      <Snackbar
+        open={showSuccessSnackbar}
+        autoHideDuration={6000}
+        onClose={() => setShowSuccessSnackbar(false)}
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+      >
+        <Alert
+          onClose={() => setShowSuccessSnackbar(false)}
+          severity="success"
+          sx={{ width: '100%' }}
+        >
+          {successMessage}
+        </Alert>
+      </Snackbar>
     </>
   );
 }

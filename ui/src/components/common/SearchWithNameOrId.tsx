@@ -1,23 +1,19 @@
 import { Search } from '@mui/icons-material';
-import { InputAdornment, TextField, type SxProps } from '@mui/material';
+import { InputAdornment, TextField } from '@mui/material';
 
 interface Search_Props {
   search_term: string;
   set_search_term: React.Dispatch<React.SetStateAction<string>>;
-  full_width?: boolean;
-  sx?: SxProps;
 }
 
 export const SearchWithNameOrId = ({
   search_term,
   set_search_term,
-  full_width = true,
-  sx,
 }: Search_Props) => {
   return (
     <TextField
-      sx={{ bgcolor: 'background.paper', borderRadius: 3, ...sx }}
-      fullWidth={full_width}
+      sx={{ bgcolor: 'background.paper', borderRadius: 3 }}
+      fullWidth
       placeholder="Search by name or ID"
       value={search_term}
       onChange={(e) => set_search_term(e.target.value)}

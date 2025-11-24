@@ -1,7 +1,6 @@
 import express from 'express';
 import { body, validationResult } from 'express-validator';
 import * as db from '../config/database.js';
-import { format_sql_datetime } from '../utils.js';
 
 const router = express.Router();
 
@@ -85,14 +84,11 @@ router.get('/', async (req, res) => {
         ci.item_type,
         ci.publication_year,
         ci.description,
-        b.id as current_branch_id,
-        b.branch_name as current_branch_name,
-        bb.id as owning_branch_id,
-        bb.branch_name as owning_branch_name
+        b.branch_name,
+        b.id as current_branch_id
       FROM LIBRARY_ITEM_COPIES lic
       JOIN LIBRARY_ITEMS ci ON lic.library_item_id = ci.id
       LEFT JOIN BRANCHES b ON lic.current_branch_id = b.id
-      LEFT JOIN BRANCHES bb ON lic.owning_branch_id = bb.id
       ${conditions}
       ORDER BY ci.title, lic.id
     `;
@@ -191,7 +187,7 @@ router.get('/unshelved', async (req, res) => {
       query = `
         SELECT 
           ic.*,
-          li.title,
+          li.title as library_item_title,
           li.item_type,
           li.description,
           li.publication_year,
@@ -207,7 +203,7 @@ router.get('/unshelved', async (req, res) => {
       query = `
       SELECT 
           ic.*,
-          li.title,
+          li.title as library_item_title,
         li.item_type,
           li.description,
           li.publication_year,
@@ -236,60 +232,11 @@ router.get('/unshelved', async (req, res) => {
   }
 });
 
-router.get('/recently-reshelved', async (req, res) => {
-  try {
-    const { branch_id } = req.query;
-
-    if (!branch_id) {
-      return res.status(400).json({
-        error: 'Branch ID is required',
-      });
-    }
-
-    const query = `
-      SELECT 
-        ic.*,
-        li.title,
-        li.item_type,
-        li.description,
-        li.publication_year,
-        b.branch_name,
-        p.id AS patron_id,
-        p.first_name AS patron_first_name,
-        p.last_name AS patron_last_name,
-        t.created_at AS transaction_time
-      FROM LIBRARY_ITEM_COPIES ic
-        JOIN LIBRARY_ITEMS li ON ic.library_item_id = li.id
-        JOIN BRANCHES b ON ic.current_branch_id = b.id
-        LEFT JOIN PATRONS p ON ic.checked_out_by = p.id
-        JOIN TRANSACTIONS t ON ic.id = t.copy_id
-      WHERE 
-        ic.status IN ('Available', 'Reserved') 
-        AND UPPER(t.transaction_type) IN ('RESHELVE', 'RESERVATION PROMOTION')
-        AND DATETIME(t.created_at) >= DATETIME('now', 'localtime', '-10 minutes')
-        AND ic.current_branch_id = ?
-      ORDER BY t.created_at DESC, b.branch_name, ic.status;
-    `;
-    const item_copies = await db.execute_query(query, [branch_id]);
-
-    res.json({
-      success: true,
-      count: item_copies.length,
-      data: item_copies,
-    });
-  } catch (error) {
-    res.status(500).json({
-      error: 'Failed to fetch recently reshelved item copies',
-      message: error.message,
-    });
-  }
-});
-
 // GET /api/v1/item-copies/item/:library_item_id - Get all copies of a library item
 router.get('/item/:library_item_id', async (req, res) => {
   try {
     const { branch_id } = req.query;
-
+    
     // First, get the first person in the reservation queue for this library item
     const first_reservation_query = `
       SELECT 
@@ -311,51 +258,34 @@ router.get('/item/:library_item_id', async (req, res) => {
       req.params.library_item_id,
     ]);
 
-    const reservation_info =
-      first_reservation.length > 0
-        ? {
-            id: first_reservation[0].reservation_id,
-            patron_id: first_reservation[0].patron_id,
-            patron_name:
-              first_reservation[0].first_name && first_reservation[0].last_name
-                ? `${first_reservation[0].first_name} ${first_reservation[0].last_name}`
-                : null,
-            status: first_reservation[0].reservation_status,
-            queue_position: first_reservation[0].queue_position,
-          }
-        : null;
+    const reservation_info = first_reservation.length > 0 ? {
+      id: first_reservation[0].reservation_id,
+      patron_id: first_reservation[0].patron_id,
+      patron_name: first_reservation[0].first_name && first_reservation[0].last_name
+        ? `${first_reservation[0].first_name} ${first_reservation[0].last_name}`
+        : null,
+      status: first_reservation[0].reservation_status,
+      queue_position: first_reservation[0].queue_position,
+    } : null;
 
     // Get all copies for this library item, optionally filtered by branch
-    const query = `
+    let query = `
       SELECT 
         ic.*,
-        li.title,
-        li.item_type,
-        li.description,
-        li.publication_year,
-        b.id as current_branch_id,
-        b.branch_name as current_branch_name,
-        bb.id as owning_branch_id,
-        bb.branch_name as owning_branch_name,
-        p.id AS patron_id,
-        p.first_name AS patron_first_name,
-        p.last_name AS patron_last_name
+        b.branch_name
       FROM LIBRARY_ITEM_COPIES ic
-        JOIN LIBRARY_ITEMS li ON ic.library_item_id = li.id
-        LEFT JOIN BRANCHES b ON ic.current_branch_id = b.id
-      LEFT JOIN BRANCHES bb ON ic.owning_branch_id = bb.id
-        LEFT JOIN PATRONS p ON ic.checked_out_by = p.id
-      WHERE 
-        ic.library_item_id = ?
-        ${branch_id ? 'AND ic.current_branch_id = ?' : ''}
-      ORDER BY ic.id, ic.status;
+      LEFT JOIN BRANCHES b ON ic.current_branch_id = b.id
+      WHERE ic.library_item_id = ?
     `;
     let params = [req.params.library_item_id];
-
+    
     // Filter by current_branch_id if branch_id is provided
     if (branch_id) {
+      query += ` AND ic.current_branch_id = ?`;
       params.push(branch_id);
     }
+    
+    query += ` ORDER BY b.branch_name, ic.status`;
 
     const item_copies = await db.execute_query(query, params);
 
@@ -390,15 +320,10 @@ router.get('/:id', async (req, res) => {
         lic.*,
         li.title,
         li.item_type,
-        li.description,
-        li.publication_year,
-        b.branch_name AS owning_branch_name,
-        cb.branch_name AS current_branch_name,
-        COUNT(*) OVER() AS total_copies_count
+        b.branch_name
       FROM LIBRARY_ITEM_COPIES lic
       JOIN LIBRARY_ITEMS li ON lic.library_item_id = li.id
       JOIN BRANCHES b ON lic.owning_branch_id = b.id
-      JOIN BRANCHES cb ON lic.current_branch_id = cb.id
       WHERE lic.id = ?
     `;
 
@@ -465,16 +390,14 @@ router.post(
         });
       }
 
-      const now = format_sql_datetime(new Date());
-
       const item_copy_data = {
         condition: 'Good',
         status: 'Available',
         owning_branch_id: req.body.owning_branch_id, // Default location to branch
         current_branch_id: req.body.owning_branch_id,
         ...req.body,
-        created_at: now,
-        updated_at: now,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
       };
 
       await db.create_record('LIBRARY_ITEM_COPIES', item_copy_data);
@@ -552,7 +475,7 @@ router.put(
 
       const update_data = {
         ...req.body,
-        updated_at: format_sql_datetime(new Date()),
+        updated_at: new Date(),
       };
 
       const updated = await db.update_record(

@@ -47,12 +47,9 @@ router.get('/', async (req, res) => {
     const patrons = await db.execute_query(
       `SELECT
         p.*,
-        b.id as local_branch_id,
-        b.branch_name as local_branch_name,
         COALESCE(COUNT(CASE WHEN t.status = 'Active' THEN 1 END), 0) as active_checkouts
       FROM PATRONS p
       LEFT JOIN TRANSACTIONS t ON p.id = t.patron_id
-      JOIN BRANCHES b ON p.local_branch_id = b.id
       ${conditions}
       GROUP BY p.id
       ORDER BY p.id`,
@@ -180,22 +177,7 @@ router.get('/search-for-renewal', async (req, res) => {
 // GET /api/v1/patrons/:id - Get single patron
 router.get('/:id', async (req, res) => {
   try {
-    const patron = await db
-      .execute_query(
-        `SELECT
-        p.*,
-        b.id as local_branch_id,
-        b.branch_name as local_branch_name,
-        COALESCE(COUNT(CASE WHEN t.status = 'Active' THEN 1 END), 0) as active_checkouts
-      FROM PATRONS p
-      LEFT JOIN TRANSACTIONS t ON p.id = t.patron_id
-      JOIN BRANCHES b ON p.local_branch_id = b.id
-      WHERE p.id = ?
-      GROUP BY p.id
-      ORDER BY p.id`,
-        [req.params.id]
-      )
-      .then((results) => results[0]);
+    const patron = await db.get_by_id('PATRONS', req.params.id);
 
     if (!patron) {
       return res.status(404).json({
@@ -208,7 +190,7 @@ router.get('/:id', async (req, res) => {
       'SELECT COUNT(*) as count FROM TRANSACTIONS WHERE patron_id = ? AND status = "Active" AND transaction_type = "checkout"',
       [req.params.id]
     );
-
+    
     const patron_with_checkouts = {
       ...patron,
       active_checkout_count: active_checkout_count[0]?.count || 0,
@@ -297,7 +279,7 @@ router.post(
         ...req.body,
         balance: req.body.balance || 0.0,
         is_active: true,
-        created_at: new Date().toLocaleString(),
+        created_at: new Date(),
       };
 
       const patron_id = await db.create_record('PATRONS', patron_data);
@@ -317,38 +299,44 @@ router.post(
 );
 
 // PUT /api/v1/patrons/:id - Update patron
-router.put('/:id', async (req, res) => {
-  try {
-    const existing_patron = await db.get_by_id('PATRONS', req.params.id);
+router.put(
+  '/:id',
+  validate_patron,
+  handle_validation_errors,
+  async (req, res) => {
+    try {
+      const existing_patron = await db.get_by_id('PATRONS', req.params.id);
 
-    if (!existing_patron) {
-      return res.status(404).json({
-        error: 'Patron not found',
-      });
-    }
+      if (!existing_patron) {
+        return res.status(404).json({
+          error: 'Patron not found',
+        });
+      }
 
-    const updated = await db.update_record('PATRONS', req.params.id, req.body);
+      const updated = await db.update_record(
+        'PATRONS',
+        req.params.id,
+        req.body
+      );
 
-    if (updated) {
-      // Fetch and return the updated patron data
-      const updated_patron = await db.get_by_id('PATRONS', req.params.id);
-      res.json({
-        success: true,
-        data: updated_patron,
-        message: 'Patron updated successfully',
-      });
-    } else {
+      if (updated) {
+        res.json({
+          success: true,
+          message: 'Patron updated successfully',
+        });
+      } else {
+        res.status(500).json({
+          error: 'Failed to update patron',
+        });
+      }
+    } catch (error) {
       res.status(500).json({
         error: 'Failed to update patron',
+        message: error.message,
       });
     }
-  } catch (error) {
-    res.status(500).json({
-      error: 'Failed to update patron',
-      message: error.message,
-    });
   }
-});
+);
 
 // DELETE /api/v1/patrons/:id - Delete patron
 router.delete('/:id', async (req, res) => {

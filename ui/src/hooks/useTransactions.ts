@@ -87,11 +87,3 @@ export const useCheckedOutItems = (branch_id?: number) => {
     refetchInterval: 30000, // Refetch every 30 seconds
   });
 };
-
-export const useCheckOutDetails = (copy_id: number | null) => {
-  return useQuery({
-    queryKey: ['transactions', 'checkout-details', copy_id],
-    queryFn: () => data_service.get_check_out_details(copy_id),
-    enabled: false,
-  });
-};
