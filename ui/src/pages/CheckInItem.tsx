@@ -92,13 +92,12 @@ export const CheckInItem: FC = () => {
     isLoading: loading_details,
     refetch: fetch_item_details,
   } = useCopyById(item_id_input ? parseInt(item_id_input) : null, {
-    lazy: true, // Only fetch when explicitly called via refetch
+    lazy: true,
   });
 
   const { data: check_out_details, refetch: fetch_checkout_details } =
     useCheckOutDetails(
-      item_id_input.length > 0 ? parseInt(item_id_input) : null,
-      { lazy: true } // Only fetch when explicitly called via refetch
+      item_id_input.length > 0 ? parseInt(item_id_input) : null
     );
 
   // Update condition when copy data is fetched
@@ -294,9 +293,12 @@ export const CheckInItem: FC = () => {
 
   const handle_checked_out_item_selected = (copy_id: number) => {
     set_item_id_input(copy_id.toString());
+  };
+
+  useEffect(() => {
     fetch_item_details();
     fetch_checkout_details();
-  };
+  }, [fetch_checkout_details, fetch_item_details, item_id_input]);
 
   return (
     <LocalizationProvider dateAdapter={AdapterDateFns}>

@@ -39,14 +39,19 @@ export const Patrons = () => {
   };
 
   return (
-    <PageContainer>
+    <PageContainer width="xl">
       <PageTitle title="Patrons" Icon_Component={Groups2} sx={{ mb: 0 }} />
       <Stack sx={{ flex: 1, overflow: 'hidden' }}>
         {xsUp ? (
           <PatronsDataGrid
             check_card_and_balance={false}
             just_active={false}
-            hidden_columns={['patron_name', 'phone', 'birthday']}
+            hidden_columns={[
+              'patron_name',
+              'phone',
+              'birthday',
+              'local_branch_id',
+            ]}
           />
         ) : (
           <PatronsList />

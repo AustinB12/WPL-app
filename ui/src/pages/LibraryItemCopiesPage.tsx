@@ -16,7 +16,7 @@ function LibraryItemCopiesPageContent({ children }: PropsWithChildren) {
     set_dialog_open(true);
   };
   return (
-    <PageContainer>
+    <PageContainer width="xl">
       <PageTitle title="Library Item Copies" Icon_Component={TableRows} />
       <Box
         sx={{

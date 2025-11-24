@@ -21,7 +21,6 @@ import {
   CalendarToday,
   Autorenew,
 } from '@mui/icons-material';
-import { format_date } from '../utils/dateUtils';
 import { PageContainer, PageTitle } from '../components/common/PageBuilders';
 
 const API_BASE_URL =
@@ -441,7 +440,7 @@ export const RenewItem: FC = () => {
                               verticalAlign: 'middle',
                             }}
                           />
-                          Due: {format_date(item.due_date)}
+                          Due: {item.due_date}
                         </Typography>
                         <Chip
                           label={item.renewal_status}
@@ -539,7 +538,7 @@ export const RenewItem: FC = () => {
                   Current Due Date
                 </Typography>
                 <Typography variant="body1">
-                  {format_date(selected_item.due_date)}
+                  {selected_item.due_date}
                 </Typography>
               </Box>
               <Box sx={{ flex: 1 }}>
@@ -639,7 +638,7 @@ export const RenewItem: FC = () => {
                   Previous Due Date
                 </Typography>
                 <Typography variant="body1">
-                  {format_date(selected_item.due_date)}
+                  {selected_item.due_date}
                 </Typography>
               </Box>
               <Box sx={{ flex: 1 }}>
@@ -651,7 +650,7 @@ export const RenewItem: FC = () => {
                   fontWeight={500}
                   color="success.main"
                 >
-                  {format_date(renewal_result.new_due_date)}
+                  {renewal_result.new_due_date}
                 </Typography>
               </Box>
             </Stack>

@@ -112,18 +112,19 @@ export interface Book_Form_Data {
 }
 
 export interface Patron {
-  active_checkout_count?: number; // Number of books currently checked out
   id: number;
   first_name: string;
   last_name: string;
   balance: number;
-  birthday?: Date;
+  birthday?: string;
   email?: string;
   phone?: string;
-  card_expiration_date: Date;
+  card_expiration_date: string;
   image_url?: string;
   is_active?: boolean;
+  local_branch_id: number;
   active_checkouts?: number;
+  active_checkout_count?: number; // Number of books currently checked out
 }
 
 export type Update_Patron_Data = Partial<Omit<Patron, 'id'>>;
@@ -136,6 +137,10 @@ export interface Branch {
   address: string;
   phone: string;
   is_main: boolean;
+  cover_image?: string;
+  description?: string;
+  primary_color?: string;
+  secondary_color?: string;
 }
 
 export interface CheckInFormData {

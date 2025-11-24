@@ -88,15 +88,10 @@ export const useCheckedOutItems = (branch_id?: number) => {
   });
 };
 
-export const useCheckOutDetails = (
-  copy_id: number | null,
-  options?: {
-    lazy?: boolean;
-  }
-) => {
+export const useCheckOutDetails = (copy_id: number | null) => {
   return useQuery({
     queryKey: ['transactions', 'checkout-details', copy_id],
     queryFn: () => data_service.get_check_out_details(copy_id),
-    enabled: copy_id !== null && !options?.lazy,
+    enabled: false,
   });
 };

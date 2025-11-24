@@ -1,9 +1,42 @@
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { data_service } from '../services/dataService';
+import type { Branch } from '../types';
 
 export const useBranches = () => {
   return useQuery({
     queryKey: ['branches'],
     queryFn: () => data_service.get_all_branches(),
+  });
+};
+
+export const useBranchById = (branch_id: number) => {
+  return useQuery({
+    queryKey: ['branch', branch_id],
+    queryFn: () => data_service.get_branch_by_id(branch_id),
+    enabled: branch_id !== null,
+  });
+};
+
+export const useUpdateBranch = (options?: {
+  onSuccess?: () => void;
+  onError?: (error: Error) => void;
+}) => {
+  const query_client = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      branch_id,
+      branch_data,
+    }: {
+      branch_id: number;
+      branch_data: Partial<Branch>;
+    }) => data_service.update_branch(branch_id, branch_data),
+    onSuccess: (_data, variables) => {
+      query_client.invalidateQueries({
+        queryKey: ['branch', variables.branch_id],
+      });
+      query_client.invalidateQueries({ queryKey: ['branch'] });
+      options?.onSuccess?.();
+    },
+    onError: options?.onError,
   });
 };

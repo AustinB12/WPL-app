@@ -65,7 +65,11 @@ async function create_tables() {
         address TEXT,
         phone TEXT,
         is_main BOOLEAN NOT NULL DEFAULT 0,
-        created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+        created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        cover_image TEXT,
+        primary_color TEXT,
+        secondary_color TEXT,
+        description TEXT
       );
     `);
 
@@ -97,7 +101,9 @@ async function create_tables() {
         birthday DATE,
         card_expiration_date DATE NOT NULL DEFAULT CURRENT_DATE,
         is_active BOOLEAN NOT NULL DEFAULT 1,
-        image_url TEXT
+        image_url TEXT,
+        local_branch_id INTEGER DEFAULT 1,
+        FOREIGN KEY (local_branch_id) REFERENCES BRANCHES(id) ON DELETE SET NULL
       )
     `);
 
@@ -226,7 +232,6 @@ async function create_tables() {
         FOREIGN KEY (owning_branch_id) REFERENCES BRANCHES(id) ON DELETE SET NULL,
         FOREIGN KEY (current_branch_id) REFERENCES BRANCHES(id) ON DELETE SET NULL,
         FOREIGN KEY (checked_out_by) REFERENCES PATRONS(id) ON DELETE SET NULL
-        FOREIGN KEY (reserved_by) REFERENCES PATRONS(id) ON DELETE SET NULL
       );
     `);
 
@@ -273,6 +278,28 @@ async function create_tables() {
         console.warn(
           pico.yellow(
             '⚠ Could not add fulfillment_date column (may already exist):'
+          ),
+          error.message
+        );
+      }
+    }
+
+    // Migration: Add local_branch_id column to PATRONS if it doesn't exist (for existing databases)
+    try {
+      await db.exec(
+        'ALTER TABLE PATRONS ADD COLUMN local_branch_id INTEGER DEFAULT 1'
+      );
+      console.log(
+        pico.green('✓ Added local_branch_id column to PATRONS table')
+      );
+    } catch (error) {
+      // Column already exists, which is fine
+      if (error.message && error.message.includes('duplicate column name')) {
+        // Silently ignore - column already exists
+      } else {
+        console.warn(
+          pico.yellow(
+            '⚠ Could not add local_branch_id column (may already exist):'
           ),
           error.message
         );

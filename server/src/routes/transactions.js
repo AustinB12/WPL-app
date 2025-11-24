@@ -984,7 +984,6 @@ router.post(
           return_date: format_sql_datetime(return_date),
           fine_amount,
           status: 'Completed',
-          notes: notes || null,
           updated_at: now,
         });
 
@@ -998,7 +997,8 @@ router.post(
           due_date: transaction.due_date,
           return_date: format_sql_datetime(return_date),
           status: 'Completed',
-          fine_amount,
+          notes: notes || null,
+          fine_amount: fine_amount,
           created_at: now,
           updated_at: now,
         };

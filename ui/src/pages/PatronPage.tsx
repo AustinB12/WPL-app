@@ -34,7 +34,6 @@ import {
   useUpdatePatron,
 } from '../hooks/usePatrons';
 import { useGetTransactionsByPatronId } from '../hooks/useTransactions';
-import { format_date } from '../utils/dateUtils';
 import type { Update_Patron_Data } from '../types';
 import { TransactionStatusChip } from '../components/transactions/TransactionStatusChip';
 import { BaseDataGrid } from '../components/common/BaseDataGrid';
@@ -425,7 +424,7 @@ export const PatronPage = () => {
                   {patron?.birthday && (
                     <InfoItem
                       icon={<Cake sx={{ color: 'text.secondary' }} />}
-                      value={format_date(patron.birthday)}
+                      value={patron.birthday}
                       label="Birthday"
                     />
                   )}

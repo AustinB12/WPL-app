@@ -477,11 +477,11 @@ export const data_service = {
   async get_all_copies_by_item_id(
     item_id: number,
     branch_id?: number
-  ): Promise<Item_Copy[]> {
+  ): Promise<Item_Copy_Result[]> {
     const url = branch_id
       ? `/item-copies/item/${item_id}?branch_id=${branch_id}`
       : `/item-copies/item/${item_id}`;
-    return await api_request<Item_Copy[]>(url);
+    return await api_request<Item_Copy_Result[]>(url);
   },
 
   async get_all_copy_ids(): Promise<number[]> {
@@ -590,6 +590,27 @@ export const data_service = {
 
   async get_all_branches(): Promise<Branch[]> {
     return await api_request<Branch[]>('/branches');
+  },
+
+  async get_branch_by_id(branch_id: number): Promise<Branch | null> {
+    try {
+      return await api_request<Branch>(`/branches/${branch_id}`);
+    } catch (error: Error | unknown) {
+      if (error instanceof Error && error.message.includes('404')) {
+        return null;
+      }
+      throw error;
+    }
+  },
+
+  async update_branch(
+    branch_id: number,
+    branch_data: Partial<Branch>
+  ): Promise<Branch> {
+    return await api_request<Branch>(`/branches/${branch_id}`, {
+      method: 'PUT',
+      body: JSON.stringify(branch_data),
+    });
   },
 
   async get_all_patrons(just_active: boolean = true): Promise<Patron[]> {

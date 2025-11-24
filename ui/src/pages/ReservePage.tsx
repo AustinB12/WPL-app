@@ -376,7 +376,7 @@ export function ReservePage() {
               }}
             >
               <BookmarkAdd color="primary" fontSize="large" />
-              Reserve
+              Reserve {searchInput}
             </Typography>
 
             <FormControl component="fieldset" sx={{ mb: 3 }}>

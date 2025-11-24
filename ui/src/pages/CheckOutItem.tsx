@@ -24,7 +24,7 @@ import { PatronsDataGrid } from '../components/patrons/PatronsDataGrid';
 import { useCheckoutBook } from '../hooks/useTransactions';
 import { usePatronById } from '../hooks/usePatrons';
 import { ConfirmCheckoutDetails } from '../components/common/ConfirmCheckoutDetails';
-import type { Item_Copy } from '../types';
+import type { Item_Copy_Result } from '../types';
 import { CheckoutReceipt } from '../components/common/CheckoutReceipt';
 import { useCopiesOfLibraryItem } from '../hooks/useCopies';
 import { useLibraryItems } from '../hooks/useLibraryItems';
@@ -47,7 +47,7 @@ const STEPS = [
 interface CheckOutFormData {
   patron_id: number;
   library_item_id: number | null;
-  item: Item_Copy | null;
+  item: Item_Copy_Result | null;
 }
 
 // Component for searching and selecting library items
@@ -123,7 +123,7 @@ const LibraryItemSearchStep: FC<{
 // Component for showing all copies of a library item
 const LibraryItemCopiesList: FC<{
   library_item_id: number;
-  on_copy_selected: (copy: Item_Copy) => void;
+  on_copy_selected: (copy: Item_Copy_Result) => void;
   selected_copy_id?: number | null;
   patron_id?: number;
 }> = ({ library_item_id, on_copy_selected, selected_copy_id, patron_id }) => {
@@ -446,13 +446,14 @@ export const CheckOutItem: FC = () => {
     set_form_data((prev) => ({ ...prev, library_item_id, item: null }));
   };
 
-  const handle_copy_selected = (copy: Item_Copy) => {
+  const handle_copy_selected = (copy: Item_Copy_Result) => {
+    reset();
     set_form_data((prev) => ({ ...prev, item: copy }));
   };
 
   return (
     <LocalizationProvider dateAdapter={AdapterDateFns}>
-      <PageContainer>
+      <PageContainer width="xl">
         <PageTitle title="Check Out Item" Icon_Component={LibraryAdd} />
 
         <Stepper activeStep={active_step}>
@@ -483,9 +484,14 @@ export const CheckOutItem: FC = () => {
             >
               {active_step === 0 && (
                 <PatronsDataGrid
+                  check_card_and_balance={false}
                   onPatronSelected={handle_patron_selected}
-                  check_card_and_balance={true}
-                  hidden_columns={['name_link']}
+                  hidden_columns={[
+                    'name_link',
+                    'local_branch_id',
+                    'phone',
+                    'birthday',
+                  ]}
                 />
               )}
               {active_step === 1 && (

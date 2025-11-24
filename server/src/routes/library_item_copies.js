@@ -326,23 +326,36 @@ router.get('/item/:library_item_id', async (req, res) => {
         : null;
 
     // Get all copies for this library item, optionally filtered by branch
-    let query = `
+    const query = `
       SELECT 
         ic.*,
-        b.branch_name
+        li.title,
+        li.item_type,
+        li.description,
+        li.publication_year,
+        b.id as current_branch_id,
+        b.branch_name as current_branch_name,
+        bb.id as owning_branch_id,
+        bb.branch_name as owning_branch_name,
+        p.id AS patron_id,
+        p.first_name AS patron_first_name,
+        p.last_name AS patron_last_name
       FROM LIBRARY_ITEM_COPIES ic
-      LEFT JOIN BRANCHES b ON ic.current_branch_id = b.id
-      WHERE ic.library_item_id = ?
+        JOIN LIBRARY_ITEMS li ON ic.library_item_id = li.id
+        LEFT JOIN BRANCHES b ON ic.current_branch_id = b.id
+      LEFT JOIN BRANCHES bb ON ic.owning_branch_id = bb.id
+        LEFT JOIN PATRONS p ON ic.checked_out_by = p.id
+      WHERE 
+        ic.library_item_id = ?
+        ${branch_id ? 'AND ic.current_branch_id = ?' : ''}
+      ORDER BY ic.id, ic.status;
     `;
     let params = [req.params.library_item_id];
 
     // Filter by current_branch_id if branch_id is provided
     if (branch_id) {
-      query += ` AND ic.current_branch_id = ?`;
       params.push(branch_id);
     }
-
-    query += ` ORDER BY b.branch_name, ic.status`;
 
     const item_copies = await db.execute_query(query, params);
 

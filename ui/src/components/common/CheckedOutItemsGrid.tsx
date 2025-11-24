@@ -4,7 +4,6 @@ import ItemTypeChip from '../library_items/ItemTypeChip';
 import { ItemCopyConditionChip } from '../copies/ItemCopyConditionChip';
 import { useCheckedOutCopies } from '../../hooks/useCopies';
 import { useSelectedBranch } from '../../hooks/useBranchHooks';
-import { format_date } from '../../utils/dateUtils';
 import { ItemCopyStatusChip } from '../copies/ItemCopyStatusChip';
 import { BaseDataGrid } from './BaseDataGrid';
 
@@ -46,7 +45,7 @@ const columns: GridColDef[] = [
     width: 150,
     valueFormatter: (value) => {
       if (!value) return '?';
-      return format_date(value);
+      return value;
     },
   },
   {

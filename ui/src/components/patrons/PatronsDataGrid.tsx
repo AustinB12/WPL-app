@@ -5,8 +5,8 @@ import {
   type GridRowSelectionModel,
 } from '@mui/x-data-grid';
 import { useDeferredValue, useState, type FC } from 'react';
-import { format_date, is_overdue } from '../../utils/dateUtils';
-import { Box, Chip, Typography, Stack, Button } from '@mui/material';
+import { is_overdue } from '../../utils/dateUtils';
+import { Box, Chip, Typography, Stack, Button, Avatar } from '@mui/material';
 import { Link } from 'react-router-dom';
 import { BaseDataGrid } from '../common/BaseDataGrid';
 import { Delete, Edit, PersonAdd } from '@mui/icons-material';
@@ -60,19 +60,34 @@ const create_columns = (
     headerName: 'Name',
     flex: 2,
     renderCell: (params: GridRenderCellParams) => (
-      <Link
-        to={`/patron/${params.row.id}`}
-        style={{ textDecoration: 'none', height: '100%', display: 'block' }}
-      >
-        <Typography
-          sx={(theme) => ({
-            textDecoration: 'none',
-            color: `color-mix(in srgb, ${theme.palette.primary.main} 20%, ${theme.palette.text.primary} 80%)`,
-            display: 'inline',
-            fontWeight: 500,
-          })}
-        >{`${params.row.first_name} ${params.row.last_name}`}</Typography>
-      </Link>
+      <Stack direction="row" spacing={1} alignItems="center">
+        <Avatar
+          sx={{
+            bgcolor:
+              params.row.last_name.length > 6
+                ? 'primary.main'
+                : 'secondary.main',
+          }}
+          src={params.row.image_url || ''}
+        >
+          {`${params.row.first_name?.charAt(0) || ''}${
+            params.row.last_name?.charAt(0) || ''
+          }`}
+        </Avatar>
+        <Link
+          to={`/patron/${params.row.id}`}
+          style={{ textDecoration: 'none', height: '100%', display: 'block' }}
+        >
+          <Typography
+            sx={(theme) => ({
+              textDecoration: 'none',
+              color: `color-mix(in srgb, ${theme.palette.primary.main} 20%, ${theme.palette.text.primary} 80%)`,
+              display: 'inline',
+              fontWeight: 500,
+            })}
+          >{`${params.row.first_name} ${params.row.last_name}`}</Typography>
+        </Link>
+      </Stack>
     ),
   },
   {
@@ -107,13 +122,7 @@ const create_columns = (
     headerName: 'Birthday',
     valueGetter: (value) => {
       if (!value || typeof value !== 'string') return '(No birthdate listed)';
-      if (typeof value === 'string' && (value as string).length !== 10) {
-        if ((value as string).includes('T')) {
-          return format_date((value as string).split('T')[0]);
-        }
-        return '(Invalid Format)';
-      }
-      return format_date(value);
+      return new Date(value).toLocaleDateString();
     },
     flex: 2,
     renderCell: (params: GridRenderCellParams) => <Box>{params.value}</Box>,
@@ -124,7 +133,7 @@ const create_columns = (
     valueGetter: (value) => {
       if (!value || typeof value !== 'string')
         return '(No expiration date listed)';
-      return format_date(value);
+      return new Date(value).toLocaleDateString();
     },
     flex: 2,
     renderCell: (params: GridRenderCellParams) => (
@@ -164,6 +173,8 @@ const create_columns = (
       <PatronsStatusChip status={params.value as boolean} />
     ),
   },
+  { field: 'local_branch_id', headerName: 'Local Branch ID', width: 100 },
+  { field: 'local_branch_name', headerName: 'Local Branch', width: 200 },
   {
     field: 'actions',
     type: 'actions',
@@ -197,7 +208,6 @@ export const PatronsDataGrid: FC<PatronsDataGridProps> = ({
   cols,
   hidden_columns = [],
   onPatronSelected = undefined,
-  check_card_and_balance = false,
 }) => {
   const { show_snackbar } = useSnackbar();
   const [search_term, set_search_term] = useState('');
@@ -328,39 +338,6 @@ export const PatronsDataGrid: FC<PatronsDataGridProps> = ({
     );
   });
 
-  const patron_can_be_selected = (row: {
-    id: number;
-    card_expiration_date: Date;
-    balance: number;
-    active_checkouts?: number;
-  }) => {
-    if (!check_card_and_balance) return true;
-
-    // Check eligibility criteria - allow fines (will prompt to clear at checkout), but block expired cards and 20+ books
-    const has_valid_card = !is_overdue(row.card_expiration_date);
-    const under_book_limit = (row.active_checkouts || 0) < 20;
-
-    return has_valid_card && under_book_limit;
-  };
-
-  const get_selection_error_message = (row: {
-    card_expiration_date: Date;
-    active_checkouts?: number;
-  }) => {
-    if (!check_card_and_balance) return '';
-
-    const has_valid_card = !is_overdue(row.card_expiration_date);
-    const under_book_limit = (row.active_checkouts || 0) < 20;
-
-    if (!has_valid_card) {
-      return 'Patron has an expired library card. Card must be renewed before checkout.';
-    }
-    if (!under_book_limit) {
-      return 'Patron has reached the maximum limit of 20 checked out items.';
-    }
-    return '';
-  };
-
   return (
     <>
       <Stack direction={'row'} sx={{ mb: 2 }} spacing={3}>
@@ -380,18 +357,9 @@ export const PatronsDataGrid: FC<PatronsDataGridProps> = ({
       <Box sx={{ flex: 1, overflow: 'hidden' }}>
         <BaseDataGrid
           label="Patrons"
-          onRowDoubleClick={(params) => {
-            if (!patron_can_be_selected(params.row)) {
-              show_snackbar({
-                message: get_selection_error_message(params.row),
-                severity: 'info',
-              });
-            }
-          }}
           rows={filtered_patrons}
           columns={final_columns}
           loading={loading}
-          disableRowSelectionOnClick={!check_card_and_balance}
           onRowSelectionModelChange={(x) => {
             const selected_id =
               Array.from((x as GridRowSelectionModel).ids)[0]?.toString() || '';
@@ -400,7 +368,6 @@ export const PatronsDataGrid: FC<PatronsDataGridProps> = ({
             }
           }}
           slots={{ noRowsOverlay: NoResultsOverlay }}
-          isRowSelectable={(params) => patron_can_be_selected(params.row)}
           hidden_columns={hidden_columns}
         />
       </Box>

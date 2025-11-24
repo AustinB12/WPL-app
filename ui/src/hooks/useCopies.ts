@@ -40,7 +40,7 @@ export const useCopyById = (
 ) => {
   const query = useQuery({
     queryKey: ['item_copy', copy_id],
-    enabled: copy_id !== null && !options?.lazy,
+    enabled: !!copy_id && !options?.lazy,
     queryFn: () => data_service.get_copy_by_id(copy_id || null),
   });
 

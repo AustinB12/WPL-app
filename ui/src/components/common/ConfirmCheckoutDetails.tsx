@@ -1,4 +1,4 @@
-import { useState, type FC, type ReactNode } from 'react';
+import { useEffect, useState, type FC, type ReactNode } from 'react';
 import {
   Card,
   CardContent,
@@ -19,6 +19,7 @@ import {
   DialogContent,
   DialogTitle,
   TextField,
+  Snackbar,
 } from '@mui/material';
 import {
   Person,
@@ -26,16 +27,19 @@ import {
   LibraryBooks,
   QrCode,
 } from '@mui/icons-material';
-import { format_date, is_overdue } from '../../utils/dateUtils';
+import { is_overdue } from '../../utils/dateUtils';
 import { usePatronById, useUpdatePatron } from '../../hooks/usePatrons';
 import { useCopyById } from '../../hooks/useCopies';
 import { useLibraryItemById } from '../../hooks/useLibraryItems';
-import type { Item_Copy } from '../../types';
+import type { Item_Copy_Result } from '../../types';
 import { ItemCopyConditionChip } from '../copies/ItemCopyConditionChip';
+import { useSnackbar } from '../../hooks/useSnackbar';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import dayjs from 'dayjs';
 
 interface ConfirmCheckoutDetailsProps {
   patron_id: number;
-  copy: Item_Copy;
+  copy: Item_Copy_Result;
   was_successful: boolean | null;
   loading: boolean;
 }
@@ -241,30 +245,21 @@ export const ConfirmCheckoutDetails: FC<ConfirmCheckoutDetailsProps> = ({
 
   // Validation override states
   const [card_override, set_card_override] = useState(false);
-  const [fine_resolved, set_fine_resolved] = useState(false);
   const [show_fine_dialog, set_show_fine_dialog] = useState(false);
   const [fine_amount_input, set_fine_amount_input] = useState('');
   const [show_override_dialog, set_show_override_dialog] = useState(false);
-  const [new_expiration_date, set_new_expiration_date] = useState('');
+  const [new_expiration_date, set_new_expiration_date] =
+    useState<dayjs.Dayjs | null>(
+      patron?.card_expiration_date ? dayjs(patron.card_expiration_date) : null
+    );
+
+  const { show_snackbar } = useSnackbar();
 
   const hasOutstandingBalance = patron ? patron.balance > 0 : false;
   const isCardExpired = patron
     ? patron.card_expiration_date &&
       is_overdue(new Date(patron.card_expiration_date))
     : false;
-
-  // Blocking conditions
-  // const has_blocking_issues =
-  //   hasTooManyBooks || // HARD BLOCK
-  //   (isCardExpired && !card_override) || // Can be overridden
-  //   (hasOutstandingBalance && !fine_resolved); // Can be resolved
-
-  // Notify parent of validation status
-  // useEffect(() => {
-  //   if (on_validation_change) {
-  //     on_validation_change(!has_blocking_issues);
-  //   }
-  // }, [has_blocking_issues, on_validation_change]);
 
   const is_any_loading = loading_patron || loading_copy || loading_library_item;
 
@@ -304,12 +299,14 @@ export const ConfirmCheckoutDetails: FC<ConfirmCheckoutDetailsProps> = ({
           },
           {
             onSuccess: () => {
-              // Mark as resolved if balance is zero
-              if (new_balance === 0) {
-                set_fine_resolved(true);
-              }
-              set_show_fine_dialog(false);
               set_fine_amount_input('');
+
+              show_snackbar({
+                severity: 'success',
+                message: 'Patron updated successfully.',
+                title: 'Success!',
+              });
+              set_show_fine_dialog(false);
             },
           }
         );
@@ -322,25 +319,37 @@ export const ConfirmCheckoutDetails: FC<ConfirmCheckoutDetailsProps> = ({
       updatePatron(
         {
           patron_id: patron.id,
-          patron_data: { card_expiration_date: new Date(new_expiration_date) },
+          patron_data: {
+            card_expiration_date: new Date(
+              new_expiration_date.toString()
+            ).toLocaleDateString(),
+          },
         },
         {
           onSuccess: () => {
             set_card_override(true);
             set_show_override_dialog(false);
-            set_new_expiration_date('');
+            set_new_expiration_date(null);
+            show_snackbar({
+              severity: 'success',
+              title: 'Success!',
+              message: "Patron's library card updated successfully.",
+            });
           },
         }
       );
     }
   };
 
-  // Set default new expiration date to 2 years from today
-  const getDefaultNewExpiration = () => {
-    const date = new Date();
-    date.setFullYear(date.getFullYear() + 2);
-    return date.toLocaleString().split('T')[0];
-  };
+  // Update form fields when patron data loads
+  useEffect(() => {
+    if (patron) {
+      set_fine_amount_input(patron.balance.toString());
+      if (patron.card_expiration_date) {
+        set_new_expiration_date(dayjs(patron.card_expiration_date));
+      }
+    }
+  }, [patron]);
 
   // If still loading essential data, show loading skeleton
   if (is_any_loading) {
@@ -412,62 +421,81 @@ export const ConfirmCheckoutDetails: FC<ConfirmCheckoutDetailsProps> = ({
     <Container maxWidth="xl" sx={{ p: 2 }}>
       {/* Warnings */}
       {(hasOutstandingBalance || isCardExpired || hasTooManyBooks) && (
-        <Box sx={{ mb: 3 }}>
-          {hasOutstandingBalance && (
-            <Alert severity="warning" sx={{ mb: 1 }}>
-              <AlertTitle>Outstanding Balance</AlertTitle>
-              This patron has an outstanding balance of $
-              {patron.balance.toFixed(2)}.
-            </Alert>
-          )}
+        <Snackbar
+          open={hasOutstandingBalance || isCardExpired || hasTooManyBooks}
+          anchorOrigin={{ horizontal: 'center', vertical: 'bottom' }}
+          onClose={() => {}}
+        >
+          <Stack columnGap={2} direction={'row'}>
+            {hasOutstandingBalance && (
+              <Alert
+                severity="warning"
+                sx={{ mb: 1 }}
+                action={
+                  <Button
+                    color="inherit"
+                    size="small"
+                    onClick={() => set_show_fine_dialog(true)}
+                  >
+                    Update Balance
+                  </Button>
+                }
+              >
+                <AlertTitle>Outstanding Balance</AlertTitle>
+                This patron has an outstanding balance of $
+                {patron.balance.toFixed(2)}
+              </Alert>
+            )}
+            {isCardExpired && (
+              <Alert
+                severity="error"
+                sx={{ mb: 2 }}
+                action={
+                  <Button
+                    color="inherit"
+                    size="small"
+                    onClick={() => set_show_override_dialog(true)}
+                  >
+                    Extend Card
+                  </Button>
+                }
+              >
+                <AlertTitle>📅 Expired Library Card</AlertTitle>
+                This patron's library card expired on{' '}
+                {patron?.card_expiration_date}. Card must be extended to
+                proceed.
+              </Alert>
+            )}
+            {hasTooManyBooks && (
+              <Alert severity="warning" sx={{ mb: 1 }}>
+                <AlertTitle>Too Many Active Checkouts</AlertTitle>
+                This patron has {active_checkout_count} books checked out.
+                Maximum is 20.
+              </Alert>
+            )}
 
-          {/* Fine Resolved */}
-          {fine_resolved && (
-            <Alert severity="success" sx={{ mb: 2 }}>
-              <AlertTitle>✓ Fine Resolved</AlertTitle>
-              Fine has been resolved. You may proceed with checkout.
-            </Alert>
-          )}
+            <Box sx={{ mb: 3 }}>
+              {/* Card Extended */}
+              {card_override && (
+                <Alert severity="success" sx={{ mb: 2 }}>
+                  <AlertTitle>✓ Card Extended</AlertTitle>
+                  Card expiration has been updated. You may proceed with
+                  checkout.
+                </Alert>
+              )}
 
-          {/* Expired Card - Can be extended */}
-          {isCardExpired && !card_override && !hasTooManyBooks && (
-            <Alert
-              severity="error"
-              sx={{ mb: 2 }}
-              action={
-                <Button
-                  color="inherit"
-                  size="small"
-                  onClick={() => set_show_override_dialog(true)}
-                >
-                  Extend Card
-                </Button>
-              }
-            >
-              <AlertTitle>📅 Expired Library Card</AlertTitle>
-              This patron's library card expired on{' '}
-              {format_date(patron?.card_expiration_date)}. Card must be extended
-              to proceed.
-            </Alert>
-          )}
-
-          {/* Card Extended */}
-          {card_override && (
-            <Alert severity="success" sx={{ mb: 2 }}>
-              <AlertTitle>✓ Card Extended</AlertTitle>
-              Card expiration has been updated. You may proceed with checkout.
-            </Alert>
-          )}
-
-          {/* Too Many Books - HARD BLOCK (cannot override) */}
-          {hasTooManyBooks && (
-            <Alert severity="error" sx={{ mb: 2 }}>
-              <AlertTitle>🚫 Too Many Books Checked Out</AlertTitle>
-              This patron has {active_checkout_count} books checked out. Maximum
-              is 20. Transaction cannot proceed until books are returned.
-            </Alert>
-          )}
-        </Box>
+              {/* Too Many Books - HARD BLOCK (cannot override) */}
+              {hasTooManyBooks && (
+                <Alert severity="error" sx={{ mb: 2 }}>
+                  <AlertTitle>🚫 Too Many Books Checked Out</AlertTitle>
+                  This patron has {active_checkout_count} books checked out.
+                  Maximum is 20. Transaction cannot proceed until books are
+                  returned.
+                </Alert>
+              )}
+            </Box>
+          </Stack>
+        </Snackbar>
       )}
 
       {/* Update Balance Dialog */}
@@ -507,7 +535,7 @@ export const ConfirmCheckoutDetails: FC<ConfirmCheckoutDetailsProps> = ({
         title="Extend Library Card"
         on_close={() => {
           set_show_override_dialog(false);
-          set_new_expiration_date('');
+          set_new_expiration_date(null);
         }}
         on_confirm={handle_override_card}
         confirm_disabled={!new_expiration_date}
@@ -517,21 +545,28 @@ export const ConfirmCheckoutDetails: FC<ConfirmCheckoutDetailsProps> = ({
           Patron: {patron?.first_name} {patron?.last_name}
         </Typography>
         <Typography variant="body2" sx={{ mb: 2 }}>
-          Current expiration: {format_date(patron?.card_expiration_date)}
+          Current expiration:
+          {new Date(patron?.card_expiration_date).toLocaleDateString()}
+          {new_expiration_date && (
+            <>
+              <br />
+              New expiration:{' '}
+              {new_expiration_date ? new_expiration_date.toString() : 'N/A'}
+            </>
+          )}
         </Typography>
         <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
           Set new expiration date for this patron's library card
         </Typography>
-        <TextField
-          autoFocus
+        <DatePicker
+          disablePast
           label="New Expiration Date"
-          type="date"
-          fullWidth
-          value={new_expiration_date || getDefaultNewExpiration()}
-          onChange={(e) => set_new_expiration_date(e.target.value)}
-          InputLabelProps={{ shrink: true }}
-          inputProps={{
-            min: new Date().toLocaleString().split('T')[0],
+          value={new_expiration_date || dayjs().add(2, 'year')}
+          onChange={(value) => {
+            set_new_expiration_date(value as dayjs.Dayjs | null);
+          }}
+          slotProps={{
+            popper: { placement: 'top-end' },
           }}
         />
       </UpdateDialog>
@@ -586,7 +621,7 @@ export const ConfirmCheckoutDetails: FC<ConfirmCheckoutDetailsProps> = ({
                   label="Card Expires"
                   value={
                     <Chip
-                      label={format_date(patron.card_expiration_date)}
+                      label={patron.card_expiration_date}
                       size="small"
                       color={isCardExpired ? 'error' : 'default'}
                       sx={{ fontWeight: 600 }}
