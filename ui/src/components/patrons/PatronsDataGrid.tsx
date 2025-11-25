@@ -5,17 +5,8 @@ import {
   type GridRowSelectionModel,
 } from '@mui/x-data-grid';
 import { useDeferredValue, useState, type FC } from 'react';
-import { format_date, is_overdue } from '../../utils/dateUtils';
-import {
-  Alert,
-  Box,
-  Chip,
-  Snackbar,
-  Typography,
-  Stack,
-  Button,
-  AlertTitle,
-} from '@mui/material';
+import { is_overdue } from '../../utils/dateUtils';
+import { Box, Chip, Typography, Stack, Button, Avatar } from '@mui/material';
 import { Link } from 'react-router-dom';
 import { BaseDataGrid } from '../common/BaseDataGrid';
 import { Delete, Edit, PersonAdd } from '@mui/icons-material';
@@ -35,6 +26,7 @@ import type {
 } from '../../types';
 import { SearchWithNameOrId } from '../common/SearchWithNameOrId';
 import { PatronsStatusChip } from './PatronsStatusChip';
+import { useSnackbar } from '../../hooks/useSnackbar';
 
 const NoResultsOverlay = () => {
   return (
@@ -68,19 +60,34 @@ const create_columns = (
     headerName: 'Name',
     flex: 2,
     renderCell: (params: GridRenderCellParams) => (
-      <Link
-        to={`/patron/${params.row.id}`}
-        style={{ textDecoration: 'none', height: '100%', display: 'block' }}
-      >
-        <Typography
-          sx={(theme) => ({
-            textDecoration: 'none',
-            color: `color-mix(in srgb, ${theme.palette.primary.main} 20%, ${theme.palette.text.primary} 80%)`,
-            display: 'inline',
-            fontWeight: 500,
-          })}
-        >{`${params.row.first_name} ${params.row.last_name}`}</Typography>
-      </Link>
+      <Stack direction="row" spacing={1} alignItems="center">
+        <Avatar
+          sx={{
+            bgcolor:
+              params.row.last_name.length > 6
+                ? 'primary.main'
+                : 'secondary.main',
+          }}
+          src={params.row.image_url || ''}
+        >
+          {`${params.row.first_name?.charAt(0) || ''}${
+            params.row.last_name?.charAt(0) || ''
+          }`}
+        </Avatar>
+        <Link
+          to={`/patron/${params.row.id}`}
+          style={{ textDecoration: 'none', height: '100%', display: 'block' }}
+        >
+          <Typography
+            sx={(theme) => ({
+              textDecoration: 'none',
+              color: `color-mix(in srgb, ${theme.palette.primary.main} 20%, ${theme.palette.text.primary} 80%)`,
+              display: 'inline',
+              fontWeight: 500,
+            })}
+          >{`${params.row.first_name} ${params.row.last_name}`}</Typography>
+        </Link>
+      </Stack>
     ),
   },
   {
@@ -115,13 +122,7 @@ const create_columns = (
     headerName: 'Birthday',
     valueGetter: (value) => {
       if (!value || typeof value !== 'string') return '(No birthdate listed)';
-      if (typeof value === 'string' && (value as string).length !== 10) {
-        if ((value as string).includes('T')) {
-          return format_date((value as string).split('T')[0]);
-        }
-        return '(Invalid Format)';
-      }
-      return format_date(value);
+      return new Date(value).toLocaleDateString();
     },
     flex: 2,
     renderCell: (params: GridRenderCellParams) => <Box>{params.value}</Box>,
@@ -132,7 +133,7 @@ const create_columns = (
     valueGetter: (value) => {
       if (!value || typeof value !== 'string')
         return '(No expiration date listed)';
-      return format_date(value);
+      return new Date(value).toLocaleDateString();
     },
     flex: 2,
     renderCell: (params: GridRenderCellParams) => (
@@ -172,6 +173,8 @@ const create_columns = (
       <PatronsStatusChip status={params.value as boolean} />
     ),
   },
+  { field: 'local_branch_id', headerName: 'Local Branch ID', width: 100 },
+  { field: 'local_branch_name', headerName: 'Local Branch', width: 200 },
   {
     field: 'actions',
     type: 'actions',
@@ -205,11 +208,8 @@ export const PatronsDataGrid: FC<PatronsDataGridProps> = ({
   cols,
   hidden_columns = [],
   onPatronSelected = undefined,
-  check_card_and_balance = false,
 }) => {
-  const [success_snack, set_success_snack] = useState('');
-  const [error_snack, set_error_snack] = useState('');
-  const [info_snack, set_info_snack] = useState('');
+  const { show_snackbar } = useSnackbar();
   const [search_term, set_search_term] = useState('');
   const deferred_search_term = useDeferredValue(search_term);
 
@@ -220,34 +220,58 @@ export const PatronsDataGrid: FC<PatronsDataGridProps> = ({
 
   const { mutate: create_patron } = useCreatePatron({
     onSuccess: () => {
-      set_success_snack('Patron created successfully!');
+      show_snackbar({
+        message: 'Patron created successfully!',
+        severity: 'success',
+        title: 'Success!',
+      });
       set_dialog_open(false);
       refetch();
     },
     onError: (error: Error) => {
-      set_error_snack(error.message || 'Failed to create patron');
+      show_snackbar({
+        message: error.message || 'Failed to create patron',
+        severity: 'error',
+        title: 'Error!',
+      });
     },
   });
 
   const update_patron_mutation = useUpdatePatron({
     onSuccess: () => {
-      set_success_snack('Patron updated successfully!');
+      show_snackbar({
+        message: 'Patron updated successfully!',
+        severity: 'success',
+        title: 'Success!',
+      });
       set_edit_modal_open(false);
       set_selected_patron(null);
     },
     onError: (error: Error) => {
-      set_error_snack(error.message || 'Failed to update patron');
+      show_snackbar({
+        message: error.message || 'Failed to update patron',
+        severity: 'error',
+        title: 'Error!',
+      });
     },
   });
 
   const delete_patron_mutation = useDeletePatronById({
     onSuccess: () => {
-      set_success_snack('Patron deleted successfully!');
+      show_snackbar({
+        message: 'Patron deleted successfully!',
+        severity: 'success',
+        title: 'Success!',
+      });
       set_delete_modal_open(false);
       set_selected_patron(null);
     },
     onError: (error: Error) => {
-      set_error_snack(error.message || 'Failed to delete patron');
+      show_snackbar({
+        message: error.message || 'Failed to delete patron',
+        severity: 'error',
+        title: 'Error!',
+      });
     },
   });
 
@@ -314,39 +338,6 @@ export const PatronsDataGrid: FC<PatronsDataGridProps> = ({
     );
   });
 
-  const patron_can_be_selected = (row: {
-    id: number;
-    card_expiration_date: Date;
-    balance: number;
-    active_checkouts?: number;
-  }) => {
-    if (!check_card_and_balance) return true;
-
-    // Check eligibility criteria - allow fines (will prompt to clear at checkout), but block expired cards and 20+ books
-    const has_valid_card = !is_overdue(row.card_expiration_date);
-    const under_book_limit = (row.active_checkouts || 0) < 20;
-
-    return has_valid_card && under_book_limit;
-  };
-
-  const get_selection_error_message = (row: {
-    card_expiration_date: Date;
-    active_checkouts?: number;
-  }) => {
-    if (!check_card_and_balance) return '';
-
-    const has_valid_card = !is_overdue(row.card_expiration_date);
-    const under_book_limit = (row.active_checkouts || 0) < 20;
-
-    if (!has_valid_card) {
-      return 'Patron has an expired library card. Card must be renewed before checkout.';
-    }
-    if (!under_book_limit) {
-      return 'Patron has reached the maximum limit of 20 checked out items.';
-    }
-    return '';
-  };
-
   return (
     <>
       <Stack direction={'row'} sx={{ mb: 2 }} spacing={3}>
@@ -363,28 +354,23 @@ export const PatronsDataGrid: FC<PatronsDataGridProps> = ({
           Create Patron
         </Button>
       </Stack>
-
-      <BaseDataGrid
-        label="Patrons"
-        onRowDoubleClick={(params) =>
-          !patron_can_be_selected(params.row) &&
-          set_info_snack(get_selection_error_message(params.row))
-        }
-        rows={filtered_patrons}
-        columns={final_columns}
-        loading={loading}
-        disableRowSelectionOnClick={!check_card_and_balance}
-        onRowSelectionModelChange={(x) => {
-          const selected_id =
-            Array.from((x as GridRowSelectionModel).ids)[0]?.toString() || '';
-          if (onPatronSelected) {
-            onPatronSelected(selected_id);
-          }
-        }}
-        slots={{ noRowsOverlay: NoResultsOverlay }}
-        isRowSelectable={(params) => patron_can_be_selected(params.row)}
-        hidden_columns={hidden_columns}
-      />
+      <Box sx={{ flex: 1, overflow: 'hidden' }}>
+        <BaseDataGrid
+          label="Patrons"
+          rows={filtered_patrons}
+          columns={final_columns}
+          loading={loading}
+          onRowSelectionModelChange={(x) => {
+            const selected_id =
+              Array.from((x as GridRowSelectionModel).ids)[0]?.toString() || '';
+            if (onPatronSelected) {
+              onPatronSelected(selected_id);
+            }
+          }}
+          slots={{ noRowsOverlay: NoResultsOverlay }}
+          hidden_columns={hidden_columns}
+        />
+      </Box>
       <New_Patron_Modal
         open={dialog_open}
         on_close={() => set_dialog_open(false)}
@@ -410,50 +396,6 @@ export const PatronsDataGrid: FC<PatronsDataGridProps> = ({
         on_confirm={handle_confirm_delete}
         is_loading={delete_patron_mutation.isPending}
       />
-      <Snackbar
-        open={Boolean(info_snack)}
-        autoHideDuration={6000}
-        onClose={() => set_info_snack('')}
-        anchorOrigin={{ horizontal: 'center', vertical: 'top' }}
-      >
-        <Alert
-          variant="filled"
-          severity="info"
-          onClose={() => set_info_snack('')}
-        >
-          {info_snack}
-        </Alert>
-      </Snackbar>
-      <Snackbar
-        open={Boolean(success_snack)}
-        autoHideDuration={6000}
-        onClose={() => set_success_snack('')}
-        anchorOrigin={{ horizontal: 'center', vertical: 'top' }}
-      >
-        <Alert
-          variant="filled"
-          severity="success"
-          onClose={() => set_success_snack('')}
-        >
-          <AlertTitle sx={{ color: 'inherit' }}>Success!</AlertTitle>
-          {success_snack}
-        </Alert>
-      </Snackbar>
-      <Snackbar
-        open={Boolean(error_snack)}
-        autoHideDuration={6000}
-        onClose={() => set_error_snack('')}
-        anchorOrigin={{ horizontal: 'center', vertical: 'top' }}
-      >
-        <Alert
-          variant="filled"
-          severity="error"
-          onClose={() => set_error_snack('')}
-        >
-          <AlertTitle sx={{ color: 'inherit' }}>Error!</AlertTitle>
-          {error_snack}
-        </Alert>
-      </Snackbar>
     </>
   );
 };

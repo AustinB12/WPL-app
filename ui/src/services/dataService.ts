@@ -10,11 +10,16 @@ import type {
   Book_Form_Data,
   Create_Library_Item_Form_Data,
   Item_Condition,
-  Item_Copy_Results,
+  Item_Copy_Result,
   Checkin_Receipt,
   Update_Patron_Data,
   Create_Patron_Data,
   Library_Copy_Status,
+  Check_Out_Details,
+  Checked_Out_Copy,
+  ReshelveAllResult,
+  Loan_Duration,
+  ReshelveResponseData,
 } from '../types';
 import { Genre } from '../types';
 
@@ -74,13 +79,10 @@ const api_request = async <T>(
         data.message ||
         data.error ||
         `HTTP ${response.status}: ${response.statusText}`;
-      const error = new Error(error_message);
+      const error = new Error(error_message) as Error & { queue?: unknown };
       // Attach additional error data (like queue information) to the error object
       if (data.queue) {
-        throw data.queue;
-      }
-      if (data.error) {
-        throw data.error;
+        error.queue = data.queue;
       }
       throw error;
     }
@@ -318,24 +320,36 @@ export const data_service = {
     return await api_request<Transaction[]>('/transactions?status=Active');
   },
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  async getCheckedOutItems(branch_id?: number): Promise<any[]> {
+  async getCheckedOutItems(branch_id?: number): Promise<Checked_Out_Copy[]> {
     const url = branch_id
       ? `/transactions/checked-out?branch_id=${branch_id}`
       : '/transactions/checked-out';
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return await api_request<any[]>(url);
+    return await api_request<Checked_Out_Copy[]>(url);
+  },
+
+  async get_check_out_details(
+    copy_id: number | null
+  ): Promise<Check_Out_Details | null> {
+    if (copy_id === null) {
+      return null;
+    }
+    return await api_request<Check_Out_Details>(
+      `/transactions/checkin-lookup/${copy_id}`
+    );
   },
 
   async reshelve_item(
     copy_id: number,
     branch_id?: number
-  ): Promise<number | null> {
+  ): Promise<ReshelveResponseData | null> {
     try {
-      const result = await api_request<number>(`/transactions/reshelve`, {
-        method: 'POST',
-        body: JSON.stringify({ copy_id, branch_id }),
-      });
+      const result = await api_request<ReshelveResponseData>(
+        `/transactions/reshelve`,
+        {
+          method: 'POST',
+          body: JSON.stringify({ copy_id, branch_id }),
+        }
+      );
       return result;
     } catch (error: Error | unknown) {
       if (error instanceof Error && error.message.includes('404')) {
@@ -348,12 +362,15 @@ export const data_service = {
   async reshelve_items(
     copy_ids: number[],
     branch_id?: number
-  ): Promise<number | null> {
+  ): Promise<ReshelveAllResult | null> {
     try {
-      const result = await api_request<number>(`/transactions/reshelve`, {
-        method: 'POST',
-        body: JSON.stringify({ copy_ids, branch_id }),
-      });
+      const result = await api_request<ReshelveAllResult>(
+        `/transactions/reshelve-all`,
+        {
+          method: 'POST',
+          body: JSON.stringify({ copy_ids, branch_id }),
+        }
+      );
       return result;
     } catch (error: Error | unknown) {
       if (error instanceof Error && error.message.includes('404')) {
@@ -460,11 +477,11 @@ export const data_service = {
   async get_all_copies_by_item_id(
     item_id: number,
     branch_id?: number
-  ): Promise<Item_Copy[]> {
+  ): Promise<Item_Copy_Result[]> {
     const url = branch_id
       ? `/item-copies/item/${item_id}?branch_id=${branch_id}`
       : `/item-copies/item/${item_id}`;
-    return await api_request<Item_Copy[]>(url);
+    return await api_request<Item_Copy_Result[]>(url);
   },
 
   async get_all_copy_ids(): Promise<number[]> {
@@ -476,7 +493,7 @@ export const data_service = {
     branch_id: number,
     status?: Library_Copy_Status,
     condition?: Item_Condition
-  ): Promise<Item_Copy[]> {
+  ): Promise<Item_Copy_Result[]> {
     let url = '/item-copies';
     const params: string[] = [];
 
@@ -495,16 +512,21 @@ export const data_service = {
     if (params.length > 0) {
       url += `?${params.join('&')}`;
     }
-    return await api_request<Item_Copy[]>(url);
+    return await api_request<Item_Copy_Result[]>(url);
   },
 
-  async get_all_item_copies(): Promise<Item_Copy[]> {
-    return await api_request<Item_Copy[]>('/item-copies');
+  async get_all_item_copies(): Promise<Item_Copy_Result[]> {
+    return await api_request<Item_Copy_Result[]>('/item-copies');
   },
 
-  async get_copy_by_id(copy_id: number): Promise<Item_Copy | null> {
+  async get_copy_by_id(
+    copy_id: number | null
+  ): Promise<Item_Copy_Result | null> {
+    if (copy_id === null) {
+      return null;
+    }
     try {
-      return await api_request<Item_Copy>(`/item-copies/${copy_id}`);
+      return await api_request<Item_Copy_Result>(`/item-copies/${copy_id}`);
     } catch (error: Error | unknown) {
       if (error instanceof Error && error.message.includes('404')) {
         return null;
@@ -513,16 +535,21 @@ export const data_service = {
     }
   },
 
-  async get_checked_out_copies(
-    branch_id: number
-  ): Promise<Item_Copy_Results[]> {
+  async get_checked_out_copies(branch_id: number): Promise<Item_Copy_Result[]> {
     const url = `/item-copies/checked-out?branch_id=${branch_id}`;
-    return await api_request<Item_Copy_Results[]>(url);
+    return await api_request<Item_Copy_Result[]>(url);
   },
 
-  async get_unshelved_copies(branch_id: number): Promise<Item_Copy_Results[]> {
+  async get_unshelved_copies(branch_id: number): Promise<Item_Copy_Result[]> {
     const url = `/item-copies/unshelved?branch_id=${branch_id}`;
-    return await api_request<Item_Copy_Results[]>(url);
+    return await api_request<Item_Copy_Result[]>(url);
+  },
+
+  async get_copies_recently_reshelved(
+    branch_id: number
+  ): Promise<Item_Copy_Result[]> {
+    const url = `/item-copies/recently-reshelved?branch_id=${branch_id}`;
+    return await api_request<Item_Copy_Result[]>(url);
   },
 
   async create_copy(copy_data: {
@@ -565,12 +592,36 @@ export const data_service = {
     return await api_request<Branch[]>('/branches');
   },
 
+  async get_branch_by_id(branch_id: number): Promise<Branch | null> {
+    try {
+      return await api_request<Branch>(`/branches/${branch_id}`);
+    } catch (error: Error | unknown) {
+      if (error instanceof Error && error.message.includes('404')) {
+        return null;
+      }
+      throw error;
+    }
+  },
+
+  async update_branch(
+    branch_id: number,
+    branch_data: Partial<Branch>
+  ): Promise<Branch> {
+    return await api_request<Branch>(`/branches/${branch_id}`, {
+      method: 'PUT',
+      body: JSON.stringify(branch_data),
+    });
+  },
+
   async get_all_patrons(just_active: boolean = true): Promise<Patron[]> {
     const url = just_active ? '/patrons?active_only=true' : '/patrons';
     return await api_request<Patron[]>(url);
   },
 
   async get_patron_by_id(patron_id: number): Promise<Patron | null> {
+    if (patron_id <= 0) {
+      return null;
+    }
     try {
       return await api_request<Patron>(`/patrons/${patron_id}`);
     } catch (error: Error | unknown) {
@@ -612,15 +663,34 @@ export const data_service = {
       );
       return result.statistics;
     } catch (error: Error | unknown) {
-      if (error instanceof Error) {
-        throw error;
-      }
+      // Return fallback statistics on error instead of throwing
+      console.error('Failed to fetch stats:', error);
+      return {
+        total: 0,
+        checked_out: 0,
+        available: 0,
+        reserved: 0,
+      };
     }
-    return {
-      total: 0,
-      checked_out: 0,
-      available: 0,
-      reserved: 0,
-    };
+  },
+
+  async get_loan_durations(): Promise<Loan_Duration[] | null> {
+    try {
+      const result = await api_request<Loan_Duration[]>(
+        '/settings/loan_durations'
+      );
+      return result;
+    } catch (error: Error | unknown) {
+      // Return null on error instead of throwing
+      console.error('Failed to fetch loan durations:', error);
+      return null;
+    }
+  },
+
+  async update_loan_duration(id: number, duration: number): Promise<void> {
+    await api_request(`/settings/loan_durations/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify({ duration }),
+    });
   },
 };

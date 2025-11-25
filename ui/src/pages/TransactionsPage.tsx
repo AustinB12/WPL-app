@@ -6,7 +6,7 @@ export const TransactionsPage = () => {
   return (
     <PageContainer>
       <PageTitle title="Transactions" Icon_Component={SsidChart} />
-      <TransactionsDataGrid />
+      <TransactionsDataGrid hidden_columns={['notes']} />
     </PageContainer>
   );
 };

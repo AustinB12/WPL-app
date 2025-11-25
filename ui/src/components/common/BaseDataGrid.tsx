@@ -45,6 +45,7 @@ export const BaseDataGrid = (props: BaseDataGridProps) => {
         ['& .MuiDataGrid-scrollbar--horizontal']: {
           height: '8px',
         },
+        ...props.sx,
       }}
       pageSizeOptions={[10, 25, 50]}
       showToolbar

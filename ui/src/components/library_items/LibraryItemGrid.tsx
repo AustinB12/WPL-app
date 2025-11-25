@@ -8,7 +8,7 @@ import {
   type Library_Item,
   type Create_Library_Item_Form_Data,
 } from '../../types';
-import { Snackbar, Alert, AlertTitle, Box } from '@mui/material';
+import { Box } from '@mui/material';
 import { LibraryItemDetails } from './LibraryItemDetails';
 import { DeleteLibraryItem } from './DeleteLibraryItem';
 import { EditLibraryItem } from './EditLibraryItem';
@@ -20,12 +20,13 @@ import {
 import ItemTypeChip from './ItemTypeChip';
 import { BaseDataGrid } from '../common/BaseDataGrid';
 import { Delete, Edit } from '@mui/icons-material';
+import { useSnackbar } from '../../hooks/useSnackbar';
 
 export const LibraryItemDataGrid = () => {
+  const { show_snackbar } = useSnackbar();
   const [details_open, set_details_open] = useState(false);
   const [delete_dialog_open, set_delete_dialog_open] = useState(false);
   const [edit_dialog_open, set_edit_dialog_open] = useState(false);
-  const [success_message, set_success_message] = useState<string | null>(null);
   const [selected_item, set_selected_item] = useState<Library_Item | null>(
     null
   );
@@ -39,10 +40,19 @@ export const LibraryItemDataGrid = () => {
     onSuccess: () => {
       set_delete_dialog_open(false);
       set_item_to_delete(null);
-      set_success_message('Library item deleted successfully');
+      show_snackbar({
+        message: 'Library item deleted successfully',
+        severity: 'success',
+        title: 'Success',
+      });
     },
-    onError: () => {
+    onError: (error) => {
       set_delete_dialog_open(false);
+      show_snackbar({
+        message: error.message,
+        severity: 'error',
+        title: 'Error',
+      });
     },
   });
 
@@ -50,9 +60,29 @@ export const LibraryItemDataGrid = () => {
     onSuccess: () => {
       set_edit_dialog_open(false);
       set_item_to_edit(null);
-      set_success_message('Library item updated successfully');
+      show_snackbar({
+        message: 'Library item updated successfully',
+        severity: 'success',
+        title: 'Success',
+      });
+    },
+    onError: (error) => {
+      show_snackbar({
+        message: error.message,
+        severity: 'error',
+        title: 'Error',
+      });
     },
   });
+
+  // Show error snackbar for query errors
+  if (error) {
+    show_snackbar({
+      message: error.message,
+      severity: 'error',
+      title: error.name || 'Error',
+    });
+  }
 
   const handle_item_selected = useCallback((item: Library_Item) => {
     set_selected_item(item);
@@ -197,30 +227,6 @@ export const LibraryItemDataGrid = () => {
         on_confirm={handle_delete_confirm}
         is_loading={delete_mutation.isPending}
       />
-      <Snackbar
-        anchorOrigin={{ horizontal: 'center', vertical: 'top' }}
-        open={Boolean(error || delete_mutation.error || update_mutation.error)}
-        autoHideDuration={6000}
-        onClose={() => {}}
-      >
-        <Alert severity="error">
-          <AlertTitle>{error?.name || 'Error'}</AlertTitle>
-          {error?.message ||
-            delete_mutation.error?.message ||
-            update_mutation.error?.message}
-        </Alert>
-      </Snackbar>
-      <Snackbar
-        anchorOrigin={{ horizontal: 'center', vertical: 'top' }}
-        open={Boolean(success_message)}
-        autoHideDuration={3000}
-        onClose={() => set_success_message(null)}
-      >
-        <Alert severity="success" onClose={() => set_success_message(null)}>
-          <AlertTitle>Success</AlertTitle>
-          {success_message}
-        </Alert>
-      </Snackbar>
     </>
   );
 };

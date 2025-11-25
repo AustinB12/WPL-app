@@ -16,9 +16,7 @@ import {
   IconButton,
   Menu,
   MenuItem,
-  Snackbar,
   CardContent,
-  AlertTitle,
 } from '@mui/material';
 import {
   CreditCard,
@@ -36,7 +34,6 @@ import {
   useUpdatePatron,
 } from '../hooks/usePatrons';
 import { useGetTransactionsByPatronId } from '../hooks/useTransactions';
-import { format_date } from '../utils/dateUtils';
 import type { Update_Patron_Data } from '../types';
 import { TransactionStatusChip } from '../components/transactions/TransactionStatusChip';
 import { BaseDataGrid } from '../components/common/BaseDataGrid';
@@ -44,6 +41,7 @@ import { TransactionTypeChip } from '../components/transactions/TransactionTypeC
 import { EditPatronModal } from '../components/patrons/EditPatronModal';
 import { DeletePatronModal } from '../components/patrons/DeletePatronModal';
 import { PageContainer } from '../components/common/PageBuilders';
+import { useSnackbar } from '../hooks/useSnackbar';
 
 interface Info_Item_Props {
   icon: ReactNode;
@@ -160,36 +158,28 @@ const cols: GridColDef[] = [
 
 export const PatronPage = () => {
   const { patron_id } = useParams();
+  const { show_snackbar } = useSnackbar();
   const [anchor_el, set_anchor_el] = useState<null | HTMLElement>(null);
   const [edit_modal_open, set_edit_modal_open] = useState(false);
   const [delete_dialog_open, set_delete_dialog_open] = useState(false);
-  const [snackbar, set_snackbar] = useState<{
-    open: boolean;
-    message: string;
-    severity: 'success' | 'error';
-  }>({
-    open: false,
-    message: '',
-    severity: 'success',
-  });
 
   const open = Boolean(anchor_el);
 
   const update_patron_mutation = useUpdatePatron({
     onSuccess: () => {
       set_edit_modal_open(false);
-      set_snackbar({
-        open: true,
+      show_snackbar({
         message: 'Patron updated successfully',
         severity: 'success',
+        title: 'Success!',
       });
     },
     onError: (error) => {
       console.error('Failed to update patron:', error);
-      set_snackbar({
-        open: true,
+      show_snackbar({
         message: `Failed to update patron: ${error.message}`,
         severity: 'error',
+        title: 'Error!',
       });
     },
   });
@@ -197,10 +187,10 @@ export const PatronPage = () => {
   const delete_patron_mutation = useDeletePatronById({
     onSuccess: () => {
       set_delete_dialog_open(false);
-      set_snackbar({
-        open: true,
+      show_snackbar({
         message: 'Patron deleted successfully',
         severity: 'success',
+        title: 'Success!',
       });
       // Redirect to patrons list after showing success message
       setTimeout(() => {
@@ -209,10 +199,10 @@ export const PatronPage = () => {
     },
     onError: (error) => {
       console.error('Failed to delete patron:', error);
-      set_snackbar({
-        open: true,
+      show_snackbar({
         message: `Failed to delete patron: ${error.message}`,
         severity: 'error',
+        title: 'Error!',
       });
     },
   });
@@ -233,10 +223,6 @@ export const PatronPage = () => {
   const handle_delete_click = () => {
     set_delete_dialog_open(true);
     handle_menu_close();
-  };
-
-  const handle_snackbar_close = () => {
-    set_snackbar((prev) => ({ ...prev, open: false }));
   };
 
   const handle_save = (patron_data: Update_Patron_Data) => {
@@ -438,7 +424,7 @@ export const PatronPage = () => {
                   {patron?.birthday && (
                     <InfoItem
                       icon={<Cake sx={{ color: 'text.secondary' }} />}
-                      value={format_date(patron.birthday)}
+                      value={patron.birthday}
                       label="Birthday"
                     />
                   )}
@@ -494,6 +480,7 @@ export const PatronPage = () => {
               loading={transactions_loading}
               disableRowSelectionOnClick
               sx={{
+                borderRadius: 3,
                 border: 'none',
                 '& .MuiDataGrid-columnHeaders': {
                   fontWeight: 600,
@@ -523,26 +510,6 @@ export const PatronPage = () => {
         on_confirm={handle_delete_confirm}
         is_loading={delete_patron_mutation.isPending}
       />
-
-      {/* Snackbar for success/error messages */}
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={6000}
-        onClose={handle_snackbar_close}
-        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-      >
-        <Alert
-          onClose={handle_snackbar_close}
-          severity={snackbar.severity}
-          sx={{ width: '100%' }}
-          variant="filled"
-        >
-          <AlertTitle sx={{ color: 'inherit' }}>
-            {snackbar.severity === 'error' ? 'Error!' : 'Success!'}
-          </AlertTitle>
-          {snackbar.message}
-        </Alert>
-      </Snackbar>
     </PageContainer>
   );
 };

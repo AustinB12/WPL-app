@@ -1,4 +1,4 @@
-import { useState, type FC, type ReactNode } from 'react';
+import { useEffect, useState, type FC, type ReactNode } from 'react';
 import {
   Card,
   CardContent,
@@ -19,6 +19,7 @@ import {
   DialogContent,
   DialogTitle,
   TextField,
+  Snackbar,
 } from '@mui/material';
 import {
   Person,
@@ -26,16 +27,19 @@ import {
   LibraryBooks,
   QrCode,
 } from '@mui/icons-material';
-import { format_date, is_overdue } from '../../utils/dateUtils';
+import { is_overdue } from '../../utils/dateUtils';
 import { usePatronById, useUpdatePatron } from '../../hooks/usePatrons';
 import { useCopyById } from '../../hooks/useCopies';
 import { useLibraryItemById } from '../../hooks/useLibraryItems';
-import type { Item_Copy } from '../../types';
+import type { Item_Copy_Result } from '../../types';
 import { ItemCopyConditionChip } from '../copies/ItemCopyConditionChip';
+import { useSnackbar } from '../../hooks/useSnackbar';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import dayjs from 'dayjs';
 
 interface ConfirmCheckoutDetailsProps {
   patron_id: number;
-  copy: Item_Copy;
+  copy: Item_Copy_Result;
   was_successful: boolean | null;
   loading: boolean;
 }
@@ -48,14 +52,14 @@ interface InfoRowProps {
 }
 
 const InfoRow: FC<InfoRowProps> = ({ label, value, highlight }) => (
-  <Box
+  <Stack
     sx={(theme) => ({
       flex: 1,
-      display: 'flex',
+      flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
       p: 1.5,
-      bgcolor: highlight ? 'background.default' : 'background.default',
+      bgcolor: theme.palette.mode === 'light' ? 'grey.100' : 'grey.800',
       borderRadius: 1.5,
       ...(highlight && {
         border: '1.5px solid',
@@ -77,7 +81,7 @@ const InfoRow: FC<InfoRowProps> = ({ label, value, highlight }) => (
     ) : (
       value
     )}
-  </Box>
+  </Stack>
 );
 
 // Helper component for card headers
@@ -126,6 +130,100 @@ const CardHeaderSection: FC<CardHeaderSectionProps> = ({
   </Box>
 );
 
+// Reusable Info Card with consistent styling
+interface InfoCardProps {
+  children: ReactNode;
+  gridSize?: { xs?: number; sm?: number; md?: number };
+}
+
+const InfoCard: FC<InfoCardProps> = ({
+  children,
+  gridSize = { xs: 12, sm: 6 },
+}) => (
+  <Grid size={gridSize}>
+    <Card
+      sx={{
+        height: '100%',
+        borderRadius: 3,
+        transition: 'all 0.3s ease',
+        display: 'flex',
+        flexDirection: 'column',
+        '&:hover': {
+          boxShadow: 4,
+        },
+      }}
+    >
+      <CardContent
+        sx={{ p: 3, flex: 1, display: 'flex', flexDirection: 'column' }}
+      >
+        {children}
+      </CardContent>
+    </Card>
+  </Grid>
+);
+
+// Reusable Update Dialog
+interface UpdateDialogProps {
+  open: boolean;
+  title: string;
+  on_close: () => void;
+  on_confirm: () => void;
+  confirm_disabled?: boolean;
+  confirm_label?: string;
+  children: ReactNode;
+}
+
+const UpdateDialog: FC<UpdateDialogProps> = ({
+  open,
+  title,
+  on_close,
+  on_confirm,
+  confirm_disabled = false,
+  confirm_label = 'Update',
+  children,
+}) => (
+  <Dialog open={open} onClose={on_close}>
+    <DialogTitle>{title}</DialogTitle>
+    <DialogContent>{children}</DialogContent>
+    <DialogActions>
+      <Button onClick={on_close}>Cancel</Button>
+      <Button
+        onClick={on_confirm}
+        variant="contained"
+        disabled={confirm_disabled}
+      >
+        {confirm_label}
+      </Button>
+    </DialogActions>
+  </Dialog>
+);
+
+// Loading Card Skeleton
+const LoadingCardSkeleton: FC<{ has_chips?: boolean }> = ({
+  has_chips = false,
+}) => (
+  <Card variant="outlined">
+    <CardContent>
+      <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+        <Skeleton variant="circular" width={40} height={40} sx={{ mr: 2 }} />
+        <Skeleton variant="text" width={200} height={32} />
+      </Box>
+      <Box sx={{ ml: 7 }}>
+        <Skeleton variant="text" width={150} height={24} sx={{ mb: 1 }} />
+        <Skeleton variant="text" width={100} height={20} sx={{ mb: 1 }} />
+        {has_chips && (
+          <Box sx={{ display: 'flex', gap: 1, mb: 1 }}>
+            <Skeleton variant="rectangular" width={60} height={24} />
+            <Skeleton variant="rectangular" width={50} height={24} />
+          </Box>
+        )}
+        <Skeleton variant="rectangular" width={80} height={24} sx={{ mb: 1 }} />
+        <Skeleton variant="rectangular" width={120} height={24} />
+      </Box>
+    </CardContent>
+  </Card>
+);
+
 export const ConfirmCheckoutDetails: FC<ConfirmCheckoutDetailsProps> = ({
   patron_id,
   copy,
@@ -147,30 +245,21 @@ export const ConfirmCheckoutDetails: FC<ConfirmCheckoutDetailsProps> = ({
 
   // Validation override states
   const [card_override, set_card_override] = useState(false);
-  const [fine_resolved, set_fine_resolved] = useState(false);
   const [show_fine_dialog, set_show_fine_dialog] = useState(false);
   const [fine_amount_input, set_fine_amount_input] = useState('');
   const [show_override_dialog, set_show_override_dialog] = useState(false);
-  const [new_expiration_date, set_new_expiration_date] = useState('');
+  const [new_expiration_date, set_new_expiration_date] =
+    useState<dayjs.Dayjs | null>(
+      patron?.card_expiration_date ? dayjs(patron.card_expiration_date) : null
+    );
+
+  const { show_snackbar } = useSnackbar();
 
   const hasOutstandingBalance = patron ? patron.balance > 0 : false;
   const isCardExpired = patron
     ? patron.card_expiration_date &&
       is_overdue(new Date(patron.card_expiration_date))
     : false;
-
-  // Blocking conditions
-  // const has_blocking_issues =
-  //   hasTooManyBooks || // HARD BLOCK
-  //   (isCardExpired && !card_override) || // Can be overridden
-  //   (hasOutstandingBalance && !fine_resolved); // Can be resolved
-
-  // Notify parent of validation status
-  // useEffect(() => {
-  //   if (on_validation_change) {
-  //     on_validation_change(!has_blocking_issues);
-  //   }
-  // }, [has_blocking_issues, on_validation_change]);
 
   const is_any_loading = loading_patron || loading_copy || loading_library_item;
 
@@ -210,12 +299,14 @@ export const ConfirmCheckoutDetails: FC<ConfirmCheckoutDetailsProps> = ({
           },
           {
             onSuccess: () => {
-              // Mark as resolved if balance is zero
-              if (new_balance === 0) {
-                set_fine_resolved(true);
-              }
-              set_show_fine_dialog(false);
               set_fine_amount_input('');
+
+              show_snackbar({
+                severity: 'success',
+                message: 'Patron updated successfully.',
+                title: 'Success!',
+              });
+              set_show_fine_dialog(false);
             },
           }
         );
@@ -228,25 +319,37 @@ export const ConfirmCheckoutDetails: FC<ConfirmCheckoutDetailsProps> = ({
       updatePatron(
         {
           patron_id: patron.id,
-          patron_data: { card_expiration_date: new Date(new_expiration_date) },
+          patron_data: {
+            card_expiration_date: new Date(
+              new_expiration_date.toString()
+            ).toLocaleDateString(),
+          },
         },
         {
           onSuccess: () => {
             set_card_override(true);
             set_show_override_dialog(false);
-            set_new_expiration_date('');
+            set_new_expiration_date(null);
+            show_snackbar({
+              severity: 'success',
+              title: 'Success!',
+              message: "Patron's library card updated successfully.",
+            });
           },
         }
       );
     }
   };
 
-  // Set default new expiration date to 2 years from today
-  const getDefaultNewExpiration = () => {
-    const date = new Date();
-    date.setFullYear(date.getFullYear() + 2);
-    return date.toISOString().split('T')[0];
-  };
+  // Update form fields when patron data loads
+  useEffect(() => {
+    if (patron) {
+      set_fine_amount_input(patron.balance.toString());
+      if (patron.card_expiration_date) {
+        set_new_expiration_date(dayjs(patron.card_expiration_date));
+      }
+    }
+  }, [patron]);
 
   // If still loading essential data, show loading skeleton
   if (is_any_loading) {
@@ -257,78 +360,11 @@ export const ConfirmCheckoutDetails: FC<ConfirmCheckoutDetailsProps> = ({
         </Typography>
 
         <Grid container spacing={3}>
-          {/* Patron Loading Skeleton */}
           <Grid size={{ xs: 12, sm: 6 }}>
-            <Card variant="outlined">
-              <CardContent>
-                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                  <Skeleton
-                    variant="circular"
-                    width={40}
-                    height={40}
-                    sx={{ mr: 2 }}
-                  />
-                  <Skeleton variant="text" width={200} height={32} />
-                </Box>
-                <Box sx={{ ml: 7 }}>
-                  <Skeleton
-                    variant="text"
-                    width={150}
-                    height={24}
-                    sx={{ mb: 1 }}
-                  />
-                  <Skeleton
-                    variant="text"
-                    width={100}
-                    height={20}
-                    sx={{ mb: 1 }}
-                  />
-                  <Skeleton
-                    variant="rectangular"
-                    width={80}
-                    height={24}
-                    sx={{ mb: 1 }}
-                  />
-                  <Skeleton variant="rectangular" width={120} height={24} />
-                </Box>
-              </CardContent>
-            </Card>
+            <LoadingCardSkeleton />
           </Grid>
-
-          {/* Item Loading Skeleton */}
           <Grid size={{ xs: 12, sm: 6 }}>
-            <Card variant="outlined">
-              <CardContent>
-                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                  <Skeleton
-                    variant="circular"
-                    width={40}
-                    height={40}
-                    sx={{ mr: 2 }}
-                  />
-                  <Skeleton variant="text" width={180} height={32} />
-                </Box>
-                <Box sx={{ ml: 7 }}>
-                  <Skeleton
-                    variant="text"
-                    width={250}
-                    height={24}
-                    sx={{ mb: 1 }}
-                  />
-                  <Box sx={{ display: 'flex', gap: 1, mb: 1 }}>
-                    <Skeleton variant="rectangular" width={60} height={24} />
-                    <Skeleton variant="rectangular" width={50} height={24} />
-                  </Box>
-                  <Skeleton
-                    variant="text"
-                    width={120}
-                    height={20}
-                    sx={{ mb: 1 }}
-                  />
-                  <Skeleton variant="text" width={100} height={20} />
-                </Box>
-              </CardContent>
-            </Card>
+            <LoadingCardSkeleton has_chips />
           </Grid>
         </Grid>
       </Container>
@@ -385,440 +421,363 @@ export const ConfirmCheckoutDetails: FC<ConfirmCheckoutDetailsProps> = ({
     <Container maxWidth="xl" sx={{ p: 2 }}>
       {/* Warnings */}
       {(hasOutstandingBalance || isCardExpired || hasTooManyBooks) && (
-        <Box sx={{ mb: 3 }}>
-          {hasOutstandingBalance && (
-            <Alert severity="warning" sx={{ mb: 1 }}>
-              <AlertTitle>Outstanding Balance</AlertTitle>
-              This patron has an outstanding balance of $
-              {patron.balance.toFixed(2)}.
-            </Alert>
-          )}
+        <Snackbar
+          open={hasOutstandingBalance || isCardExpired || hasTooManyBooks}
+          anchorOrigin={{ horizontal: 'center', vertical: 'bottom' }}
+          onClose={() => {}}
+        >
+          <Stack columnGap={2} direction={'row'}>
+            {hasOutstandingBalance && (
+              <Alert
+                severity="warning"
+                sx={{ mb: 1 }}
+                action={
+                  <Button
+                    color="inherit"
+                    size="small"
+                    onClick={() => set_show_fine_dialog(true)}
+                  >
+                    Update Balance
+                  </Button>
+                }
+              >
+                <AlertTitle>Outstanding Balance</AlertTitle>
+                This patron has an outstanding balance of $
+                {patron.balance.toFixed(2)}
+              </Alert>
+            )}
+            {isCardExpired && (
+              <Alert
+                severity="error"
+                sx={{ mb: 2 }}
+                action={
+                  <Button
+                    color="inherit"
+                    size="small"
+                    onClick={() => set_show_override_dialog(true)}
+                  >
+                    Extend Card
+                  </Button>
+                }
+              >
+                <AlertTitle>📅 Expired Library Card</AlertTitle>
+                This patron's library card expired on{' '}
+                {patron?.card_expiration_date}. Card must be extended to
+                proceed.
+              </Alert>
+            )}
+            {hasTooManyBooks && (
+              <Alert severity="warning" sx={{ mb: 1 }}>
+                <AlertTitle>Too Many Active Checkouts</AlertTitle>
+                This patron has {active_checkout_count} books checked out.
+                Maximum is 20.
+              </Alert>
+            )}
 
-          {/* Fine Resolved */}
-          {fine_resolved && (
-            <Alert severity="success" sx={{ mb: 2 }}>
-              <AlertTitle>✓ Fine Resolved</AlertTitle>
-              Fine has been resolved. You may proceed with checkout.
-            </Alert>
-          )}
+            <Box sx={{ mb: 3 }}>
+              {/* Card Extended */}
+              {card_override && (
+                <Alert severity="success" sx={{ mb: 2 }}>
+                  <AlertTitle>✓ Card Extended</AlertTitle>
+                  Card expiration has been updated. You may proceed with
+                  checkout.
+                </Alert>
+              )}
 
-          {/* Expired Card - Can be extended */}
-          {isCardExpired && !card_override && !hasTooManyBooks && (
-            <Alert
-              severity="error"
-              sx={{ mb: 2 }}
-              action={
-                <Button
-                  color="inherit"
-                  size="small"
-                  onClick={() => set_show_override_dialog(true)}
-                >
-                  Extend Card
-                </Button>
-              }
-            >
-              <AlertTitle>📅 Expired Library Card</AlertTitle>
-              This patron's library card expired on{' '}
-              {format_date(patron?.card_expiration_date)}. Card must be extended
-              to proceed.
-            </Alert>
-          )}
-
-          {/* Card Extended */}
-          {card_override && (
-            <Alert severity="success" sx={{ mb: 2 }}>
-              <AlertTitle>✓ Card Extended</AlertTitle>
-              Card expiration has been updated. You may proceed with checkout.
-            </Alert>
-          )}
-
-          {/* Too Many Books - HARD BLOCK (cannot override) */}
-          {hasTooManyBooks && (
-            <Alert severity="error" sx={{ mb: 2 }}>
-              <AlertTitle>🚫 Too Many Books Checked Out</AlertTitle>
-              This patron has {active_checkout_count} books checked out. Maximum
-              is 20. Transaction cannot proceed until books are returned.
-            </Alert>
-          )}
-        </Box>
+              {/* Too Many Books - HARD BLOCK (cannot override) */}
+              {hasTooManyBooks && (
+                <Alert severity="error" sx={{ mb: 2 }}>
+                  <AlertTitle>🚫 Too Many Books Checked Out</AlertTitle>
+                  This patron has {active_checkout_count} books checked out.
+                  Maximum is 20. Transaction cannot proceed until books are
+                  returned.
+                </Alert>
+              )}
+            </Box>
+          </Stack>
+        </Snackbar>
       )}
 
       {/* Update Balance Dialog */}
-      <Dialog
+      <UpdateDialog
         open={show_fine_dialog}
-        onClose={() => {
+        title="Update Patron Balance"
+        on_close={() => {
           set_show_fine_dialog(false);
           set_fine_amount_input('');
         }}
+        on_confirm={handle_update_balance}
+        confirm_disabled={
+          fine_amount_input === '' || parseFloat(fine_amount_input) < 0
+        }
+        confirm_label="Update Balance"
       >
-        <DialogTitle>Update Patron Balance</DialogTitle>
-        <DialogContent>
-          <Typography variant="body2" sx={{ mb: 2 }}>
-            Current balance: ${patron?.balance.toFixed(2)}
-          </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            Enter the new balance amount for this patron
-          </Typography>
-          <TextField
-            autoFocus
-            label="New Balance"
-            type="number"
-            fullWidth
-            value={fine_amount_input}
-            onChange={(e) => set_fine_amount_input(e.target.value)}
-            inputProps={{ min: 0, step: 0.01 }}
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button
-            onClick={() => {
-              set_show_fine_dialog(false);
-              set_fine_amount_input('');
-            }}
-          >
-            Cancel
-          </Button>
-          <Button
-            onClick={handle_update_balance}
-            variant="contained"
-            disabled={
-              fine_amount_input === '' || parseFloat(fine_amount_input) < 0
-            }
-          >
-            Update Balance
-          </Button>
-        </DialogActions>
-      </Dialog>
+        <Typography variant="body2" sx={{ mb: 2 }}>
+          Current balance: ${patron?.balance.toFixed(2)}
+        </Typography>
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+          Enter the new balance amount for this patron
+        </Typography>
+        <TextField
+          autoFocus
+          label="New Balance"
+          type="number"
+          fullWidth
+          value={fine_amount_input}
+          onChange={(e) => set_fine_amount_input(e.target.value)}
+          inputProps={{ min: 0, step: 0.01 }}
+        />
+      </UpdateDialog>
 
       {/* Override Card Dialog */}
-      <Dialog
+      <UpdateDialog
         open={show_override_dialog}
-        onClose={() => {
+        title="Extend Library Card"
+        on_close={() => {
           set_show_override_dialog(false);
-          set_new_expiration_date('');
+          set_new_expiration_date(null);
         }}
+        on_confirm={handle_override_card}
+        confirm_disabled={!new_expiration_date}
+        confirm_label="Update Card"
       >
-        <DialogTitle>Extend Library Card</DialogTitle>
-        <DialogContent>
-          <Typography variant="body2" sx={{ mb: 2 }}>
-            Patron: {patron?.first_name} {patron?.last_name}
-          </Typography>
-          <Typography variant="body2" sx={{ mb: 2 }}>
-            Current expiration: {format_date(patron?.card_expiration_date)}
-          </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            Set new expiration date for this patron's library card
-          </Typography>
-          <TextField
-            autoFocus
-            label="New Expiration Date"
-            type="date"
-            fullWidth
-            value={new_expiration_date || getDefaultNewExpiration()}
-            onChange={(e) => set_new_expiration_date(e.target.value)}
-            InputLabelProps={{ shrink: true }}
-            inputProps={{
-              min: new Date().toISOString().split('T')[0], // Can't set to past date
-            }}
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button
-            onClick={() => {
-              set_show_override_dialog(false);
-              set_new_expiration_date('');
-            }}
-          >
-            Cancel
-          </Button>
-          <Button
-            onClick={handle_override_card}
-            variant="contained"
-            disabled={!new_expiration_date}
-          >
-            Update Card
-          </Button>
-        </DialogActions>
-      </Dialog>
+        <Typography variant="body2" sx={{ mb: 2 }}>
+          Patron: {patron?.first_name} {patron?.last_name}
+        </Typography>
+        <Typography variant="body2" sx={{ mb: 2 }}>
+          Current expiration:
+          {new Date(patron?.card_expiration_date).toLocaleDateString()}
+          {new_expiration_date && (
+            <>
+              <br />
+              New expiration:{' '}
+              {new_expiration_date ? new_expiration_date.toString() : 'N/A'}
+            </>
+          )}
+        </Typography>
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+          Set new expiration date for this patron's library card
+        </Typography>
+        <DatePicker
+          disablePast
+          label="New Expiration Date"
+          value={new_expiration_date || dayjs().add(2, 'year')}
+          onChange={(value) => {
+            set_new_expiration_date(value as dayjs.Dayjs | null);
+          }}
+          slotProps={{
+            popper: { placement: 'top-end' },
+          }}
+        />
+      </UpdateDialog>
 
       <Grid container spacing={3} sx={{ alignItems: 'stretch' }}>
         {/* Patron Information */}
-        <Grid size={{ xs: 12, sm: 6 }}>
-          <Card
-            sx={{
-              height: '100%',
-              borderRadius: 3,
-              transition: 'all 0.3s ease',
-              display: 'flex',
-              flexDirection: 'column',
-              '&:hover': {
-                boxShadow: 4,
-              },
-            }}
-          >
-            <CardContent
-              sx={{ p: 3, flex: 1, display: 'flex', flexDirection: 'column' }}
-            >
-              <CardHeaderSection
-                icon={<Person sx={{ fontSize: 32 }} />}
-                overline="Patron"
-                title={`${patron.first_name} ${patron.last_name}`}
-                avatar_src={patron.image_url}
-                bgcolor="primary.main"
-              />
+        <InfoCard>
+          <CardHeaderSection
+            icon={<Person sx={{ fontSize: 32 }} />}
+            overline="Patron"
+            title={`${patron.first_name} ${patron.last_name}`}
+            avatar_src={patron.image_url}
+            bgcolor="primary.main"
+          />
 
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                <Stack direction={'row'} spacing={2} sx={{ width: 1 }}>
-                  <InfoRow label="Patron ID" value={`#${patron.id}`} />
-                  <InfoRow
-                    label="Balance"
-                    value={
-                      <Chip
-                        label={`$${patron.balance.toFixed(2)}`}
-                        size="small"
-                        color={patron.balance > 0 ? 'warning' : 'success'}
-                        sx={{ fontWeight: 600 }}
-                      />
-                    }
-                  />
-                </Stack>
-                <InfoRow label="Email" value={patron.email} />
-                <Stack direction={'row'} spacing={2} sx={{ width: 1 }}>
-                  <InfoRow
-                    label="Books Checked Out"
-                    value={
-                      <Chip
-                        label={`${active_checkout_count} / 20`}
-                        size="small"
-                        color={
-                          hasTooManyBooks
-                            ? 'error'
-                            : active_checkout_count >= 15
-                            ? 'warning'
-                            : 'default'
-                        }
-                        sx={{ fontWeight: 600 }}
-                      />
-                    }
-                  />
-                  {patron.card_expiration_date && (
-                    <InfoRow
-                      label="Card Expires"
-                      value={
-                        <Chip
-                          label={format_date(patron.card_expiration_date)}
-                          size="small"
-                          color={isCardExpired ? 'error' : 'default'}
-                          sx={{ fontWeight: 600 }}
-                        />
-                      }
-                    />
-                  )}
-                </Stack>
-                <Stack direction={'row'} spacing={2} sx={{ width: 1 }}>
-                  <InfoRow label="Phone" value={patron.phone} />
-                </Stack>
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        {/* Item Information */}
-        <Grid size={{ xs: 12, sm: 6 }}>
-          <Card
-            sx={{
-              height: '100%',
-              borderRadius: 3,
-              transition: 'all 0.3s ease',
-              display: 'flex',
-              flexDirection: 'column',
-              '&:hover': {
-                boxShadow: 4,
-              },
-            }}
-          >
-            <CardContent
-              sx={{ p: 3, flex: 1, display: 'flex', flexDirection: 'column' }}
-            >
-              <CardHeaderSection
-                icon={<LibraryBooks sx={{ fontSize: 32 }} />}
-                overline="Library Item"
-                title={library_item.title}
-                bgcolor="secondary.main"
-              />
-
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                {library_item.description && (
-                  <Typography
-                    variant="body2"
-                    sx={{
-                      color: 'text.secondary',
-                      mb: 2,
-                      fontStyle: 'italic',
-                      display: '-webkit-box',
-                      WebkitLineClamp: 2,
-                      WebkitBoxOrient: 'vertical',
-                      overflow: 'hidden',
-                    }}
-                  >
-                    {library_item.description}
-                  </Typography>
-                )}
-                <Stack direction={'row'} spacing={2} sx={{ width: 1 }}>
-                  <InfoRow
-                    label="Item Type"
-                    value={
-                      <Chip
-                        label={library_item.item_type}
-                        size="small"
-                        color="secondary"
-                        sx={{ fontWeight: 600 }}
-                      />
-                    }
-                  />
-                  {library_item.publication_year && (
-                    <InfoRow
-                      label="Published"
-                      value={library_item.publication_year.toString()}
-                    />
-                  )}
-                </Stack>
-                {item_copy.branch_name && (
-                  <InfoRow label="Branch" value={item_copy.branch_name} />
-                )}
-                {item_copy.status && (
-                  <InfoRow
-                    label="Status"
-                    value={
-                      <Chip
-                        label={item_copy.status}
-                        size="small"
-                        color={
-                          item_copy.status === 'Available'
-                            ? 'success'
-                            : 'default'
-                        }
-                        sx={{ fontWeight: 600 }}
-                      />
-                    }
-                  />
-                )}
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        {/* Due Date Information */}
-        <Grid size={{ xs: 12, sm: 6 }}>
-          <Card
-            sx={{
-              height: '100%',
-              borderRadius: 3,
-              transition: 'all 0.3s ease',
-              display: 'flex',
-              flexDirection: 'column',
-              '&:hover': {
-                boxShadow: 4,
-              },
-            }}
-          >
-            <CardContent
-              sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}
-            >
-              <CardHeaderSection
-                icon={<CalendarToday sx={{ fontSize: 32 }} />}
-                overline="Due Date Information"
-                title={due_date ? format_date(due_date.toISOString()) : 'N/A'}
-                bgcolor="info.main"
-              />
-              <Stack
-                sx={{
-                  flex: 1,
-                  justifyContent: 'center',
-                }}
-              >
-                <Typography
-                  variant="body2"
-                  color="text.secondary"
-                  sx={{ mb: 2 }}
-                >
-                  Item must be returned by this date
-                </Typography>
-                <Box sx={{ mt: 'auto' }}>
-                  <InfoRow
-                    label="Loan Duration:"
-                    value={
-                      library_item &&
-                      String(library_item.item_type).toUpperCase() === 'VIDEO'
-                        ? library_item.publication_year &&
-                          library_item.publication_year >=
-                            new Date().getFullYear() - 1
-                          ? '3 days'
-                          : '1 week'
-                        : '4 weeks'
-                    }
-                  />
-                </Box>
-              </Stack>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        {/* Copy Information */}
-        <Grid size={{ xs: 12, sm: 6 }}>
-          <Card
-            sx={{
-              height: '100%',
-              borderRadius: 3,
-              transition: 'all 0.3s ease',
-              display: 'flex',
-              flexDirection: 'column',
-              '&:hover': {
-                boxShadow: 4,
-              },
-            }}
-          >
-            <CardContent
-              sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}
-            >
-              <CardHeaderSection
-                icon={
-                  <QrCode
-                    onClick={() => console.log('QR Code clicked')}
-                    sx={{ fontSize: 32 }}
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            <Stack direction={'row'} spacing={2} sx={{ width: 1 }}>
+              <InfoRow label="Patron ID" value={`#${patron.id}`} />
+              <InfoRow
+                label="Balance"
+                value={
+                  <Chip
+                    label={`$${patron.balance.toFixed(2)}`}
+                    size="small"
+                    color={patron.balance > 0 ? 'warning' : 'success'}
+                    sx={{ fontWeight: 600 }}
                   />
                 }
-                overline="Copy Information"
-                title={`Copy #${item_copy.id}`}
-                bgcolor="success.main"
               />
-              <Stack
+            </Stack>
+            <InfoRow label="Email" value={patron.email} />
+            <Stack direction={'row'} spacing={2} sx={{ width: 1 }}>
+              <InfoRow
+                label="Books Checked Out"
+                value={
+                  <Chip
+                    label={`${active_checkout_count} / 20`}
+                    size="small"
+                    color={
+                      hasTooManyBooks
+                        ? 'error'
+                        : active_checkout_count >= 15
+                        ? 'warning'
+                        : 'default'
+                    }
+                    sx={{ fontWeight: 600 }}
+                  />
+                }
+              />
+              {patron.card_expiration_date && (
+                <InfoRow
+                  label="Card Expires"
+                  value={
+                    <Chip
+                      label={patron.card_expiration_date}
+                      size="small"
+                      color={isCardExpired ? 'error' : 'default'}
+                      sx={{ fontWeight: 600 }}
+                    />
+                  }
+                />
+              )}
+            </Stack>
+            <Stack direction={'row'} spacing={2} sx={{ width: 1 }}>
+              <InfoRow label="Phone" value={patron.phone} />
+            </Stack>
+          </Box>
+        </InfoCard>
+
+        {/* Item Information */}
+        <InfoCard>
+          <CardHeaderSection
+            icon={<LibraryBooks sx={{ fontSize: 32 }} />}
+            overline="Library Item"
+            title={library_item.title}
+            bgcolor="secondary.main"
+          />
+
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            {library_item.description && (
+              <Typography
+                variant="body2"
                 sx={{
-                  gap: 2,
-                  flex: 1,
-                  justifyContent: 'center',
+                  color: 'text.secondary',
+                  mb: 2,
+                  fontStyle: 'italic',
+                  display: '-webkit-box',
+                  WebkitLineClamp: 2,
+                  WebkitBoxOrient: 'vertical',
+                  overflow: 'hidden',
                 }}
               >
-                <Grid container spacing={2} sx={{ width: 1 }}>
-                  <Grid size={{ xs: 12, sm: 6 }}>
-                    <InfoRow
-                      label="Condition"
-                      value={
-                        <ItemCopyConditionChip
-                          size="small"
-                          condition={item_copy?.condition || 'Good'}
-                        />
-                      }
+                {library_item.description}
+              </Typography>
+            )}
+            <Stack direction={'row'} spacing={2} sx={{ width: 1 }}>
+              <InfoRow
+                label="Item Type"
+                value={
+                  <Chip
+                    label={library_item.item_type}
+                    size="small"
+                    color="secondary"
+                    sx={{ fontWeight: 600 }}
+                  />
+                }
+              />
+              {library_item.publication_year && (
+                <InfoRow
+                  label="Published"
+                  value={library_item.publication_year.toString()}
+                />
+              )}
+            </Stack>
+            {item_copy.branch_name && (
+              <InfoRow label="Branch" value={item_copy.branch_name} />
+            )}
+            {item_copy.status && (
+              <InfoRow
+                label="Status"
+                value={
+                  <Chip
+                    label={item_copy.status}
+                    size="small"
+                    color={
+                      item_copy.status === 'Available' ? 'success' : 'default'
+                    }
+                    sx={{ fontWeight: 600 }}
+                  />
+                }
+              />
+            )}
+          </Box>
+        </InfoCard>
+
+        {/* Due Date Information */}
+        <InfoCard>
+          <CardHeaderSection
+            icon={<CalendarToday sx={{ fontSize: 32 }} />}
+            overline="Due Date Information"
+            title={due_date ? due_date.toLocaleDateString() : 'N/A'}
+            bgcolor="info.main"
+          />
+          <Stack
+            sx={{
+              flex: 1,
+              justifyContent: 'center',
+            }}
+          >
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+              Item must be returned by this date
+            </Typography>
+            <Box sx={{ mt: 'auto' }}>
+              <InfoRow
+                label="Loan Duration:"
+                value={
+                  library_item &&
+                  String(library_item.item_type).toUpperCase() === 'VIDEO'
+                    ? library_item.publication_year &&
+                      library_item.publication_year >=
+                        new Date().getFullYear() - 1
+                      ? '3 days'
+                      : '1 week'
+                    : '4 weeks'
+                }
+              />
+            </Box>
+          </Stack>
+        </InfoCard>
+
+        {/* Copy Information */}
+        <InfoCard>
+          <CardHeaderSection
+            icon={
+              <QrCode
+                onClick={() => console.log('QR Code clicked')}
+                sx={{ fontSize: 32 }}
+              />
+            }
+            overline="Copy Information"
+            title={`Copy #${item_copy.id}`}
+            bgcolor="success.main"
+          />
+          <Stack
+            sx={{
+              gap: 2,
+              flex: 1,
+              justifyContent: 'center',
+            }}
+          >
+            <Grid container spacing={2} sx={{ width: 1 }}>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <InfoRow
+                  label="Condition"
+                  value={
+                    <ItemCopyConditionChip
+                      size="small"
+                      condition={item_copy?.condition || 'Good'}
                     />
-                  </Grid>
-                  <Grid size={{ xs: 12, sm: 6 }}>
-                    <InfoRow label="Location" value={item_copy.branch_name} />
-                  </Grid>
-                </Grid>
-              </Stack>
-            </CardContent>
-          </Card>
-        </Grid>
+                  }
+                />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <InfoRow
+                  label="Location"
+                  value={item_copy.current_branch_name}
+                />
+              </Grid>
+            </Grid>
+          </Stack>
+        </InfoCard>
         {loading && (
           <Grid size={12}>
             <LinearProgress sx={{ width: 1, height: '0.5rem' }} />

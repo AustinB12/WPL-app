@@ -4,13 +4,10 @@ import {
   Button,
   Box,
   Alert,
-  AlertTitle,
   Step,
   StepLabel,
   Stepper,
-  Snackbar,
   Tooltip,
-  TextField,
   Paper,
   List,
   ListItem,
@@ -18,17 +15,7 @@ import {
   ListItemText,
   Card,
   CardContent,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Chip,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
+  Stack,
 } from '@mui/material';
 import { LibraryAdd } from '@mui/icons-material';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -37,7 +24,7 @@ import { PatronsDataGrid } from '../components/patrons/PatronsDataGrid';
 import { useCheckoutBook } from '../hooks/useTransactions';
 import { usePatronById } from '../hooks/usePatrons';
 import { ConfirmCheckoutDetails } from '../components/common/ConfirmCheckoutDetails';
-import type { Item_Copy } from '../types';
+import type { Item_Copy_Result } from '../types';
 import { CheckoutReceipt } from '../components/common/CheckoutReceipt';
 import { useCopiesOfLibraryItem } from '../hooks/useCopies';
 import { useLibraryItems } from '../hooks/useLibraryItems';
@@ -45,19 +32,22 @@ import { useLibraryItemById } from '../hooks/useLibraryItems';
 import { ItemCopyStatusChip } from '../components/copies/ItemCopyStatusChip';
 import { ItemCopyConditionChip } from '../components/copies/ItemCopyConditionChip';
 import { useSelectedBranch } from '../hooks/useBranchHooks';
-import { PageContainer } from '../components/common/PageBuilders';
+import { PageContainer, PageTitle } from '../components/common/PageBuilders';
+import { SearchWithNameOrId } from '../components/common/SearchWithNameOrId';
+import { useSnackbar } from '../hooks/useSnackbar';
+import { FineConfirmationDialog } from '../components/common/FineConfirmationDialog';
 
 const STEPS = [
   'Select Patron',
   'Select Library Item',
   'Select Copy',
   'Confirm Details',
-] as const;
+] as string[];
 
 interface CheckOutFormData {
   patron_id: number;
   library_item_id: number | null;
-  item: Item_Copy | null;
+  item: Item_Copy_Result | null;
 }
 
 // Component for searching and selecting library items
@@ -84,13 +74,10 @@ const LibraryItemSearchStep: FC<{
       <Typography variant="h6" gutterBottom>
         Search Library Items
       </Typography>
-      <TextField
-        fullWidth
-        label="Search by Title or Item ID"
-        value={search_term}
-        onChange={(e) => set_search_term(e.target.value)}
+      <SearchWithNameOrId
         sx={{ mb: 2 }}
-        placeholder="Enter title or item ID..."
+        search_term={search_term}
+        set_search_term={set_search_term}
       />
       <Paper sx={{ maxHeight: '60vh', overflow: 'auto' }}>
         <List>
@@ -136,7 +123,7 @@ const LibraryItemSearchStep: FC<{
 // Component for showing all copies of a library item
 const LibraryItemCopiesList: FC<{
   library_item_id: number;
-  on_copy_selected: (copy: Item_Copy) => void;
+  on_copy_selected: (copy: Item_Copy_Result) => void;
   selected_copy_id?: number | null;
   patron_id?: number;
 }> = ({ library_item_id, on_copy_selected, selected_copy_id, patron_id }) => {
@@ -328,13 +315,12 @@ export const CheckOutItem: FC = () => {
     item: null,
   });
 
-  const [error, set_error] = useState<string | null>(null);
-  const [queue_info, set_queue_info] = useState<Array<{
-    patron_id: number;
-    patron_name: string;
-    queue_position: number;
-    status: string;
-  }> | null>(null);
+  // const [queue_info, set_queue_info] = useState<Array<{
+  //   patron_id: number;
+  //   patron_name: string;
+  //   queue_position: number;
+  //   status: string;
+  // }> | null>(null);
   const [receipt_open, set_receipt_open] = useState<boolean>(false);
   const [active_step, set_active_step] = useState(0);
   const [fine_confirmation_open, set_fine_confirmation_open] = useState(false);
@@ -343,6 +329,8 @@ export const CheckOutItem: FC = () => {
     patron_id: number;
     copy_id: number;
   } | null>(null);
+
+  const { show_snackbar } = useSnackbar();
 
   const {
     mutate: checkoutBook,
@@ -365,6 +353,11 @@ export const CheckOutItem: FC = () => {
         },
         {
           onSuccess: () => {
+            show_snackbar({
+              message: 'Item checked out successfully!',
+              severity: 'success',
+              title: 'Success!',
+            });
             set_receipt_open(true);
             set_fine_confirmation_open(false);
             set_pending_checkout(null);
@@ -372,20 +365,15 @@ export const CheckOutItem: FC = () => {
           onError: (error: Error) => {
             const error_message = error.message || 'Failed to check out item';
 
-            set_error(error_message);
+            show_snackbar({ message: error_message, severity: 'error' });
             set_fine_confirmation_open(false);
             set_pending_checkout(null);
           },
         }
       );
     },
-    [checkoutBook, form_data.patron_id, form_data.item]
+    [checkoutBook, form_data.patron_id, form_data.item?.id, show_snackbar]
   );
-
-  const handle_retry = useCallback(() => {
-    set_error(null);
-    handle_checkout_book();
-  }, [handle_checkout_book]);
 
   const handle_next = () => {
     if (active_step === STEPS.length - 1) {
@@ -417,8 +405,6 @@ export const CheckOutItem: FC = () => {
   const handle_reset = () => {
     set_active_step(0);
     set_form_data({ patron_id: 0, library_item_id: null, item: null });
-    set_error(null);
-    set_queue_info(null);
     reset();
   };
 
@@ -460,153 +446,15 @@ export const CheckOutItem: FC = () => {
     set_form_data((prev) => ({ ...prev, library_item_id, item: null }));
   };
 
-  const handle_copy_selected = (copy: Item_Copy) => {
+  const handle_copy_selected = (copy: Item_Copy_Result) => {
+    reset();
     set_form_data((prev) => ({ ...prev, item: copy }));
   };
 
   return (
     <LocalizationProvider dateAdapter={AdapterDateFns}>
-      <PageContainer>
-        <Typography
-          variant="h3"
-          component="h1"
-          gutterBottom
-          title={'Active Step: ' + active_step}
-          sx={{
-            fontWeight: 'bold',
-            mb: 4,
-            display: 'flex',
-            alignItems: 'center',
-            gap: 2,
-            fontSize: { xs: '1.5rem', sm: '2rem', md: '2.5rem' },
-          }}
-        >
-          <LibraryAdd color="primary" fontSize="large" />
-          Check Out Item
-        </Typography>
-
-        <Snackbar
-          open={!!error}
-          autoHideDuration={60000}
-          onClose={() => {
-            set_error(null);
-            set_queue_info(null);
-          }}
-          anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-        >
-          <Alert
-            severity="error"
-            sx={{ mb: 3, maxWidth: 600 }}
-            onClose={() => {
-              set_error(null);
-              set_queue_info(null);
-            }}
-          >
-            <AlertTitle>Check-out Error</AlertTitle>
-            {error}
-            {queue_info && queue_info.length > 0 && (
-              <Box sx={{ mt: 2 }}>
-                <Typography variant="subtitle2" fontWeight="bold" gutterBottom>
-                  Reservation Queue:
-                </Typography>
-                <TableContainer
-                  component={Paper}
-                  variant="outlined"
-                  sx={{ mt: 1 }}
-                >
-                  <Table size="small">
-                    <TableHead>
-                      <TableRow>
-                        <TableCell>
-                          <strong>Position</strong>
-                        </TableCell>
-                        <TableCell>
-                          <strong>Patron Name</strong>
-                        </TableCell>
-                        <TableCell>
-                          <strong>Status</strong>
-                        </TableCell>
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {queue_info.map((q) => (
-                        <TableRow key={q.patron_id}>
-                          <TableCell>#{q.queue_position}</TableCell>
-                          <TableCell>{q.patron_name}</TableCell>
-                          <TableCell>
-                            <Chip
-                              label={q.status}
-                              size="small"
-                              color={
-                                q.status === 'ready' ? 'success' : 'default'
-                              }
-                            />
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </TableContainer>
-              </Box>
-            )}
-            <Button
-              size="small"
-              onClick={handle_retry}
-              sx={{ mt: 2, display: 'block' }}
-            >
-              Try Again
-            </Button>
-          </Alert>
-        </Snackbar>
-
-        {/* Fine Confirmation Dialog */}
-        <Dialog
-          open={fine_confirmation_open}
-          onClose={() => {
-            set_fine_confirmation_open(false);
-            set_pending_checkout(null);
-          }}
-          maxWidth="sm"
-          fullWidth
-        >
-          <DialogTitle>Clear Outstanding Fines?</DialogTitle>
-          <DialogContent>
-            <Alert severity="warning" sx={{ mb: 2 }}>
-              <AlertTitle>Patron Has Outstanding Fines</AlertTitle>
-              This patron has an outstanding balance of{' '}
-              <strong>${patron_balance.toFixed(2)}</strong>.
-            </Alert>
-            <Typography variant="body1" sx={{ mt: 2 }}>
-              Would you like to clear the fine? This assumes the fine was paid
-              externally.
-            </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-              Selecting "No" will cancel the checkout transaction.
-            </Typography>
-          </DialogContent>
-          <DialogActions>
-            <Button
-              onClick={() => {
-                set_fine_confirmation_open(false);
-                set_pending_checkout(null);
-              }}
-              color="error"
-            >
-              No, Cancel Transaction
-            </Button>
-            <Button
-              onClick={() => {
-                if (pending_checkout) {
-                  handle_checkout_book(true);
-                }
-              }}
-              variant="contained"
-              color="primary"
-            >
-              Yes, Clear Fine and Continue
-            </Button>
-          </DialogActions>
-        </Dialog>
+      <PageContainer width="xl">
+        <PageTitle title="Check Out Item" Icon_Component={LibraryAdd} />
 
         <Stepper activeStep={active_step}>
           {STEPS.map((label) => (
@@ -620,25 +468,30 @@ export const CheckOutItem: FC = () => {
             <Typography sx={{ mt: 2, mb: 1 }}>
               {"All steps completed - you're finished"}
             </Typography>
-            <Box sx={{ display: 'flex', flexDirection: 'row', pt: 2 }}>
+            <Stack direction={'row'} sx={{ pt: 2 }}>
               <Box sx={{ flex: '1 1 auto' }} />
               <Button onClick={handle_reset}>Reset</Button>
-            </Box>
+            </Stack>
           </>
         ) : (
           <>
-            <Box
+            <Stack
               sx={{
                 flex: 1,
-                mt: 2,
+                mt: 1,
                 overflow: 'hidden',
               }}
             >
               {active_step === 0 && (
                 <PatronsDataGrid
+                  check_card_and_balance={false}
                   onPatronSelected={handle_patron_selected}
-                  check_card_and_balance={true}
-                  hidden_columns={['name_link']}
+                  hidden_columns={[
+                    'name_link',
+                    'local_branch_id',
+                    'phone',
+                    'birthday',
+                  ]}
                 />
               )}
               {active_step === 1 && (
@@ -663,15 +516,8 @@ export const CheckOutItem: FC = () => {
                   loading={loading}
                 />
               )}
-              <Box />
-            </Box>
-            <Box
-              sx={{
-                display: 'flex',
-                flexDirection: 'row',
-                pt: 2,
-              }}
-            >
+            </Stack>
+            <Stack direction={'row'} sx={{ pt: 2 }}>
               <Button
                 disabled={active_step === 0}
                 onClick={handle_back}
@@ -684,7 +530,6 @@ export const CheckOutItem: FC = () => {
               <Tooltip
                 children={
                   <span>
-                    {/* this span is needed to avoid a ref error caused by MUI code */}
                     <Button
                       variant="outlined"
                       onClick={handle_next}
@@ -696,7 +541,7 @@ export const CheckOutItem: FC = () => {
                 }
                 title={get_tooltip_message()}
               ></Tooltip>
-            </Box>
+            </Stack>
           </>
         )}
       </PageContainer>
@@ -704,6 +549,19 @@ export const CheckOutItem: FC = () => {
         open={receipt_open}
         on_close={() => set_receipt_open(false)}
         receipt={checkout_receipt}
+      />
+      <FineConfirmationDialog
+        open={fine_confirmation_open}
+        patron_balance={patron_balance}
+        on_close={() => {
+          set_fine_confirmation_open(false);
+          set_pending_checkout(null);
+        }}
+        on_confirm={() => {
+          if (pending_checkout) {
+            handle_checkout_book(true);
+          }
+        }}
       />
     </LocalizationProvider>
   );

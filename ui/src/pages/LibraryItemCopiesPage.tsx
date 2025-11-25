@@ -1,8 +1,9 @@
 import { useState, type PropsWithChildren } from 'react';
-import { Container, Fab, Typography, Box } from '@mui/material';
+import { Fab, Box } from '@mui/material';
 import { Add, TableRows } from '@mui/icons-material';
 import { CopiesDataGrid } from '../components/copies/CopiesDataGrid';
 import { CreateCopyDialog } from '../components/copies/CreateCopyDialog';
+import { PageContainer, PageTitle } from '../components/common/PageBuilders';
 
 function LibraryItemCopiesPageContent({ children }: PropsWithChildren) {
   const [dialog_open, set_dialog_open] = useState(false);
@@ -15,31 +16,8 @@ function LibraryItemCopiesPageContent({ children }: PropsWithChildren) {
     set_dialog_open(true);
   };
   return (
-    <Container
-      maxWidth="xl"
-      sx={{
-        py: 3,
-        height: '100vh',
-        display: 'flex',
-        flexDirection: 'column',
-      }}
-    >
-      <Typography
-        variant="h3"
-        component="h1"
-        gutterBottom
-        sx={{
-          fontWeight: 'bold',
-          mb: 1,
-          display: 'flex',
-          alignItems: 'center',
-          gap: 2,
-          fontSize: { xs: '1.5rem', sm: '2rem', md: '2.5rem' },
-        }}
-      >
-        <TableRows color="primary" fontSize="large" />
-        All Copies
-      </Typography>
+    <PageContainer width="xl">
+      <PageTitle title="Library Item Copies" Icon_Component={TableRows} />
       <Box
         sx={{
           flex: 1,
@@ -47,7 +25,6 @@ function LibraryItemCopiesPageContent({ children }: PropsWithChildren) {
           flexDirection: 'column',
           overflow: 'hidden',
           minHeight: 0,
-          mb: 8,
         }}
       >
         {children}
@@ -66,7 +43,7 @@ function LibraryItemCopiesPageContent({ children }: PropsWithChildren) {
         <Add />
       </Fab>
       <CreateCopyDialog open={dialog_open} on_close={handle_close} />
-    </Container>
+    </PageContainer>
   );
 }
 

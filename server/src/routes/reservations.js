@@ -1,23 +1,25 @@
 import express from 'express';
 import { body, validationResult } from 'express-validator';
 import * as db from '../config/database.js';
+import { format_sql_datetime } from '../utils.js';
 
 const router = express.Router();
 
 // Helper function to check and process expired reservations
 const process_expired_reservations = async () => {
+  const now = format_sql_datetime(new Date());
   try {
     // Find all "ready" reservations that have expired (more than 5 days old)
     const expired_reservations = await db.execute_query(
       'SELECT * FROM RESERVATIONS WHERE status = "ready" AND expiry_date < ?',
-      [new Date().toISOString()]
+      [now]
     );
 
     for (const reservation of expired_reservations) {
       // Mark reservation as expired
       await db.update_record('RESERVATIONS', reservation.id, {
         status: 'expired',
-        updated_at: new Date().toISOString(),
+        updated_at: now,
       });
 
       // Set item back to "returned" status
@@ -29,7 +31,7 @@ const process_expired_reservations = async () => {
       if (copies.length > 0) {
         await db.update_record('LIBRARY_ITEM_COPIES', copies[0].id, {
           status: 'returned',
-          updated_at: new Date().toISOString(),
+          updated_at: now,
         });
 
         // Check for next person in queue
@@ -45,14 +47,14 @@ const process_expired_reservations = async () => {
 
           await db.update_record('RESERVATIONS', next_in_queue[0].id, {
             status: 'ready',
-            expiry_date: new_expiry.toISOString(),
-            updated_at: new Date().toISOString(),
+            expiry_date: format_sql_datetime(new_expiry),
+            updated_at: now,
           });
 
           // Set item back to Reserved (ready for pickup)
           await db.update_record('LIBRARY_ITEM_COPIES', copies[0].id, {
             status: 'Reserved',
-            updated_at: new Date().toISOString(),
+            updated_at: now,
           });
         }
       }
@@ -243,7 +245,11 @@ router.post(
 
         // Check if the copy can be reserved
         // Allow reserving copies that are Available, Checked Out, or Returned (not yet available)
-        const reservable_statuses = ['Available', 'Checked Out', 'Returned (not yet available)'];
+        const reservable_statuses = [
+          'Available',
+          'Checked Out',
+          'Returned (not yet available)',
+        ];
         if (!reservable_statuses.includes(selected_copy.status)) {
           return res.status(400).json({
             error: 'Copy not reservable',
@@ -267,9 +273,9 @@ router.post(
       // If no copy_id was provided, fall back to querying for any available copy
       if (!copy_id) {
         available_copies = await db.execute_query(
-        'SELECT * FROM LIBRARY_ITEM_COPIES WHERE library_item_id = ? AND status = "Available" LIMIT 1',
-        [library_item.id]
-      );
+          'SELECT * FROM LIBRARY_ITEM_COPIES WHERE library_item_id = ? AND status = "Available" LIMIT 1',
+          [library_item.id]
+        );
       }
 
       // Step 9-10: Check if item is already reserved by this patron
@@ -321,6 +327,8 @@ router.post(
           ? 'ready'
           : 'waiting';
 
+      const now = format_sql_datetime(new Date());
+
       // Set expiry date to 5 days from now (only applies when status is "ready")
       const reservation_date = new Date();
       const expiry_date = new Date(reservation_date);
@@ -329,12 +337,12 @@ router.post(
       const reservation_data = {
         library_item_id: library_item.id,
         patron_id,
-        reservation_date: reservation_date.toISOString(),
-        expiry_date: expiry_date.toISOString(),
+        reservation_date: format_sql_datetime(reservation_date),
+        expiry_date: format_sql_datetime(expiry_date),
         status: reservation_status,
         queue_position,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
+        created_at: now,
+        updated_at: now,
       };
 
       // Step 13: Create reservation record
@@ -345,25 +353,28 @@ router.post(
 
       // Step 14: Update item status to Reserved (ready for pickup) if reservation is ready
       // Use the selected copy if available, otherwise use the first available copy found
-      const copy_to_reserve = selected_copy && selected_copy.status === 'Available' 
-        ? selected_copy 
-        : available_copies.length > 0 ? available_copies[0] : null;
-      
+      const copy_to_reserve =
+        selected_copy && selected_copy.status === 'Available'
+          ? selected_copy
+          : available_copies.length > 0
+            ? available_copies[0]
+            : null;
+
       if (reservation_status === 'ready' && copy_to_reserve) {
         await db.update_record('LIBRARY_ITEM_COPIES', copy_to_reserve.id, {
           status: 'Reserved',
-          updated_at: new Date().toISOString(),
+          updated_at: now,
         });
       }
 
       // Step 16: Log reservation transaction
       // Use the selected copy if provided, otherwise use the copy that was reserved (if any)
-      const transaction_copy_id = selected_copy 
-        ? selected_copy.id 
-        : copy_to_reserve 
-          ? copy_to_reserve.id 
+      const transaction_copy_id = selected_copy
+        ? selected_copy.id
+        : copy_to_reserve
+          ? copy_to_reserve.id
           : null;
-      
+
       const transaction_data = {
         copy_id: transaction_copy_id,
         patron_id,
@@ -374,8 +385,8 @@ router.post(
           reservation_status === 'ready'
             ? 'Item ready for pickup - on reserved shelf'
             : 'Patron waiting in queue for item',
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
+        created_at: now,
+        updated_at: now,
       };
 
       await db.create_record('TRANSACTIONS', transaction_data);
@@ -441,18 +452,20 @@ router.put('/:id/fulfill', async (req, res) => {
     const expiry_date = new Date();
     expiry_date.setDate(expiry_date.getDate() + 5);
 
+    const now = format_sql_datetime(new Date());
+
     // Update reservation status to 'ready' and set expiry date
     await db.update_record('RESERVATIONS', req.params.id, {
       status: 'ready',
-      expiry_date: expiry_date.toISOString(),
-      notification_sent: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
+      expiry_date: format_sql_datetime(expiry_date),
+      notification_sent: now,
+      updated_at: now,
     });
 
     // Reserve the item copy
     await db.update_record('LIBRARY_ITEM_COPIES', available_copies[0].id, {
       status: 'Reserved',
-      updated_at: new Date().toISOString(),
+      updated_at: now,
     });
 
     // Log transaction for fulfillment
@@ -463,8 +476,8 @@ router.put('/:id/fulfill', async (req, res) => {
       transaction_type: 'Reservation Fulfilled',
       status: 'Active',
       notes: `Reservation fulfilled - item available for pickup. Expires in 5 days.`,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
+      created_at: now,
+      updated_at: now,
     });
 
     // Update queue positions for remaining reservations
@@ -480,7 +493,7 @@ router.put('/:id/fulfill', async (req, res) => {
       data: {
         reservation_id: req.params.id,
         copy_id: available_copies[0].id,
-        expiry_date: expiry_date.toISOString(),
+        expiry_date: format_sql_datetime(expiry_date),
       },
     });
   } catch (error) {
@@ -544,7 +557,7 @@ router.get('/validate-patron/:patron_id', async (req, res) => {
 // Should be called periodically (e.g., daily cron job)
 router.put('/expire-old', async (req, res) => {
   try {
-    const today = new Date().toISOString();
+    const today = format_sql_datetime(new Date());
 
     // Find all ready reservations that have expired
     const expired_reservations = await db.execute_query(
@@ -558,7 +571,7 @@ router.put('/expire-old', async (req, res) => {
       // Update reservation status to expired
       await db.update_record('RESERVATIONS', reservation.id, {
         status: 'expired',
-        updated_at: new Date().toISOString(),
+        updated_at: today,
       });
 
       // Get the reserved copy and make it available again
@@ -570,7 +583,7 @@ router.put('/expire-old', async (req, res) => {
       if (reserved_copies.length > 0) {
         await db.update_record('LIBRARY_ITEM_COPIES', reserved_copies[0].id, {
           status: 'Available',
-          updated_at: new Date().toISOString(),
+          updated_at: today,
         });
       }
 
@@ -582,8 +595,8 @@ router.put('/expire-old', async (req, res) => {
         transaction_type: 'Reservation Expired',
         status: 'Completed',
         notes: 'Reservation expired - patron did not collect within 5 days',
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
+        created_at: today,
+        updated_at: today,
       });
 
       expired_count++;
@@ -604,6 +617,7 @@ router.put('/expire-old', async (req, res) => {
 
 // DELETE /api/v1/reservations/:id - Cancel reservation
 router.delete('/:id', async (req, res) => {
+  const now = format_sql_datetime(new Date());
   try {
     const reservation = await db.get_by_id('RESERVATIONS', req.params.id);
 
@@ -622,7 +636,7 @@ router.delete('/:id', async (req, res) => {
     // Update reservation status to cancelled
     await db.update_record('RESERVATIONS', req.params.id, {
       status: 'cancelled',
-      updated_at: new Date().toISOString(),
+      updated_at: now,
     });
 
     // If there was a reserved copy, we need to handle it carefully
@@ -647,8 +661,8 @@ router.delete('/:id', async (req, res) => {
 
         await db.update_record('RESERVATIONS', next_reservation.id, {
           status: 'ready',
-          expiry_date: new_expiry.toISOString(),
-          updated_at: new Date().toISOString(),
+          expiry_date: format_sql_datetime(new_expiry),
+          updated_at: now,
         });
 
         // Keep the copy as "Reserved" for the promoted reservation
@@ -657,7 +671,7 @@ router.delete('/:id', async (req, res) => {
         // No waiting reservations, so make the copy available
         await db.update_record('LIBRARY_ITEM_COPIES', reserved_copies[0].id, {
           status: 'Available',
-          updated_at: new Date().toISOString(),
+          updated_at: now,
         });
       }
     }
@@ -676,8 +690,8 @@ router.delete('/:id', async (req, res) => {
       transaction_type: 'Reservation Cancelled',
       status: 'Completed',
       notes: 'Reservation cancelled',
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
+      created_at: now,
+      updated_at: now,
     });
 
     res.json({

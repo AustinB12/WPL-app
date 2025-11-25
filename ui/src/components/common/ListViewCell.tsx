@@ -45,7 +45,9 @@ export function ListViewCell({
             label={`${patron.active_checkouts || 0}/20`}
             color={(patron.active_checkouts || 0) >= 20 ? 'error' : 'default'}
             size={'small'}
-            variant={(patron.active_checkouts || 0) >= 20 ? 'filled' : 'outlined'}
+            variant={
+              (patron.active_checkouts || 0) >= 20 ? 'filled' : 'outlined'
+            }
           />
           <Chip
             label={expired_card ? 'Expired' : 'Active'}
@@ -55,10 +57,6 @@ export function ListViewCell({
           />
         </Stack>
       </Stack>
-      {/* <Stack direction="row" sx={{ gap: 0.5 }}>
-        <EditAction {...props} />
-        <DeleteAction {...props} />
-      </Stack> */}
     </Stack>
   );
 }

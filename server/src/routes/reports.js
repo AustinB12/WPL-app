@@ -350,7 +350,7 @@ router.get('/stats/overview', function (req, res) {
         COUNT(*) as total_items,
         SUM(CASE WHEN status = 'Available' THEN 1 ELSE 0 END) as available_items,
         SUM(CASE WHEN status = 'Checked Out' THEN 1 ELSE 0 END) as borrowed_items,
-        SUM(CASE WHEN status = 'Unshelved' THEN 1 ELSE 0 END) as unshelved_items,
+        SUM(CASE WHEN status = 'Returned (not yet available)' THEN 1 ELSE 0 END) as unshelved_items,
         SUM(CASE WHEN status = 'Damaged' THEN 1 ELSE 0 END) as damaged_items,
         SUM(CASE WHEN status = 'Reserved' THEN 1 ELSE 0 END) as reserved_items
       FROM LIBRARY_ITEM_COPIES

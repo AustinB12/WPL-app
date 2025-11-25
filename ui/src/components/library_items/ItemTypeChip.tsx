@@ -7,7 +7,7 @@ import {
   YouTube,
   Album,
 } from '@mui/icons-material';
-import { Chip, useTheme } from '@mui/material';
+import { Chip, useTheme, type ChipProps, type SxProps } from '@mui/material';
 import type { JSX } from 'react';
 import type { Library_Item_Type } from '../../types';
 import { mangoFusionPalette } from '@mui/x-charts/colorPalettes';
@@ -107,7 +107,15 @@ const ITEM_TYPE_MAP_LIGHT: Record<Library_Item_Type, Item_Type_Config> = {
   },
 };
 
-const ItemTypeChip = ({ item_type }: { item_type: Library_Item_Type }) => {
+const ItemTypeChip = ({
+  item_type,
+  size = 'medium',
+  sx,
+}: {
+  item_type: Library_Item_Type;
+  size?: ChipProps['size'];
+  sx?: SxProps;
+}) => {
   const theme = useTheme();
   const is_dark = theme.palette.mode === 'dark';
   const ITEM_TYPE_MAP = is_dark ? ITEM_TYPE_MAP_DARK : ITEM_TYPE_MAP_LIGHT;
@@ -119,11 +127,13 @@ const ItemTypeChip = ({ item_type }: { item_type: Library_Item_Type }) => {
 
   return (
     <Chip
+      size={size}
       variant={is_dark ? 'outlined' : 'filled'}
       sx={{
         borderColor: color,
         color: is_dark ? color : 'white',
         bgcolor: is_dark ? 'transparent' : color,
+        ...sx,
       }}
       label={label}
       icon={icon}

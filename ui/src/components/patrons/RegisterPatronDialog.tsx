@@ -39,10 +39,11 @@ export const RegisterPatronDialog = ({
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const handleChange = (field: string) => (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({ ...formData, [field]: e.target.value });
-    setError('');
-  };
+  const handleChange =
+    (field: string) => (e: React.ChangeEvent<HTMLInputElement>) => {
+      setFormData({ ...formData, [field]: e.target.value });
+      setError('');
+    };
 
   const handleSubmit = async () => {
     // Validate required fields
@@ -132,7 +133,7 @@ export const RegisterPatronDialog = ({
   const getDefaultCardExpiration = () => {
     const date = new Date();
     date.setFullYear(date.getFullYear() + 2);
-    return date.toISOString().split('T')[0];
+    return date.toLocaleString().split('T')[0];
   };
 
   // Initialize form with default card expiration date when dialog opens
@@ -237,7 +238,13 @@ export const RegisterPatronDialog = ({
         <Button
           onClick={handleSubmit}
           variant="contained"
-          disabled={loading || !formData.first_name || !formData.last_name || !formData.birthday || !formData.card_expiration_date}
+          disabled={
+            loading ||
+            !formData.first_name ||
+            !formData.last_name ||
+            !formData.birthday ||
+            !formData.card_expiration_date
+          }
         >
           {loading ? 'Creating...' : 'Create Patron'}
         </Button>
