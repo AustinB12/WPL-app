@@ -19,8 +19,9 @@ import {
 } from '../../hooks/useLibraryItems';
 import ItemTypeChip from './ItemTypeChip';
 import { BaseDataGrid } from '../common/BaseDataGrid';
-import { Delete, Edit } from '@mui/icons-material';
+import { Delete, Edit, ReadMore } from '@mui/icons-material';
 import { useSnackbar } from '../../hooks/useSnackbar';
+import { useNavigate } from 'react-router-dom';
 
 export const LibraryItemDataGrid = () => {
   const { show_snackbar } = useSnackbar();
@@ -35,6 +36,7 @@ export const LibraryItemDataGrid = () => {
   );
   const [item_to_edit, set_item_to_edit] = useState<Library_Item | null>(null);
   const { data: rows, isLoading: loading, error } = useLibraryItems();
+  const navigate = useNavigate();
 
   const delete_mutation = useDeleteLibraryItem({
     onSuccess: () => {
@@ -84,10 +86,16 @@ export const LibraryItemDataGrid = () => {
     });
   }
 
-  const handle_item_selected = useCallback((item: Library_Item) => {
-    set_selected_item(item);
-    set_details_open(true);
-  }, []);
+  const handle_item_selected = useCallback(
+    (id: GridRowId) => {
+      const item = rows?.find((row) => row.id === id);
+      if (item) {
+        set_selected_item(item);
+        set_details_open(true);
+      }
+    },
+    [rows]
+  );
 
   const handle_delete_click = useCallback(
     (id: GridRowId) => {
@@ -149,6 +157,7 @@ export const LibraryItemDataGrid = () => {
           return <ItemTypeChip item_type={params.value} />;
         },
       },
+
       {
         field: 'description',
         headerName: 'Description',
@@ -165,26 +174,30 @@ export const LibraryItemDataGrid = () => {
       {
         field: 'actions',
         type: 'actions',
-        width: 60,
+        width: 150,
         getActions: (params) => [
           <GridActionsCellItem
-            key="delete"
-            icon={<Delete />}
-            label="Delete"
-            onClick={() => handle_delete_click(params.id)}
-            showInMenu
+            key="details"
+            icon={<ReadMore />}
+            label="Details"
+            onClick={() => handle_item_selected(params.id)}
           />,
           <GridActionsCellItem
             key="edit"
             icon={<Edit />}
             label="Edit"
             onClick={() => handle_edit_click(params.id)}
-            showInMenu
+          />,
+          <GridActionsCellItem
+            key="delete"
+            icon={<Delete />}
+            label="Delete"
+            onClick={() => handle_delete_click(params.id)}
           />,
         ],
       },
     ],
-    [handle_delete_click, handle_edit_click]
+    [handle_delete_click, handle_edit_click, handle_item_selected]
   );
 
   return (
@@ -197,9 +210,11 @@ export const LibraryItemDataGrid = () => {
           columns={columns}
           loading={loading}
           pageSizeOptions={[10, 25, 50, 100]}
-          onRowDoubleClick={(params) =>
-            handle_item_selected(params.row as Library_Item)
-          }
+          onRowDoubleClick={(params) => {
+            // handle_item_selected(params.row as Library_Item);
+            console.log('double clicked row:', params.row);
+            navigate(`/library-item/${params.id}`);
+          }}
         />
       </Box>
       <LibraryItemDetails

@@ -1,4 +1,11 @@
-import { Container, Typography, type SxProps, type Theme } from '@mui/material';
+import {
+  Container,
+  Skeleton,
+  Stack,
+  Typography,
+  type SxProps,
+  type Theme,
+} from '@mui/material';
 import { type PropsWithChildren } from 'react';
 
 export const PageContainer = ({
@@ -31,25 +38,43 @@ interface Page_Title_Props {
   title: string;
   Icon_Component: React.ElementType;
   sx?: SxProps<Theme>;
+  loading?: boolean;
 }
 
-export function PageTitle({ title, Icon_Component, sx }: Page_Title_Props) {
+export function PageTitle({
+  title,
+  Icon_Component,
+  sx,
+  loading,
+}: Page_Title_Props) {
   return (
-    <Typography
-      variant="h3"
-      component="h1"
-      gutterBottom
-      sx={{
-        fontWeight: 'bold',
-        display: 'flex',
-        alignItems: 'center',
-        gap: 2,
-        fontSize: { xs: '1.5rem', sm: '2rem', md: '2.5rem' },
-        ...sx,
-      }}
-    >
+    <Stack direction="row" alignItems="center" spacing={2}>
       <Icon_Component color="primary" fontSize="large" />
-      {title}
-    </Typography>
+
+      <Typography
+        variant="h1"
+        gutterBottom
+        sx={{
+          fontWeight: 'bold',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 2,
+          fontSize: { xs: '1.5rem', sm: '2rem', md: '2.5rem' },
+          ...sx,
+        }}
+      >
+        {loading ? (
+          <Skeleton
+            variant="text"
+            sx={{
+              fontSize: { xs: '2.5rem', sm: '3rem', md: '3.25rem' },
+              width: `min(70vw, ${Math.round(title.length * 1.2) + 'ch'})`,
+            }}
+          ></Skeleton>
+        ) : (
+          title
+        )}
+      </Typography>
+    </Stack>
   );
 }

@@ -248,7 +248,7 @@
 //   };
 
 //   const availableCopies = copies?.filter((copy: Copy) =>
-//     copy.status === 'Available' || copy.status === 'Checked Out' || copy.status === 'Returned (not yet available)'
+//     copy.status === 'Available' || copy.status === 'Checked Out' || copy.status === 'Unshelved'
 //   ) || [];
 
 //   const selectedCopy = copies?.find((c: Copy) => c.id === selectedCopyId);

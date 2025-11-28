@@ -244,12 +244,8 @@ router.post(
         selected_copy = copy_validation[0];
 
         // Check if the copy can be reserved
-        // Allow reserving copies that are Available, Checked Out, or Returned (not yet available)
-        const reservable_statuses = [
-          'Available',
-          'Checked Out',
-          'Returned (not yet available)',
-        ];
+        // Allow reserving copies that are Available, Checked Out, or Unshelved
+        const reservable_statuses = ['Available', 'Checked Out', 'Unshelved'];
         if (!reservable_statuses.includes(selected_copy.status)) {
           return res.status(400).json({
             error: 'Copy not reservable',

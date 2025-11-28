@@ -27,7 +27,7 @@ const validate_item_copy = [
       'Damaged',
       'Unshelved',
       'Lost',
-      'Returned (not yet available)',
+      'Unshelved',
     ])
     .withMessage('Invalid status'),
   body('cost')
@@ -85,41 +85,65 @@ router.get('/', async (req, res) => {
         ci.item_type,
         ci.publication_year,
         ci.description,
+        ci.congress_code,
         b.id as current_branch_id,
         b.branch_name as current_branch_name,
         bb.id as owning_branch_id,
-        bb.branch_name as owning_branch_name
+        bb.branch_name as owning_branch_name,
+        bk.author,
+        bk.publisher,
+        bk.genre as book_genre,
+        bk.number_of_pages,
+        v.director,
+        v.studio,
+        v.format as video_format,
+        v.duration_minutes,
+        v.rating as video_rating,
+        v.genre as video_genre,
+        ab.narrator,
+        ab.duration_in_seconds as audiobook_duration,
+        ab.publisher as audiobook_publisher,
+        ab.genre as audiobook_genre,
+        va.artist as vinyl_artist,
+        va.color as vinyl_color,
+        va.number_of_tracks as vinyl_tracks,
+        va.genre as vinyl_genre,
+        cd.artist as cd_artist,
+        cd.record_label,
+        cd.number_of_tracks as cd_tracks,
+        cd.genre as cd_genre,
+        per.pages as periodical_pages,
+        per.issue_number as periodical_issue_number,
+        per.publication_date as periodical_publication_date,
+        mag.subscription_cost as magazine_subscription_cost,
+        mag.publisher as magazine_publisher,
+        mag.issue_number as magazine_issue_number,
+        mag.publication_month as magazine_publication_month,
+        mag.publication_year as magazine_publication_year,
+        ROW_NUMBER() OVER (PARTITION BY lic.library_item_id ORDER BY lic.id) as copy_number,
+        COUNT(*) OVER (PARTITION BY lic.library_item_id) as total_copies
       FROM LIBRARY_ITEM_COPIES lic
       JOIN LIBRARY_ITEMS ci ON lic.library_item_id = ci.id
       LEFT JOIN BRANCHES b ON lic.current_branch_id = b.id
       LEFT JOIN BRANCHES bb ON lic.owning_branch_id = bb.id
+      LEFT JOIN BOOKS bk ON (ci.id = bk.library_item_id AND ci.item_type = 'BOOK')
+      LEFT JOIN VIDEOS v ON (ci.id = v.library_item_id AND ci.item_type = 'VIDEO')
+      LEFT JOIN AUDIOBOOKS ab ON (ci.id = ab.library_item_id AND ci.item_type = 'AUDIOBOOK')
+      LEFT JOIN VINYL_ALBUMS va ON (ci.id = va.library_item_id AND ci.item_type = 'VINYL_ALBUM')
+      LEFT JOIN CDS cd ON (ci.id = cd.library_item_id AND ci.item_type = 'CD')
+      LEFT JOIN PERIODICALS per ON (ci.id = per.library_item_id AND ci.item_type = 'PERIODICAL')
+      LEFT JOIN MAGAZINES mag ON (ci.id = mag.library_item_id AND ci.item_type = 'MAGAZINE')
       ${conditions}
       ORDER BY ci.title, lic.id
     `;
 
     const item_copies = await db.execute_query(query, params);
 
-    // Add copy labels to each copy
-    const copies_with_labels = await Promise.all(
-      item_copies.map(async (copy) => {
-        const all_copies = await db.execute_query(
-          'SELECT id FROM LIBRARY_ITEM_COPIES WHERE library_item_id = ? ORDER BY id',
-          [copy.library_item_id]
-        );
-
-        const copy_index = all_copies.findIndex((c) => c.id === copy.id);
-        const copy_number = copy_index + 1;
-        const total_copies = all_copies.length;
-        const copy_label = `Copy ${copy_number} of ${total_copies}`;
-
-        return {
-          ...copy,
-          copy_label,
-          copy_number,
-          total_copies,
-        };
-      })
-    );
+    // Add copy labels using pre-calculated numbers from SQL
+    const copies_with_labels = item_copies.map((copy) => ({
+      ...copy,
+      copy_label: `Copy ${copy.copy_number} of ${copy.total_copies}`,
+    }));
 
     res.json({
       success: true,
@@ -134,46 +158,72 @@ router.get('/', async (req, res) => {
   }
 });
 
+// GET /api/v1/item-copies/checked-out - Get all checked out item copies, optionally filtered
 router.get('/checked-out', async (req, res) => {
   try {
-    const { branch_id } = req.query;
+    const { library_item_id, branch_id, condition } = req.query;
+    const params = [];
 
-    // Validate branch_id
-    if (!branch_id) {
-      return res.status(400).json({
-        error: 'Branch ID is required',
-      });
+    // Initial filter on status - must be checked out
+    const filters = ["lic.status = 'Checked Out'"];
+
+    if (library_item_id) {
+      filters.push('lic.library_item_id = ?');
+      params.push(library_item_id);
     }
+    if (branch_id) {
+      // Filter by current_branch_id (where the copy currently is)
+      filters.push('lic.current_branch_id = ?');
+      params.push(branch_id);
+    }
+    if (condition) {
+      filters.push('lic.condition = ?');
+      params.push(condition);
+    }
+
+    const conditions = ' WHERE ' + filters.join(' AND ');
 
     const query = `
       SELECT 
-        ic.*,
-        li.title,
-        li.item_type,
-        li.description,
-        li.publication_year,
-        b.branch_name,
+        lic.*,
+        ci.title,
+        ci.item_type,
+        ci.publication_year,
+        ci.description,
+        b.id as current_branch_id,
+        b.branch_name as current_branch_name,
+        bb.id as owning_branch_id,
+        bb.branch_name as owning_branch_name,
         p.id AS patron_id,
         p.first_name AS patron_first_name,
-        p.last_name AS patron_last_name
-      FROM LIBRARY_ITEM_COPIES ic
-        JOIN LIBRARY_ITEMS li ON ic.library_item_id = li.id
-        JOIN BRANCHES b ON ic.owning_branch_id = b.id
-        JOIN PATRONS p ON ic.checked_out_by = p.id
-      WHERE ic.status = 'Checked Out' AND ic.owning_branch_id = ?
-      ORDER BY b.branch_name, ic.status
+        p.last_name AS patron_last_name,
+        ROW_NUMBER() OVER (PARTITION BY lic.library_item_id ORDER BY lic.id) as copy_number,
+        COUNT(*) OVER (PARTITION BY lic.library_item_id) as total_copies
+      FROM LIBRARY_ITEM_COPIES lic
+      JOIN LIBRARY_ITEMS ci ON lic.library_item_id = ci.id
+      LEFT JOIN BRANCHES b ON lic.current_branch_id = b.id
+      LEFT JOIN BRANCHES bb ON lic.owning_branch_id = bb.id
+      LEFT JOIN PATRONS p ON lic.checked_out_by = p.id
+      ${conditions}
+      ORDER BY ci.title, lic.id
     `;
 
-    const item_copies = await db.execute_query(query, [branch_id]);
+    const item_copies = await db.execute_query(query, params);
+
+    // Add copy labels using pre-calculated numbers from SQL
+    const copies_with_labels = item_copies.map((copy) => ({
+      ...copy,
+      copy_label: `Copy ${copy.copy_number} of ${copy.total_copies}`,
+    }));
 
     res.json({
       success: true,
-      count: item_copies.length,
-      data: item_copies,
+      count: copies_with_labels.length,
+      data: copies_with_labels,
     });
   } catch (error) {
     res.status(500).json({
-      error: 'Failed to fetch item copies',
+      error: 'Failed to fetch checked out item copies',
       message: error.message,
     });
   }
@@ -199,7 +249,7 @@ router.get('/unshelved', async (req, res) => {
         FROM LIBRARY_ITEM_COPIES ic
           JOIN LIBRARY_ITEMS li ON ic.library_item_id = li.id
           LEFT JOIN BRANCHES b ON ic.current_branch_id = b.id
-        WHERE ic.status = 'Returned (not yet available)' AND ic.current_branch_id = ?
+        WHERE ic.status = 'Unshelved' AND ic.current_branch_id = ?
         ORDER BY ic.id;
       `;
       params = [branch_id];
@@ -215,7 +265,7 @@ router.get('/unshelved', async (req, res) => {
         FROM LIBRARY_ITEM_COPIES ic
           JOIN LIBRARY_ITEMS li ON ic.library_item_id = li.id
           LEFT JOIN BRANCHES b ON ic.current_branch_id = b.id
-        WHERE ic.status = 'Returned (not yet available)'
+        WHERE ic.status = 'Unshelved'
         ORDER BY ic.id;
       `;
       params = [];
@@ -339,18 +389,20 @@ router.get('/item/:library_item_id', async (req, res) => {
         bb.branch_name as owning_branch_name,
         p.id AS patron_id,
         p.first_name AS patron_first_name,
-        p.last_name AS patron_last_name
+        p.last_name AS patron_last_name,
+        ROW_NUMBER() OVER (PARTITION BY ic.library_item_id ORDER BY ic.id) as copy_number,
+        COUNT(*) OVER (PARTITION BY ic.library_item_id) as total_copies
       FROM LIBRARY_ITEM_COPIES ic
         JOIN LIBRARY_ITEMS li ON ic.library_item_id = li.id
         LEFT JOIN BRANCHES b ON ic.current_branch_id = b.id
-      LEFT JOIN BRANCHES bb ON ic.owning_branch_id = bb.id
+        LEFT JOIN BRANCHES bb ON ic.owning_branch_id = bb.id
         LEFT JOIN PATRONS p ON ic.checked_out_by = p.id
       WHERE 
         ic.library_item_id = ?
         ${branch_id ? 'AND ic.current_branch_id = ?' : ''}
       ORDER BY ic.id, ic.status;
     `;
-    let params = [req.params.library_item_id];
+    const params = [req.params.library_item_id];
 
     // Filter by current_branch_id if branch_id is provided
     if (branch_id) {
@@ -359,9 +411,12 @@ router.get('/item/:library_item_id', async (req, res) => {
 
     const item_copies = await db.execute_query(query, params);
 
-    // Format the response to include reservation info for reserved copies
+    // Format the response to include reservation info and copy labels
     const formatted_copies = item_copies.map((copy) => {
-      const result = { ...copy };
+      const result = {
+        ...copy,
+        copy_label: `Copy ${copy.copy_number} of ${copy.total_copies}`,
+      };
       // If copy is reserved and there's a reservation, include reservation details
       if (copy.status === 'Reserved' && reservation_info) {
         result.reservation = reservation_info;
@@ -523,7 +578,7 @@ const validate_item_copy_update = [
       'Damaged',
       'Unshelved',
       'Lost',
-      'Returned (not yet available)',
+      'Unshelved',
     ])
     .withMessage('Invalid status'),
   body('cost')

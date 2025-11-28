@@ -7,7 +7,6 @@ import { LibraryItemsPage } from './pages/LibraryItemsPage';
 import { Patrons } from './pages/Patrons';
 import { CheckInItem } from './pages/CheckInItem';
 import { CheckOutItem } from './pages/CheckOutItem';
-import { BookPage } from './pages/Book';
 import { PatronPage } from './pages/PatronPage';
 import { lazy } from 'react';
 import { SearchPage } from './pages/SearchPage';
@@ -15,15 +14,16 @@ import { RenewItem } from './pages/RenewItem';
 import { ReservePage } from './pages/ReservePage';
 import { SnackbarProvider } from './contexts/SnackbarContext';
 import { GlobalSnackbar } from './components/common/GlobalSnackbar';
-// import { BranchPage } from './pages/BranchPage';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { Library_Item_Page } from './pages/LibraryItemPage';
+import { BranchPage } from './pages/BranchPage';
 
-// const BranchesPage = lazy(() =>
-//   import('./pages/BranchesPage').then((module) => ({
-//     default: module.BranchesPage,
-//   }))
-// );
+const BranchesPage = lazy(() =>
+  import('./pages/BranchesPage').then((module) => ({
+    default: module.BranchesPage,
+  }))
+);
 
 const SettingsPage = lazy(() =>
   import('./pages/SettingsPage').then((module) => ({
@@ -98,19 +98,32 @@ function App() {
             <Route path="/" element={<Layout />}>
               <Route index element={<SearchPage />} />
               <Route path="library-items" element={<LibraryItemsPage />} />
+              <Route path="library-item">
+                <Route
+                  path=":library_item_id"
+                  element={<Library_Item_Page />}
+                />
+                change
+              </Route>
               <Route
                 path="library-item-copies"
                 element={<LibraryItemCopiesPage />}
               />
+              <Route path="library-item-copy">
+                <Route
+                  path=":library_item_copy_id"
+                  element={<LibraryItemCopiesPage />} // TODO change
+                />
+              </Route>
               <Route path="patrons" element={<Patrons />} />
               <Route path="patron">
                 <Route path=":patron_id" element={<PatronPage />} />
               </Route>
               <Route path="transactions" element={<TransactionsPage />} />
-              {/* <Route path="branches" element={<BranchesPage />} /> */}
-              {/* <Route path="branch">
+              <Route path="branches" element={<BranchesPage />} />
+              <Route path="branch">
                 <Route path=":branch_id" element={<BranchPage />} />
-              </Route> */}
+              </Route>
               <Route path="reservations" element={<ReservationsPage />} />
               <Route path="dashboard" element={<DashboardPage />} />
               <Route path="search" element={<SearchPage />} />
@@ -124,9 +137,6 @@ function App() {
               <Route path="settings" element={<SettingsPage />} />
               <Route path="available" element={<MarkAvailablePage />} />
               <Route path="reserve" element={<ReservePage />} />
-              <Route path="books">
-                <Route path=":book_id" element={<BookPage />} />
-              </Route>
             </Route>
           </Routes>
           <GlobalSnackbar />

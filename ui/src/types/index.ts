@@ -74,21 +74,26 @@ export interface BookFilters {
 
 export enum Genre {
   Academic = 'Academic',
+  Adventure = 'Adventure',
   Art = 'Art',
   Biography = 'Biography',
   Business = 'Business',
   Children = 'Children',
+  Coming_Of_Age = 'Coming-of-Age',
   Cooking = 'Cooking',
   Drama = 'Drama',
+  Dystopian = 'Dystopian',
   Fantasy = 'Fantasy',
   Fiction = 'Fiction',
   Health = 'Health',
   History = 'History',
   Horror = 'Horror',
+  Memoir = 'Memoir',
   Mystery = 'Mystery',
   NonFiction = 'Non-Fiction',
   Poetry = 'Poetry',
   Political = 'Political',
+  PsychThriller = 'Psychological Thriller',
   Reference = 'Reference',
   Romance = 'Romance',
   ScienceFiction = 'Science Fiction',
@@ -197,10 +202,168 @@ export interface Library_Item {
   id: number;
   title: string;
   item_type: Library_Item_Type;
-  description?: string;
-  publication_year?: number;
-  congress_code?: string;
+  description: string;
+  publication_year: number;
+  congress_code: string;
+  created_at: string;
+  updated_at: string;
+  author: string;
+  publisher: string;
+  genre: Genre[];
+  number_of_pages: string;
+  director: string;
+  studio: string;
+  video_format: string;
+  duration_minutes: string;
+  video_rating: string;
+  narrator: string;
+  audiobook_duration: string;
+  artist: string;
+  vinyl_color: string;
+  vinyl_tracks: string;
+  cd_artist: string;
+  record_label: string;
+  cd_tracks: string;
+  cover_image_url?: string;
+  subscription_cost: string;
+  magazine_publisher: string;
+  issue_number: string;
+  publication_month: string;
+  publication_date: string;
+  pages: string;
+  total_copies: string;
+  available_copies: string;
+  checked_out_copies: string;
 }
+
+export type Audiobook = Omit<
+  Library_Item,
+  | 'cd_artist'
+  | 'record_label'
+  | 'cd_tracks'
+  | 'video_format'
+  | 'duration_minutes'
+  | 'video_rating'
+  | 'director'
+  | 'studio'
+  | 'number_of_pages'
+  | 'book_genre'
+  | 'artist'
+  | 'vinyl_color'
+  | 'vinyl_tracks'
+>;
+
+export type Book = Omit<
+  Library_Item,
+  | 'narrator'
+  | 'audiobook_duration'
+  | 'cd_artist'
+  | 'record_label'
+  | 'cd_tracks'
+  | 'video_format'
+  | 'duration_minutes'
+  | 'video_rating'
+  | 'director'
+  | 'studio'
+  | 'vinyl_color'
+  | 'vinyl_tracks'
+>;
+
+export type Video = Omit<
+  Library_Item,
+  | 'narrator'
+  | 'audiobook_duration'
+  | 'cd_artist'
+  | 'record_label'
+  | 'cd_tracks'
+  | 'number_of_pages'
+  | 'book_genre'
+  | 'artist'
+  | 'vinyl_color'
+  | 'vinyl_tracks'
+>;
+
+export type Periodical = Omit<
+  Library_Item,
+  | 'narrator'
+  | 'audiobook_duration'
+  | 'cd_artist'
+  | 'record_label'
+  | 'cd_tracks'
+  | 'video_format'
+  | 'duration_minutes'
+  | 'video_rating'
+  | 'director'
+  | 'studio'
+  | 'number_of_pages'
+>;
+
+export type CD = Omit<
+  Library_Item,
+  | 'narrator'
+  | 'audiobook_duration'
+  | 'video_format'
+  | 'duration_minutes'
+  | 'video_rating'
+  | 'director'
+  | 'studio'
+  | 'number_of_pages'
+  | 'book_genre'
+  | 'artist'
+  | 'vinyl_color'
+  | 'vinyl_tracks'
+>;
+
+export type Vinyl = Omit<
+  Library_Item,
+  | 'narrator'
+  | 'audiobook_duration'
+  | 'cd_artist'
+  | 'record_label'
+  | 'cd_tracks'
+  | 'video_format'
+  | 'duration_minutes'
+  | 'video_rating'
+  | 'director'
+  | 'studio'
+  | 'number_of_pages'
+  | 'book_genre'
+>;
+
+export type Recording = Omit<
+  Library_Item,
+  | 'narrator'
+  | 'audiobook_duration'
+  | 'video_format'
+  | 'duration_minutes'
+  | 'video_rating'
+  | 'director'
+  | 'studio'
+  | 'number_of_pages'
+  | 'book_genre'
+  | 'artist'
+  | 'vinyl_color'
+  | 'vinyl_tracks'
+>;
+
+export type Magazine = Omit<
+  Library_Item,
+  | 'narrator'
+  | 'audiobook_duration'
+  | 'cd_artist'
+  | 'record_label'
+  | 'cd_tracks'
+  | 'video_format'
+  | 'duration_minutes'
+  | 'video_rating'
+  | 'director'
+  | 'studio'
+  | 'number_of_pages'
+  | 'book_genre'
+  | 'artist'
+  | 'vinyl_color'
+  | 'vinyl_tracks'
+>;
 
 export type Create_Library_Item_Data = Omit<Library_Item, 'id'>;
 
@@ -222,7 +385,7 @@ export type Library_Copy_Status =
   | 'Ready For Pickup'
   | 'Damaged'
   | 'Lost'
-  | 'Returned (not yet available)';
+  | 'Unshelved';
 
 export interface Item_Copy {
   id: number;
@@ -240,48 +403,6 @@ export interface Item_Copy {
     status: string;
     queue_position: number;
   };
-}
-
-export interface Book extends Library_Item {
-  id: number;
-  library_item_id: number;
-  publisher: string;
-  author: string;
-  genre?: Genre[];
-  cover_image_url?: string;
-  number_of_pages?: number;
-}
-
-export interface Recording extends Library_Item {
-  artist: string;
-  library_item_id: number;
-  label: string;
-  duration_seconds?: number;
-}
-
-export interface Video extends Library_Item {
-  director: string;
-  library_item_id: number;
-  producer: string;
-  duration_minutes?: number;
-}
-
-export interface Periodical extends Library_Item {
-  issue_number: string;
-  library_item_id: number;
-  publisher: string;
-}
-
-export interface Magazine extends Library_Item {
-  issue_number: string;
-  library_item_id: number;
-  publisher: string;
-}
-
-export interface Audiobook extends Library_Item, Book {
-  narrator: string;
-  library_item_id: number;
-  duration_hours?: number;
 }
 
 export interface Item_Copy_Result extends Item_Copy {

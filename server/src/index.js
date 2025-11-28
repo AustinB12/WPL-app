@@ -11,9 +11,6 @@ import patrons_routes from './routes/patrons.js';
 import transactions_routes from './routes/transactions.js';
 import reservations_routes from './routes/reservations.js';
 import branches_routes from './routes/library_branches.js';
-import videos_routes from './routes/videos.js';
-import books_routes from './routes/books.js';
-import audiobooks_routes from './routes/audiobooks.js';
 import reports_routes from './routes/reports.js';
 import settings_routes from './routes/settings.js';
 
@@ -92,9 +89,6 @@ app.use(api_base + '/transactions', transactions_routes);
 app.use(api_base + '/reservations', reservations_routes);
 app.use(api_base + '/branches', branches_routes);
 app.use(api_base + '/item-copies', item_copies_routes);
-app.use(api_base + '/videos', videos_routes);
-app.use(api_base + '/books', books_routes);
-app.use(api_base + '/audiobooks', audiobooks_routes);
 app.use(api_base + '/reports', reports_routes);
 app.use(api_base + '/settings', settings_routes);
 

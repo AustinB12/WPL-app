@@ -5,3 +5,17 @@
 - [ ] Testing - Vitest
 
 - [ ] make reservations link to copies not items
+
+- [ ] Individual page for library items
+
+- [ ] Individual page for library item copies
+
+- [ ] Page for each item type
+  - [ ] Audiobook
+  - [ ] Book
+  - [ ] CD
+  - [ ] Magazine
+  - [ ] Periodical
+  - [ ] Recording
+  - [ ] Video
+  - [ ] Vinyl

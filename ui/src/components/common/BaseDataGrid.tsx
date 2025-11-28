@@ -45,6 +45,12 @@ export const BaseDataGrid = (props: BaseDataGridProps) => {
         ['& .MuiDataGrid-scrollbar--horizontal']: {
           height: '8px',
         },
+        '& .MuiDataGrid-cell:focus': {
+          outline: 'none',
+        },
+        '& .MuiDataGrid-row:hover': {
+          cursor: 'pointer',
+        },
         ...props.sx,
       }}
       pageSizeOptions={[10, 25, 50]}

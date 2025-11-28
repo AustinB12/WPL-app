@@ -19,6 +19,8 @@ import { useCopies, useDeleteCopy, useUpdateCopy } from '../../hooks/useCopies';
 import { EditCopyModal, type Edit_Copy_Form_Data } from './EditCopyModal';
 import { DeleteCopyModal } from './DeleteCopyModal';
 import { useSnackbar } from '../../hooks/useSnackbar';
+import { GenreChip } from '../common/GenreChip';
+import { Stack } from '@mui/material';
 
 export const CopiesDataGrid = ({
   on_copy_selected,
@@ -30,7 +32,9 @@ export const CopiesDataGrid = ({
     'description',
     'publication_year',
     'owning_branch_id',
+    'owning_branch_name',
     'current_branch_id',
+    'current_branch_name',
   ],
   filter,
 }: {
@@ -131,6 +135,55 @@ export const CopiesDataGrid = ({
       headerName: 'Pub. Year',
       width: 100,
       editable: false,
+    },
+    {
+      field: 'genre',
+      headerName: 'Genre',
+      width: 120,
+      editable: false,
+      valueGetter: (_, row) => {
+        if (row.item_type === 'BOOK') {
+          return row.book_genre;
+        }
+        if (row.item_type === 'VIDEO') {
+          return row.video_genre;
+        }
+        if (row.item_type === 'AUDIOBOOK') {
+          return row.audiobook_genre;
+        }
+        if (row.item_type === 'VINYL_ALBUM') {
+          return row.vinyl_genre;
+        }
+        if (row.item_type === 'CD') {
+          return row.cd_genre;
+        }
+        if (row.item_type === 'PERIODICAL') {
+          return row.periodical_genre;
+        }
+        if (row.item_type === 'MAGAZINE') {
+          return row.magazine_genre;
+        }
+        return null;
+      },
+      flex: 1,
+      renderCell: (params) => {
+        if (params.value) {
+          const x = JSON.parse(params.value);
+          return (
+            <Stack
+              spacing={1}
+              direction={'row'}
+              alignItems={'center'}
+              height="100%"
+            >
+              {x.map((genre: string) => (
+                <GenreChip key={genre} genre={genre} />
+              ))}
+            </Stack>
+          );
+        }
+        return null;
+      },
     },
     {
       field: 'status',

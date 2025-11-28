@@ -1,6 +1,7 @@
 import express from 'express';
 import { body, validationResult } from 'express-validator';
 import * as db from '../config/database.js';
+import { format_sql_datetime } from '../utils.js';
 
 const router = express.Router();
 
@@ -10,7 +11,22 @@ const validate_patron = [
   body('last_name').notEmpty().withMessage('Last name is required'),
   body('email').optional().isEmail().withMessage('Invalid email format'),
   body('phone').optional().isString().withMessage('Phone must be a string'),
-  body('balance').optional().isFloat().withMessage('Balance must be a number'),
+  body('balance')
+    .optional()
+    .isFloat({ min: 0 })
+    .withMessage('Balance must be a non-negative number'),
+  body('local_branch_id')
+    .optional()
+    .isInt({ min: 1 })
+    .withMessage('Branch ID must be a valid positive integer'),
+  body('card_expiration_date')
+    .optional()
+    .isISO8601()
+    .withMessage('Card expiration date must be a valid date (YYYY-MM-DD)'),
+  body('birthday')
+    .optional()
+    .isISO8601()
+    .withMessage('Birthday must be a valid date (YYYY-MM-DD)'),
 ];
 
 // Helper function to handle validation errors
@@ -29,33 +45,35 @@ const handle_validation_errors = (req, res, next) => {
 router.get('/', async (req, res) => {
   try {
     const { search, active_only } = req.query;
-    let conditions = '';
-    let params = [];
+    const conditions = [];
+    const params = [];
 
     if (active_only === 'true') {
-      conditions += ' WHERE p.is_active = 1';
+      conditions.push('p.is_active = 1');
     }
 
     if (search) {
-      conditions += active_only === 'true' ? ' AND' : ' WHERE';
-      conditions +=
-        ' (p.first_name LIKE ? OR p.last_name LIKE ? OR p.email LIKE ?)';
+      conditions.push(
+        '(p.first_name LIKE ? OR p.last_name LIKE ? OR p.email LIKE ?)'
+      );
       params.push(`%${search}%`, `%${search}%`, `%${search}%`);
     }
+
+    const where_clause =
+      conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
 
     // Include active checkout count for each patron
     const patrons = await db.execute_query(
       `SELECT
         p.*,
-        b.id as local_branch_id,
         b.branch_name as local_branch_name,
-        COALESCE(COUNT(CASE WHEN t.status = 'Active' THEN 1 END), 0) as active_checkouts
+        COUNT(t.id) as active_checkouts
       FROM PATRONS p
-      LEFT JOIN TRANSACTIONS t ON p.id = t.patron_id
+      LEFT JOIN TRANSACTIONS t ON p.id = t.patron_id AND t.status = 'Active'
       JOIN BRANCHES b ON p.local_branch_id = b.id
-      ${conditions}
+      ${where_clause}
       GROUP BY p.id
-      ORDER BY p.id`,
+      ORDER BY p.last_name, p.first_name`,
       params
     );
     res.json({
@@ -180,22 +198,19 @@ router.get('/search-for-renewal', async (req, res) => {
 // GET /api/v1/patrons/:id - Get single patron
 router.get('/:id', async (req, res) => {
   try {
-    const patron = await db
-      .execute_query(
-        `SELECT
+    const [patron] = await db.execute_query(
+      `SELECT
         p.*,
         b.id as local_branch_id,
         b.branch_name as local_branch_name,
         COALESCE(COUNT(CASE WHEN t.status = 'Active' THEN 1 END), 0) as active_checkouts
       FROM PATRONS p
-      LEFT JOIN TRANSACTIONS t ON p.id = t.patron_id
+      LEFT JOIN TRANSACTIONS t ON p.id = t.patron_id 
       JOIN BRANCHES b ON p.local_branch_id = b.id
       WHERE p.id = ?
-      GROUP BY p.id
-      ORDER BY p.id`,
-        [req.params.id]
-      )
-      .then((results) => results[0]);
+      GROUP BY p.id`,
+      [req.params.id]
+    );
 
     if (!patron) {
       return res.status(404).json({
@@ -203,20 +218,9 @@ router.get('/:id', async (req, res) => {
       });
     }
 
-    // Get active checkout count (per acceptance criteria)
-    const active_checkout_count = await db.execute_query(
-      'SELECT COUNT(*) as count FROM TRANSACTIONS WHERE patron_id = ? AND status = "Active" AND transaction_type = "checkout"',
-      [req.params.id]
-    );
-
-    const patron_with_checkouts = {
-      ...patron,
-      active_checkout_count: active_checkout_count[0]?.count || 0,
-    };
-
     res.json({
       success: true,
-      data: patron_with_checkouts,
+      data: patron,
     });
   } catch (error) {
     res.status(500).json({
@@ -238,7 +242,22 @@ router.get('/:id/transactions', async (req, res) => {
     }
 
     const transactions = await db.execute_query(
-      `SELECT t.*, ci.title, ci.item_type, ic.library_item_id
+      `SELECT 
+        t.*, 
+        ci.title, 
+        ci.item_type, 
+        ic.library_item_id,
+        (
+          SELECT COUNT(*) + 1
+          FROM LIBRARY_ITEM_COPIES ic2
+          WHERE ic2.library_item_id = ic.library_item_id
+          AND ic2.id < ic.id
+        ) as copy_number,
+        (
+          SELECT COUNT(*)
+          FROM LIBRARY_ITEM_COPIES ic3
+          WHERE ic3.library_item_id = ic.library_item_id
+        ) as total_copies
        FROM TRANSACTIONS t
        JOIN LIBRARY_ITEM_COPIES ic ON t.copy_id = ic.id
        JOIN LIBRARY_ITEMS ci ON ic.library_item_id = ci.id
@@ -248,30 +267,10 @@ router.get('/:id/transactions', async (req, res) => {
     );
 
     // Add copy labels to transactions
-    const transactions_with_labels = await Promise.all(
-      transactions.map(async (transaction) => {
-        // Get all copies for this library item
-        const all_copies = await db.execute_query(
-          'SELECT id FROM LIBRARY_ITEM_COPIES WHERE library_item_id = ? ORDER BY id',
-          [transaction.library_item_id]
-        );
-
-        // Calculate copy number
-        const copy_index = all_copies.findIndex(
-          (c) => c.id === transaction.copy_id
-        );
-        const copy_number = copy_index + 1;
-        const total_copies = all_copies.length;
-        const copy_label = `Copy ${copy_number} of ${total_copies}`;
-
-        return {
-          ...transaction,
-          copy_label,
-          copy_number,
-          total_copies,
-        };
-      })
-    );
+    const transactions_with_labels = transactions.map((transaction) => ({
+      ...transaction,
+      copy_label: `Copy ${transaction.copy_number} of ${transaction.total_copies}`,
+    }));
 
     res.json({
       success: true,
@@ -293,14 +292,46 @@ router.post(
   handle_validation_errors,
   async (req, res) => {
     try {
+      // Validate branch exists if provided
+      if (req.body.local_branch_id) {
+        const branch = await db.get_by_id('BRANCHES', req.body.local_branch_id);
+        if (!branch) {
+          return res.status(400).json({
+            error: 'Invalid branch ID',
+            message: `Branch with ID ${req.body.local_branch_id} does not exist`,
+          });
+        }
+      }
+
+      // Check if email already exists (if provided)
+      if (req.body.email) {
+        const existing_patron = await db.execute_query(
+          'SELECT id FROM PATRONS WHERE email = ?',
+          [req.body.email]
+        );
+        if (existing_patron.length > 0) {
+          return res.status(409).json({
+            error: 'Email already exists',
+            message: 'A patron with this email address already exists',
+          });
+        }
+      }
+
       const patron_data = {
-        ...req.body,
+        first_name: req.body.first_name,
+        last_name: req.body.last_name,
+        email: req.body.email || null,
+        phone: req.body.phone || null,
+        address: req.body.address || null,
+        birthday: req.body.birthday || null,
+        local_branch_id: req.body.local_branch_id || 1,
+        card_expiration_date: req.body.card_expiration_date || null,
         balance: req.body.balance || 0.0,
         is_active: true,
-        created_at: new Date().toLocaleString(),
+        created_at: format_sql_datetime(new Date()),
       };
 
-      const patron_id = await db.create_record('PATRONS', patron_data);
+      const patron_id = await db.insert_record('PATRONS', patron_data);
 
       res.status(201).json({
         success: true,
@@ -308,6 +339,14 @@ router.post(
         data: { id: patron_id, ...patron_data },
       });
     } catch (error) {
+      // Handle SQLite unique constraint violations
+      if (error.message && error.message.includes('UNIQUE constraint failed')) {
+        return res.status(409).json({
+          error: 'Duplicate entry',
+          message: 'A patron with this email already exists',
+        });
+      }
+
       res.status(500).json({
         error: 'Failed to create patron',
         message: error.message,
@@ -327,21 +366,15 @@ router.put('/:id', async (req, res) => {
       });
     }
 
-    const updated = await db.update_record('PATRONS', req.params.id, req.body);
+    await db.update_record('PATRONS', req.params.id, req.body);
 
-    if (updated) {
-      // Fetch and return the updated patron data
-      const updated_patron = await db.get_by_id('PATRONS', req.params.id);
-      res.json({
-        success: true,
-        data: updated_patron,
-        message: 'Patron updated successfully',
-      });
-    } else {
-      res.status(500).json({
-        error: 'Failed to update patron',
-      });
-    }
+    // Fetch and return the updated patron data
+    const updated_patron = await db.get_by_id('PATRONS', req.params.id);
+    res.json({
+      success: true,
+      data: updated_patron,
+      message: 'Patron updated successfully',
+    });
   } catch (error) {
     res.status(500).json({
       error: 'Failed to update patron',
@@ -361,19 +394,8 @@ router.delete('/:id', async (req, res) => {
       });
     }
 
-    // Check if patron has active transactions
-    const active_transactions = await db.execute_query(
-      'SELECT COUNT(*) as count FROM TRANSACTIONS WHERE patron_id = ? AND status = "Active"',
-      [req.params.id]
-    );
-
-    if (active_transactions[0].count > 0) {
-      return res.status(400).json({
-        error: 'Cannot delete patron with active transactions',
-      });
-    }
-
-    // Delete patron record
+    // Database has ON DELETE CASCADE for FINES, TRANSACTIONS, and RESERVATIONS
+    // So we only need to delete the patron record
     await db.delete_record('PATRONS', req.params.id);
 
     res.json({

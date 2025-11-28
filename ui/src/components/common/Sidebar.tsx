@@ -26,6 +26,7 @@ import {
   BookmarkAdd,
   EventNote,
   Dashboard,
+  LocationCity,
 } from '@mui/icons-material';
 
 export const drawerWidth = 240;
@@ -55,6 +56,7 @@ export const Sidebar = ({
     { text: 'Patrons', path: '/patrons', icon: <Groups2 /> },
     { text: 'Transactions', path: '/transactions', icon: <SsidChart /> },
     { text: 'Reservations', path: '/reservations', icon: <EventNote /> },
+    { text: 'Branches', path: '/branches', icon: <LocationCity /> },
   ];
 
   const action_items = [

@@ -119,7 +119,9 @@ router.post(
   async (req, res) => {
     try {
       const branch_data = {
-        ...req.body,
+        branch_name: req.body.branch_name,
+        address: req.body.address || null,
+        phone: req.body.phone || null,
         is_main: req.body.is_main || false,
         created_at: format_sql_datetime(new Date()),
       };
@@ -155,22 +157,12 @@ router.put(
         });
       }
 
-      const updated = await db.update_record(
-        'BRANCHES',
-        req.params.id,
-        req.body
-      );
+      await db.update_record('BRANCHES', req.params.id, req.body);
 
-      if (updated) {
-        res.json({
-          success: true,
-          message: 'Branch updated successfully',
-        });
-      } else {
-        res.status(500).json({
-          error: 'Failed to update branch',
-        });
-      }
+      res.json({
+        success: true,
+        message: 'Branch updated successfully',
+      });
     } catch (error) {
       res.status(500).json({
         error: 'Failed to update branch',
@@ -193,8 +185,8 @@ router.delete('/:id', async (req, res) => {
 
     // Check if branch has any item copies
     const item_copies = await db.execute_query(
-      'SELECT COUNT(*) as count FROM LIBRARY_ITEM_COPIES WHERE branch_id = ?',
-      [req.params.id]
+      'SELECT COUNT(*) as count FROM LIBRARY_ITEM_COPIES WHERE owning_branch_id = ? OR current_branch_id = ?',
+      [req.params.id, req.params.id]
     );
 
     if (item_copies[0].count > 0) {
@@ -204,18 +196,12 @@ router.delete('/:id', async (req, res) => {
       });
     }
 
-    const deleted = await db.delete_record('BRANCHES', req.params.id);
+    await db.delete_record('BRANCHES', req.params.id);
 
-    if (deleted) {
-      res.json({
-        success: true,
-        message: 'Branch deleted successfully',
-      });
-    } else {
-      res.status(500).json({
-        error: 'Failed to delete branch',
-      });
-    }
+    res.json({
+      success: true,
+      message: 'Branch deleted successfully',
+    });
   } catch (error) {
     res.status(500).json({
       error: 'Failed to delete branch',

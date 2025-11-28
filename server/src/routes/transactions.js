@@ -1008,9 +1008,9 @@ router.post(
           checkin_transaction_data
         );
 
-        // Update item copy - initially set to "Returned (not yet available)" (will be updated later if there's a reservation)
+        // Update item copy - initially set to "Unshelved" (will be updated later if there's a reservation)
         await db.update_record('LIBRARY_ITEM_COPIES', copy_id, {
-          status: 'Returned (not yet available)',
+          status: 'Unshelved',
           checked_out_by: null,
           due_date: null,
           current_branch_id: new_location_id || item_copy.current_branch_id,
@@ -1033,7 +1033,7 @@ router.post(
         );
 
         let reservation_fulfilled = null;
-        let final_status = 'Returned (not yet available)';
+        let final_status = 'Unshelved';
 
         // If there's a waiting reservation, fulfill it automatically
         if (waiting_reservations.length > 0) {
@@ -1453,10 +1453,10 @@ router.post(
 
       // Verify the item is in the correct status for reshelving
       const status_upper = (item_copy.status || '').trim().toUpperCase();
-      if (status_upper !== 'RETURNED (NOT YET AVAILABLE)') {
+      if (status_upper !== 'UNSHELVED') {
         return res.status(400).json({
           error: 'Item cannot be reshelved',
-          message: `Item status must be "Returned (not yet available)" to reshelve. Current status: ${item_copy.status || 'null'}`,
+          message: `Item status must be "Unshelved" to reshelve. Current status: ${item_copy.status || 'null'}`,
         });
       }
 
@@ -1566,11 +1566,11 @@ router.post(
 
             // Verify the item is in the correct status for reshelving
             const status_upper = (item_copy.status || '').trim().toUpperCase();
-            if (status_upper !== 'RETURNED (NOT YET AVAILABLE)') {
+            if (status_upper !== 'UNSHELVED') {
               errors.push({
                 copy_id,
                 error: 'Item cannot be reshelved',
-                message: `Item status must be "Returned (not yet available)" to reshelve. Current status: ${item_copy.status || 'null'}`,
+                message: `Item status must be "Unshelved" to reshelve. Current status: ${item_copy.status || 'null'}`,
               });
               continue;
             }
@@ -1670,7 +1670,7 @@ router.post(
   }
 );
 
-// POST /api/v1/transactions/reshelve/undo - Undo reshelve (change status back to "Returned (not yet available)")
+// POST /api/v1/transactions/reshelve/undo - Undo reshelve (change status back to "Unshelved")
 router.post(
   '/reshelve/undo',
   [body('copy_id').isNumeric().withMessage('Valid copy ID is required')],
@@ -1728,9 +1728,9 @@ router.post(
 
       // Wrap both operations in a transaction for atomicity
       await db.execute_transaction(async () => {
-        // Update status back to "Returned (not yet available)"
+        // Update status back to "Unshelved"
         await db.update_record('LIBRARY_ITEM_COPIES', copy_id, {
-          status: 'Returned (not yet available)',
+          status: 'Unshelved',
           updated_at: format_sql_datetime(new Date()),
         });
 
@@ -1743,7 +1743,7 @@ router.post(
         message: 'Reshelve undone successfully',
         data: {
           copy_id,
-          status: 'Returned (not yet available)',
+          status: 'Unshelved',
         },
       });
     } catch (error) {

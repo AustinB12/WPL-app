@@ -3,10 +3,10 @@ import { body, validationResult } from 'express-validator';
 import * as db from '../config/database.js';
 import { format_sql_datetime } from '../utils.js';
 
-var router = express.Router();
+const router = express.Router();
 
 // Validation middleware
-var validate_fine = [
+const validate_fine = [
   body('transaction_id').notEmpty().withMessage('Transaction ID is required'),
   body('patron_id').notEmpty().withMessage('Patron ID is required'),
   body('amount')
@@ -15,8 +15,8 @@ var validate_fine = [
 ];
 
 // Helper function to handle validation errors
-var handle_validation_errors = function (req, res, next) {
-  var errors = validationResult(req);
+const handle_validation_errors = (req, res, next) => {
+  const errors = validationResult(req);
   if (!errors.isEmpty()) {
     return res.status(400).json({
       error: 'Validation failed',
@@ -27,18 +27,13 @@ var handle_validation_errors = function (req, res, next) {
 };
 
 // GET /api/v1/fines - Get all fines
-router.get('/', async function (req, res) {
+router.get('/', async (req, res) => {
   try {
-    var unpaid_only = req.query.unpaid_only;
-    var query = 'SELECT * FROM FINES';
+    const unpaid_only = req.query.unpaid_only === 'true';
+    const conditions = unpaid_only ? 'WHERE is_paid = 0' : '';
+    const query = `SELECT * FROM FINES ${conditions} ORDER BY created_at DESC`;
 
-    if (unpaid_only === 'true') {
-      query += ' WHERE is_paid = 0';
-    }
-
-    query += ' ORDER BY created_at DESC';
-
-    var fines = await db.execute_query(query);
+    const fines = await db.execute_query(query);
 
     res.json({
       success: true,
@@ -54,9 +49,9 @@ router.get('/', async function (req, res) {
 });
 
 // GET /api/v1/fines/:id - Get single fine
-router.get('/:id', async function (req, res) {
+router.get('/:id', async (req, res) => {
   try {
-    var fine = await db.get_by_id('FINES', req.params.id);
+    const fine = await db.get_by_id('FINES', req.params.id);
 
     if (!fine) {
       return res.status(404).json({
@@ -77,24 +72,21 @@ router.get('/:id', async function (req, res) {
 });
 
 // POST /api/v1/fines - Create new fine
-router.post(
-  '/',
-  validate_fine,
-  handle_validation_errors,
-  async function (req, res) {
-    try {
-      var fine_data = {
-        transaction_id: req.body.transaction_id,
-        patron_id: req.body.patron_id,
-        amount: req.body.amount,
-        reason: req.body.reason || null,
-        is_paid: false,
-        paid_date: null,
-        payment_method: null,
-        notes: req.body.notes || null,
-        created_at: format_sql_datetime(new Date()),
-      };
+router.post('/', validate_fine, handle_validation_errors, async (req, res) => {
+  try {
+    const fine_data = {
+      transaction_id: req.body.transaction_id,
+      patron_id: req.body.patron_id,
+      amount: req.body.amount,
+      reason: req.body.reason || null,
+      is_paid: false,
+      paid_date: null,
+      payment_method: null,
+      notes: req.body.notes || null,
+      created_at: format_sql_datetime(new Date()),
+    };
 
+    await db.execute_transaction(async () => {
       await db.create_record('FINES', fine_data);
 
       // Update patron balance
@@ -102,25 +94,25 @@ router.post(
         'UPDATE PATRONS SET balance = balance + ? WHERE id = ?',
         [fine_data.amount, fine_data.patron_id]
       );
+    });
 
-      res.status(201).json({
-        success: true,
-        message: 'Fine created successfully',
-        data: fine_data,
-      });
-    } catch (error) {
-      res.status(500).json({
-        error: 'Failed to create fine',
-        message: error.message,
-      });
-    }
+    res.status(201).json({
+      success: true,
+      message: 'Fine created successfully',
+      data: fine_data,
+    });
+  } catch (error) {
+    res.status(500).json({
+      error: 'Failed to create fine',
+      message: error.message,
+    });
   }
-);
+});
 
 // PUT /api/v1/fines/:id/pay - Mark fine as paid
-router.put('/:id/pay', async function (req, res) {
+router.put('/:id/pay', async (req, res) => {
   try {
-    var fine = await db.get_by_id('FINES', req.params.id);
+    const fine = await db.get_by_id('FINES', req.params.id);
 
     if (!fine) {
       return res.status(404).json({
@@ -134,19 +126,21 @@ router.put('/:id/pay', async function (req, res) {
       });
     }
 
-    var update_data = {
+    const update_data = {
       is_paid: true,
       paid_date: format_sql_datetime(new Date()),
       payment_method: req.body.payment_method || 'Cash',
     };
 
-    await db.update_record('FINES', req.params.id, update_data);
+    await db.execute_transaction(async () => {
+      await db.update_record('FINES', req.params.id, update_data);
 
-    // Update patron balance
-    await db.execute_query(
-      'UPDATE PATRONS SET balance = balance - ? WHERE id = ?',
-      [fine.amount, fine.patron_id]
-    );
+      // Update patron balance
+      await db.execute_query(
+        'UPDATE PATRONS SET balance = balance - ? WHERE id = ?',
+        [fine.amount, fine.patron_id]
+      );
+    });
 
     res.json({
       success: true,
@@ -161,9 +155,9 @@ router.put('/:id/pay', async function (req, res) {
 });
 
 // DELETE /api/v1/fines/:id - Delete fine
-router.delete('/:id', async function (req, res) {
+router.delete('/:id', async (req, res) => {
   try {
-    var fine = await db.get_by_id('FINES', req.params.id);
+    const fine = await db.get_by_id('FINES', req.params.id);
 
     if (!fine) {
       return res.status(404).json({
@@ -171,32 +165,21 @@ router.delete('/:id', async function (req, res) {
       });
     }
 
-    // If fine was paid, refund to patron balance
-    if (fine.is_paid) {
+    await db.execute_transaction(async () => {
+      // Adjust patron balance based on payment status
+      const balance_adjustment = fine.is_paid ? fine.amount : -fine.amount;
       await db.execute_query(
         'UPDATE PATRONS SET balance = balance + ? WHERE id = ?',
-        [fine.amount, fine.patron_id]
+        [balance_adjustment, fine.patron_id]
       );
-    } else {
-      // If unpaid, reduce patron balance
-      await db.execute_query(
-        'UPDATE PATRONS SET balance = balance - ? WHERE id = ?',
-        [fine.amount, fine.patron_id]
-      );
-    }
 
-    var deleted = await db.delete_record('FINES', req.params.id);
+      await db.delete_record('FINES', req.params.id);
+    });
 
-    if (deleted) {
-      res.json({
-        success: true,
-        message: 'Fine deleted successfully',
-      });
-    } else {
-      res.status(500).json({
-        error: 'Failed to delete fine',
-      });
-    }
+    res.json({
+      success: true,
+      message: 'Fine deleted successfully',
+    });
   } catch (error) {
     res.status(500).json({
       error: 'Failed to delete fine',

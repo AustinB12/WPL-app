@@ -93,15 +93,6 @@ export function ItemCopyStatusChip({
           color="default"
         />
       );
-    case 'Returned (not yet available)':
-      return (
-        <Chip
-          size={size}
-          variant={is_light ? 'filled' : 'outlined'}
-          label="Returned"
-          color="warning"
-        />
-      );
     default:
       return (
         <Chip

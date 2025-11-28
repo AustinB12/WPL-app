@@ -70,7 +70,15 @@ export default function SimpleGrid({
       disableColumnSorting
       disableDensitySelector
       disableMultipleRowSelection
-      sx={{ '--DataGrid-overlayHeight': overlay_height || '100px' }}
+      sx={{
+        '--DataGrid-overlayHeight': overlay_height || '100px',
+        '& .MuiDataGrid-cell:focus': {
+          outline: 'none',
+        },
+        '& .MuiDataGrid-row:hover': {
+          cursor: 'pointer',
+        },
+      }}
       slots={{
         noRowsOverlay: () => no_rows_overlay,
         noResultsOverlay: () => no_results_overlay,

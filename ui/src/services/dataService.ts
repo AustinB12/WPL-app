@@ -1,13 +1,10 @@
 import type {
-  Book,
   Transaction,
   Reservation,
-  BookFilters,
   Library_Item,
   Item_Copy,
   Branch,
   Patron,
-  Book_Form_Data,
   Create_Library_Item_Form_Data,
   Item_Condition,
   Item_Copy_Result,
@@ -97,129 +94,6 @@ const api_request = async <T>(
 };
 
 export const data_service = {
-  //! Book operations
-
-  async get_books(filters?: BookFilters): Promise<Book[]> {
-    const search_params = new URLSearchParams();
-
-    if (filters?.search) {
-      search_params.append('search', filters.search);
-    }
-
-    if (filters?.genre) {
-      search_params.append('genre', filters.genre);
-    }
-
-    if (filters?.author) {
-      search_params.append('author', filters.author);
-    }
-
-    if (filters?.availability) {
-      search_params.append('availability', filters.availability);
-    }
-
-    search_params.append('item_type', 'Book');
-
-    const query_string = search_params.toString()
-      ? `?${search_params.toString()}`
-      : '';
-    const books = await api_request<Book[]>(`/library-items${query_string}`);
-
-    // Filter only books from library items
-    return books.filter((item) => item.item_type === 'BOOK');
-  },
-
-  async getBookById(id: string): Promise<Book | null> {
-    try {
-      // First get the library item
-      const library_item = await api_request<Library_Item>(
-        `/library-items/${id}`
-      );
-
-      if (!library_item || library_item.item_type !== 'BOOK') {
-        return null;
-      }
-
-      // Then get book-specific details if they exist
-      // For now, we'll construct a basic book from library item
-      const book: Book = {
-        id: library_item.id,
-        title: library_item.title,
-        item_type: library_item.item_type,
-        description: library_item.description,
-        publication_year: library_item.publication_year,
-        congress_code: library_item.congress_code,
-        author: '', // These would come from books table
-        genre: [],
-        publisher: '',
-        cover_image_url: '',
-        library_item_id: library_item.id,
-      };
-
-      return book;
-    } catch (error: Error | unknown) {
-      if (error instanceof Error && error.message.includes('404')) {
-        return null;
-      }
-      throw error;
-    }
-  },
-
-  async create_book(book: Book_Form_Data): Promise<Book> {
-    const library_item_data = {
-      title: book.title,
-      item_type: 'Book',
-      description: book.description,
-      publication_year: book.publication_year,
-      congress_code: book.congress_code,
-    };
-
-    const created_item = await api_request<Library_Item>('/library-items', {
-      method: 'POST',
-      body: JSON.stringify(library_item_data),
-    });
-
-    // Convert library item back to book format
-    return {
-      ...created_item,
-      author: book.author || '',
-      genre: book?.genre || [],
-      publisher: book?.publisher || '',
-      cover_image_url: book?.cover_image_url || '',
-      library_item_id: created_item.id,
-    };
-  },
-
-  async updateBook(id: string, updates: Partial<Book>): Promise<Book | null> {
-    try {
-      const library_item_updates = {
-        title: updates.title,
-        description: updates.description,
-        publication_year: updates.publication_year,
-      };
-
-      await api_request(`/library-items/${id}`, {
-        method: 'PUT',
-        body: JSON.stringify(library_item_updates),
-      });
-
-      // Return updated book
-      return await this.getBookById(id);
-    } catch (error: Error | unknown) {
-      if (error instanceof Error && error.message.includes('404')) {
-        return null;
-      }
-      throw error;
-    }
-  },
-
-  async deleteBook(id: string): Promise<boolean> {
-    await api_request(`/library-items/${id}`, {
-      method: 'DELETE',
-    });
-    return true;
-  },
-
   async getGenres(): Promise<Genre[]> {
     // Since we don't have a dedicated books table with genres in the new API,
     // we'll return a static list of common genres for now
