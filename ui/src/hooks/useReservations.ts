@@ -1,10 +1,15 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { data_service } from '../services/dataService';
 
-export const useReservations = () => {
+export const useReservations = (
+  patron_id?: number,
+  status?: string,
+  library_item_id?: number
+) => {
   return useQuery({
-    queryKey: ['reservations'],
-    queryFn: () => data_service.getAllReservations(),
+    queryKey: ['reservations', patron_id, status, library_item_id],
+    queryFn: () =>
+      data_service.getAllReservations(patron_id, status, library_item_id),
   });
 };
 

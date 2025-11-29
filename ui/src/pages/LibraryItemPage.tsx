@@ -88,7 +88,11 @@ export const Library_Item_Page = () => {
                   <Stack direction={'row'} justifyContent={'space-between'}>
                     <LIP_Field
                       label="Publisher"
-                      value={data?.publisher || 'Unknown'}
+                      value={
+                        data?.publisher ||
+                        data?.audiobook_publisher ||
+                        'Unknown'
+                      }
                     />
                     <LIP_Field
                       label="Congress Code"
@@ -143,7 +147,7 @@ export const Library_Item_Page = () => {
             <Grid size={4}>
               <img
                 style={{ width: '97%', borderRadius: '8px' }}
-                src={data?.cover_image_url}
+                src={data?.cover_image_url || data?.audiobook_cover_image || ''}
                 alt={`Cover image of ${data?.title || ''}`}
               />
             </Grid>

@@ -71,17 +71,64 @@ router.get('/', async (req, res) => {
 
     const where_clause =
       conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
-    const order_by = 'ORDER BY title';
+    const group_by = 'GROUP BY li.id';
+    const order_by = 'ORDER BY li.title';
 
-    const library_items = await db.get_all(
-      'LIBRARY_ITEMS',
-      `${where_clause} ${order_by}`,
-      params
-    );
+    const query = `
+      SELECT 
+        li.*,
+        bk.author,
+        bk.publisher,
+        bk.genre as book_genre,
+        bk.number_of_pages,
+        v.director,
+        v.studio,
+        v.format as video_format,
+        v.duration_minutes,
+        v.rating as video_rating,
+        v.genre as video_genre,
+        ab.narrator,
+        ab.duration_in_seconds as audiobook_duration,
+        ab.publisher as audiobook_publisher,
+        ab.genre as audiobook_genre,
+        va.artist as vinyl_artist,
+        va.color as vinyl_color,
+        va.number_of_tracks as vinyl_tracks,
+        va.genre as vinyl_genre,
+        cd.artist as cd_artist,
+        cd.record_label,
+        cd.number_of_tracks as cd_tracks,
+        cd.genre as cd_genre,
+        per.pages as periodical_pages,
+        per.issue_number as periodical_issue_number,
+        per.publication_date as periodical_publication_date,
+        mag.subscription_cost as magazine_subscription_cost,
+        mag.publisher as magazine_publisher,
+        mag.issue_number as magazine_issue_number,
+        mag.publication_month as magazine_publication_month,
+        mag.publication_year as magazine_publication_year,
+        COUNT(DISTINCT ic.id) as total_copies,
+        SUM(CASE WHEN ic.status = 'Available' THEN 1 ELSE 0 END) as available_copies,
+        SUM(CASE WHEN ic.status = 'Checked Out' THEN 1 ELSE 0 END) as checked_out_copies
+      FROM LIBRARY_ITEMS li
+      LEFT JOIN LIBRARY_ITEM_COPIES ic ON li.id = ic.library_item_id
+      LEFT JOIN BOOKS bk ON li.id = bk.library_item_id
+      LEFT JOIN VIDEOS v ON li.id = v.library_item_id
+      LEFT JOIN AUDIOBOOKS ab ON li.id = ab.library_item_id
+      LEFT JOIN VINYL_ALBUMS va ON li.id = va.library_item_id
+      LEFT JOIN CDS cd ON li.id = cd.library_item_id
+      LEFT JOIN PERIODICALS per ON li.id = per.library_item_id
+      LEFT JOIN MAGAZINES mag ON li.id = mag.library_item_id
+      ${where_clause}
+      ${group_by}
+      ${order_by}
+    `;
+
+    const library_items_with_counts = await db.execute_query(query, params);
     res.json({
       success: true,
-      count: library_items.length,
-      data: library_items,
+      count: library_items_with_counts.length,
+      data: library_items_with_counts,
     });
   } catch (error) {
     res.status(500).json({
@@ -109,6 +156,11 @@ router.get('/:id', async (req, res) => {
         v.rating as video_rating,
         a.narrator,
         a.duration_in_seconds as audiobook_duration,
+        a.publisher as audiobook_publisher,
+        a.genre as audiobook_genre,
+        a.cover_img_url as audiobook_cover_image,
+        a.format as audiobook_format,
+        a.rating as audiobook_rating,
         va.artist,
         va.color as vinyl_color,
         va.number_of_tracks as vinyl_tracks,

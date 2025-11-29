@@ -553,7 +553,7 @@ router.post(
           });
 
           const next_in_queue = await db.execute_query(
-            'SELECT * FROM RESERVATIONS WHERE library_item_id = ? AND status = "waiting" ORDER BY queue_position LIMIT 1',
+            'SELECT * FROM RESERVATIONS WHERE item_copy_id = ? AND status = "waiting" ORDER BY queue_position LIMIT 1',
             [reservation.library_item_id]
           );
 
@@ -598,7 +598,7 @@ router.post(
 
       // First, check if THIS patron has a reservation
       const patron_reservation = await db.execute_query(
-        'SELECT * FROM RESERVATIONS WHERE library_item_id = ? AND patron_id = ? AND status IN ("waiting", "ready") ORDER BY queue_position LIMIT 1',
+        'SELECT * FROM RESERVATIONS WHERE item_copy_id = ? AND patron_id = ? AND status IN ("waiting", "ready") ORDER BY queue_position LIMIT 1',
         [item_copy.library_item_id, patron_id]
       );
 
@@ -609,14 +609,14 @@ router.post(
       if (patron_reservation.length === 0) {
         // Patron has no reservation - block if there are ANY other reservations
         other_patron_reservations = await db.execute_query(
-          'SELECT * FROM RESERVATIONS WHERE library_item_id = ? AND status IN ("waiting", "ready") ORDER BY queue_position LIMIT 1',
+          'SELECT * FROM RESERVATIONS WHERE item_copy_id = ? AND status IN ("waiting", "ready") ORDER BY queue_position LIMIT 1',
           [item_copy.library_item_id]
         );
       } else {
         // Patron has a reservation - only block if someone else has a better queue position
         const patron_queue_pos = patron_reservation[0].queue_position;
         other_patron_reservations = await db.execute_query(
-          'SELECT * FROM RESERVATIONS WHERE library_item_id = ? AND patron_id != ? AND status IN ("waiting", "ready") AND queue_position < ? ORDER BY queue_position LIMIT 1',
+          'SELECT * FROM RESERVATIONS WHERE item_copy_id = ? AND patron_id != ? AND status IN ("waiting", "ready") AND queue_position < ? ORDER BY queue_position LIMIT 1',
           [item_copy.library_item_id, patron_id, patron_queue_pos]
         );
       }
@@ -653,7 +653,7 @@ router.post(
       let reservation_to_fulfill = null;
       if (item_copy.status === 'Reserved' || item_copy.status === 'reserved') {
         const reservations = await db.execute_query(
-          'SELECT * FROM RESERVATIONS WHERE library_item_id = ? AND patron_id = ? AND status IN ("waiting", "ready") ORDER BY queue_position LIMIT 1',
+          'SELECT * FROM RESERVATIONS WHERE item_copy_id = ? AND patron_id = ? AND status IN ("waiting", "ready") ORDER BY queue_position LIMIT 1',
           [item_copy.library_item_id, patron_id]
         );
 
@@ -1028,7 +1028,7 @@ router.post(
 
         // Check if there are any "waiting" reservations for this library item
         const waiting_reservations = await db.execute_query(
-          'SELECT * FROM RESERVATIONS WHERE library_item_id = ? AND status = "waiting" ORDER BY queue_position ASC LIMIT 1',
+          'SELECT * FROM RESERVATIONS WHERE item_copy_id = ? AND status = "waiting" ORDER BY queue_position ASC LIMIT 1',
           [item_copy.library_item_id]
         );
 
@@ -1462,7 +1462,7 @@ router.post(
 
       // Check if there are "waiting" reservations for this item
       const waiting_reservations = await db.execute_query(
-        'SELECT * FROM RESERVATIONS WHERE library_item_id = ? AND status = "waiting" ORDER BY queue_position LIMIT 1',
+        'SELECT * FROM RESERVATIONS WHERE item_copy_id = ? AND status = "waiting" ORDER BY queue_position LIMIT 1',
         [item_copy.library_item_id]
       );
 
@@ -1577,7 +1577,7 @@ router.post(
 
             // Check if there are "waiting" reservations for this item
             const waiting_reservations = await db.execute_query(
-              'SELECT * FROM RESERVATIONS WHERE library_item_id = ? AND status = "waiting" ORDER BY queue_position LIMIT 1',
+              'SELECT * FROM RESERVATIONS WHERE item_copy_id = ? AND status = "waiting" ORDER BY queue_position LIMIT 1',
               [item_copy.library_item_id]
             );
 

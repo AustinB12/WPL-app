@@ -11,7 +11,6 @@ import { PatronPage } from './pages/PatronPage';
 import { lazy } from 'react';
 import { SearchPage } from './pages/SearchPage';
 import { RenewItem } from './pages/RenewItem';
-import { ReservePage } from './pages/ReservePage';
 import { SnackbarProvider } from './contexts/SnackbarContext';
 import { GlobalSnackbar } from './components/common/GlobalSnackbar';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
@@ -136,7 +135,7 @@ function App() {
               <Route path="renewals" element={<RenewalsPage />} />
               <Route path="settings" element={<SettingsPage />} />
               <Route path="available" element={<MarkAvailablePage />} />
-              <Route path="reserve" element={<ReservePage />} />
+              <Route path="reserve" element={<ReservationsPage />} />
             </Route>
           </Routes>
           <GlobalSnackbar />

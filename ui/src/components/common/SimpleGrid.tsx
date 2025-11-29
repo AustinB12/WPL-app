@@ -48,6 +48,7 @@ type Simple_Grid_Props = {
   no_rows_overlay?: React.ReactNode;
   no_results_overlay?: React.ReactNode;
   overlay_height?: string;
+  on_row_click?: DataGridProps['onRowClick'];
 };
 
 export default function SimpleGrid({
@@ -57,6 +58,7 @@ export default function SimpleGrid({
   no_rows_overlay,
   no_results_overlay,
   overlay_height,
+  on_row_click,
 }: Simple_Grid_Props) {
   return (
     <DataGrid
@@ -70,6 +72,7 @@ export default function SimpleGrid({
       disableColumnSorting
       disableDensitySelector
       disableMultipleRowSelection
+      onRowClick={on_row_click}
       sx={{
         '--DataGrid-overlayHeight': overlay_height || '100px',
         '& .MuiDataGrid-cell:focus': {
@@ -87,7 +90,7 @@ export default function SimpleGrid({
       initialState={{
         pagination: {
           paginationModel: {
-            pageSize: 10,
+            pageSize: 20,
           },
         },
       }}

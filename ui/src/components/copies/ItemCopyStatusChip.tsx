@@ -18,7 +18,7 @@ export function ItemCopyStatusChip({
           size={size}
           variant={is_light ? 'filled' : 'outlined'}
           label="Available"
-          color="info"
+          color="success"
         />
       );
     case 'Checked Out':

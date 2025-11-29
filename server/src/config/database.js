@@ -239,7 +239,7 @@ async function create_tables() {
     await db.exec(`
       CREATE TABLE IF NOT EXISTS RESERVATIONS (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        library_item_id INTEGER NOT NULL,
+        item_copy_id INTEGER NOT NULL,
         patron_id INTEGER,
         reservation_date DATETIME DEFAULT CURRENT_TIMESTAMP,
         expiry_date DATE,
@@ -249,7 +249,7 @@ async function create_tables() {
         fulfillment_date DATETIME,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (library_item_id) REFERENCES LIBRARY_ITEMS(id) ON DELETE CASCADE,
+        FOREIGN KEY (item_copy_id) REFERENCES LIBRARY_ITEM_COPIES(id) ON DELETE CASCADE,
         FOREIGN KEY (patron_id) REFERENCES PATRONS(id) ON DELETE CASCADE
       )
     `);
@@ -376,7 +376,7 @@ async function create_tables() {
       
       -- Reservation indexes for queue management
       CREATE INDEX IF NOT EXISTS idx_reservations_status ON RESERVATIONS(status);
-      CREATE INDEX IF NOT EXISTS idx_reservations_item_queue ON RESERVATIONS(library_item_id, queue_position, status);
+      CREATE INDEX IF NOT EXISTS idx_reservations_item_queue ON RESERVATIONS(item_copy_id, queue_position, status);
       CREATE INDEX IF NOT EXISTS idx_reservations_patron ON RESERVATIONS(patron_id);
       CREATE INDEX IF NOT EXISTS idx_reservations_dates ON RESERVATIONS(reservation_date, expiry_date);
       CREATE INDEX IF NOT EXISTS idx_reservations_active ON RESERVATIONS(status, expiry_date) WHERE status IN ('pending', 'ready');

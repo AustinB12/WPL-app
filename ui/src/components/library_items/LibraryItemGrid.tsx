@@ -157,7 +157,6 @@ export const LibraryItemDataGrid = () => {
           return <ItemTypeChip item_type={params.value} />;
         },
       },
-
       {
         field: 'description',
         headerName: 'Description',
@@ -165,6 +164,7 @@ export const LibraryItemDataGrid = () => {
         editable: false,
         flex: 1,
       },
+      { field: 'total_copies', headerName: 'Copies', width: 90 },
       {
         field: 'publication_year',
         headerName: 'Publication Year',

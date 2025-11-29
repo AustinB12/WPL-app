@@ -1,6 +1,12 @@
 import { Chip, useTheme } from '@mui/material';
 
-export const PatronsStatusChip = ({ status }: { status: boolean }) => {
+export const PatronsStatusChip = ({
+  status,
+  size = 'medium',
+}: {
+  status: boolean;
+  size?: 'small' | 'medium';
+}) => {
   const theme = useTheme();
   const is_dark = theme.palette.mode === 'dark';
   return (
@@ -8,7 +14,7 @@ export const PatronsStatusChip = ({ status }: { status: boolean }) => {
       variant={is_dark ? 'outlined' : 'filled'}
       label={status ? 'Active' : 'Inactive'}
       color={status ? 'success' : 'error'}
-      size="small"
+      size={size}
     />
   );
 };

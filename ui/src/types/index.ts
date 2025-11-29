@@ -234,6 +234,11 @@ export interface Library_Item {
   total_copies: string;
   available_copies: string;
   checked_out_copies: string;
+  audiobook_format?: string;
+  audiobook_rating?: string;
+  audiobook_genre?: Genre[];
+  audiobook_cover_image?: string;
+  audiobook_publisher?: string;
 }
 
 export type Audiobook = Omit<

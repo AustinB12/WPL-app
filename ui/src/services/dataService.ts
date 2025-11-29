@@ -290,8 +290,31 @@ export const data_service = {
     });
   },
 
-  async getAllReservations(): Promise<Reservation[]> {
-    return await api_request<Reservation[]>('/reservations');
+  async getAllReservations(
+    patron_id?: number,
+    status?: string,
+    library_item_id?: number
+  ): Promise<Reservation[]> {
+    let url = '/reservations';
+    const params: string[] = [];
+
+    if (patron_id) {
+      params.push(`patron_id=${patron_id}`);
+    }
+
+    if (status) {
+      params.push(`status=${status}`);
+    }
+
+    if (library_item_id) {
+      params.push(`library_item_id=${library_item_id}`);
+    }
+
+    if (params.length > 0) {
+      url += `?${params.join('&')}`;
+    }
+
+    return await api_request<Reservation[]>(url);
   },
 
   async cancelReservation(reservation_id: string): Promise<Reservation | null> {
@@ -366,7 +389,8 @@ export const data_service = {
   async get_all_copies(
     branch_id: number,
     status?: Library_Copy_Status,
-    condition?: Item_Condition
+    condition?: Item_Condition,
+    other_status?: Library_Copy_Status
   ): Promise<Item_Copy_Result[]> {
     let url = '/item-copies';
     const params: string[] = [];
@@ -377,6 +401,10 @@ export const data_service = {
 
     if (status) {
       params.push(`status=${status}`);
+    }
+
+    if (other_status) {
+      params.push(`other_status=${other_status}`);
     }
 
     if (condition) {

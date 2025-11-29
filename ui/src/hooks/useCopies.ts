@@ -7,11 +7,13 @@ import type { Edit_Copy_Form_Data } from '../components/copies/EditCopyModal';
 export const useCopies = (
   branch_id: number,
   status?: Library_Copy_Status,
-  condition?: Item_Condition
+  condition?: Item_Condition,
+  other_status?: Library_Copy_Status
 ) => {
   return useQuery({
-    queryKey: ['item_copies', branch_id, status, condition],
-    queryFn: () => data_service.get_all_copies(branch_id, status, condition),
+    queryKey: ['item_copies', branch_id, status, condition, other_status],
+    queryFn: () =>
+      data_service.get_all_copies(branch_id, status, condition, other_status),
   });
 };
 

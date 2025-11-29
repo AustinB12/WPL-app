@@ -1,4 +1,3 @@
-import { Stack } from '@mui/material';
 import { type GridColDef } from '@mui/x-data-grid';
 import ItemTypeChip from '../library_items/ItemTypeChip';
 import { ItemCopyConditionChip } from '../copies/ItemCopyConditionChip';
@@ -52,15 +51,17 @@ const columns: GridColDef[] = [
     field: 'status',
     headerName: 'Status',
     width: 120,
-    renderCell: (params) => (
-      <Stack sx={{ height: 1 }} direction={'row'} gap={1} alignItems={'center'}>
-        {new Date(params.row.due_date) < new Date() ? (
-          <ItemCopyStatusChip status="Overdue" />
-        ) : (
-          <ItemCopyStatusChip status="Checked Out" />
-        )}
-      </Stack>
-    ),
+    renderCell: (params) => {
+      return (
+        <ItemCopyStatusChip
+          status={
+            new Date(params.row.due_date) < new Date()
+              ? 'Overdue'
+              : 'Checked Out'
+          }
+        />
+      );
+    },
   },
   {
     field: 'item_type',

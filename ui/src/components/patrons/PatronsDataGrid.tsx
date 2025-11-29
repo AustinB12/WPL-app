@@ -151,16 +151,15 @@ const create_columns = (
   {
     field: 'active_checkouts',
     headerName: 'Checked Out',
-    flex: 1,
+    width: 120,
     renderCell: (params: GridRenderCellParams) => {
       const count = params.value || 0;
       const tooMany = count >= 20;
       return (
         <Chip
           label={`${count} / 20`}
-          size="small"
-          color={tooMany ? 'error' : 'default'}
-          variant={tooMany ? 'filled' : 'outlined'}
+          color={tooMany ? 'error' : 'success'}
+          variant="filled"
         />
       );
     },

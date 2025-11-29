@@ -713,13 +713,13 @@ export const ConfirmCheckoutDetails: FC<ConfirmCheckoutDetailsProps> = ({
           <Stack
             sx={{
               flex: 1,
-              justifyContent: 'center',
+              justifyContent: 'space-between',
             }}
           >
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
               Item must be returned by this date
             </Typography>
-            <Box sx={{ mt: 'auto' }}>
+            <Box>
               <InfoRow
                 label="Loan Duration:"
                 value={
@@ -757,6 +757,9 @@ export const ConfirmCheckoutDetails: FC<ConfirmCheckoutDetailsProps> = ({
               justifyContent: 'center',
             }}
           >
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+              {item_copy.copy_label}
+            </Typography>
             <Grid container spacing={2} sx={{ width: 1 }}>
               <Grid size={{ xs: 12, sm: 6 }}>
                 <InfoRow

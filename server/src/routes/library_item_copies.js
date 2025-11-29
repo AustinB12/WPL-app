@@ -51,7 +51,8 @@ const handle_validation_errors = (req, res, next) => {
 // GET /api/v1/item-copies - Get all item copies
 router.get('/', async (req, res) => {
   try {
-    const { library_item_id, branch_id, status, condition } = req.query;
+    const { library_item_id, branch_id, status, condition, other_status } =
+      req.query;
     let conditions = '';
     let params = [];
 
@@ -68,6 +69,10 @@ router.get('/', async (req, res) => {
     if (status) {
       filters.push('lic.status = ?');
       params.push(status);
+    }
+    if (other_status) {
+      filters.push('lic.status = ?');
+      params.push(other_status);
     }
     if (condition) {
       filters.push('lic.condition = ?');

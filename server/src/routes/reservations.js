@@ -2,6 +2,7 @@ import express from 'express';
 import { body, validationResult } from 'express-validator';
 import * as db from '../config/database.js';
 import { format_sql_datetime } from '../utils.js';
+import pico from 'picocolors';
 
 const router = express.Router();
 
@@ -11,54 +12,31 @@ const process_expired_reservations = async () => {
   try {
     // Find all "ready" reservations that have expired (more than 5 days old)
     const expired_reservations = await db.execute_query(
-      'SELECT * FROM RESERVATIONS WHERE status = "ready" AND expiry_date < ?',
+      'SELECT id, item_copy_id FROM RESERVATIONS WHERE status = "ready" AND expiry_date < ?',
       [now]
     );
 
-    for (const reservation of expired_reservations) {
-      // Mark reservation as expired
-      await db.update_record('RESERVATIONS', reservation.id, {
-        status: 'expired',
-        updated_at: now,
-      });
+    if (expired_reservations.length > 0) {
+      const reservation_ids = expired_reservations.map((r) => r.id).join(', ');
+      const copy_ids = expired_reservations
+        .map((r) => r.item_copy_id)
+        .join(', ');
 
-      // Set item back to "returned" status
-      const copies = await db.execute_query(
-        'SELECT * FROM LIBRARY_ITEM_COPIES WHERE library_item_id = ? AND status = "Reserved" LIMIT 1',
-        [reservation.library_item_id]
-      );
+      await db.execute_query(`
+        UPDATE RESERVATIONS SET status = 'expired', updated_at = ${now}
+        WHERE id IN (${reservation_ids})`);
 
-      if (copies.length > 0) {
-        await db.update_record('LIBRARY_ITEM_COPIES', copies[0].id, {
-          status: 'returned',
-          updated_at: now,
-        });
-
-        // Check for next person in queue
-        const next_in_queue = await db.execute_query(
-          'SELECT * FROM RESERVATIONS WHERE library_item_id = ? AND status = "waiting" ORDER BY queue_position LIMIT 1',
-          [reservation.library_item_id]
-        );
-
-        if (next_in_queue.length > 0) {
-          // Move next person to "ready" status
-          const new_expiry = new Date();
-          new_expiry.setDate(new_expiry.getDate() + 5);
-
-          await db.update_record('RESERVATIONS', next_in_queue[0].id, {
-            status: 'ready',
-            expiry_date: format_sql_datetime(new_expiry),
-            updated_at: now,
-          });
-
-          // Set item back to Reserved (ready for pickup)
-          await db.update_record('LIBRARY_ITEM_COPIES', copies[0].id, {
-            status: 'Reserved',
-            updated_at: now,
-          });
-        }
-      }
+      await db.execute_query(`
+          UPDATE LIBRARY_ITEM_COPIES SET status = 'Unshelved', updated_at = ${now}
+          WHERE id IN (${copy_ids})`);
     }
+    console.log(
+      pico.bgGreen(
+        pico.bold(
+          `Expired reservations processed | Count: ${expired_reservations.length}`
+        )
+      )
+    );
   } catch (error) {
     console.error('Error processing expired reservations:', error);
   }
@@ -66,9 +44,9 @@ const process_expired_reservations = async () => {
 
 // Validation middleware
 const validate_reservation = [
-  body('library_item_id')
+  body('item_copy_id')
     .isInt({ min: 1 })
-    .withMessage('Valid library item ID is required'),
+    .withMessage('Valid item copy ID is required'),
   body('patron_id')
     .isInt({ min: 1 })
     .withMessage('Valid patron ID is required'),
@@ -92,7 +70,7 @@ router.get('/', async (req, res) => {
     // Process expired reservations before fetching
     await process_expired_reservations();
 
-    const { patron_id, status, library_item_id } = req.query;
+    const { patron_id, status, library_item_id, item_copy_id } = req.query;
     let conditions = '';
     let params = [];
 
@@ -106,8 +84,12 @@ router.get('/', async (req, res) => {
       params.push(status);
     }
     if (library_item_id) {
-      filters.push('r.library_item_id = ?');
+      filters.push('ic.library_item_id = ?');
       params.push(library_item_id);
+    }
+    if (item_copy_id) {
+      filters.push('r.item_copy_id = ?');
+      params.push(item_copy_id);
     }
 
     if (filters.length > 0) {
@@ -120,11 +102,16 @@ router.get('/', async (req, res) => {
         p.first_name,
         p.last_name,
         p.email,
-        ci.title,
-        ci.item_type
+        li.title,
+        li.item_type,
+        li.description,
+        ic.id as copy_id,
+        ic.status as copy_status,
+        ic.condition as copy_condition
       FROM RESERVATIONS r
       JOIN PATRONS p ON r.patron_id = p.id
-      JOIN LIBRARY_ITEMS ci ON r.library_item_id = ci.id
+      JOIN LIBRARY_ITEM_COPIES ic ON r.item_copy_id = ic.id
+      JOIN LIBRARY_ITEMS li ON ic.library_item_id = li.id
       ${conditions}
       ORDER BY r.queue_position, r.reservation_date
     `;
@@ -184,19 +171,18 @@ router.get('/:id', async (req, res) => {
 });
 
 // POST /api/v1/reservations - Create new reservation
-// Follows exact flow from diagram
 router.post(
   '/',
   validate_reservation,
   handle_validation_errors,
   async (req, res) => {
     try {
-      const { library_item_id, patron_id, copy_id } = req.body;
+      const { item_copy_id, patron_id } = req.body;
 
-      // Step 4: Lookup patron record
+      // Lookup patron record
       const patron = await db.get_by_id('PATRONS', patron_id);
 
-      // Step 6-7: Validate patron account
+      // Validate patron account
       if (!patron) {
         return res.status(400).json({
           error: 'Return validation failure',
@@ -214,70 +200,26 @@ router.post(
       }
 
       // Verify library item exists
-      const library_item = await db.get_by_id('LIBRARY_ITEMS', library_item_id);
-      if (!library_item) {
+      const copy = await db.get_by_id('LIBRARY_ITEM_COPIES', item_copy_id);
+      if (!copy) {
         return res.status(400).json({
-          error: 'Library item not found',
+          error: 'Library item copy not found',
         });
       }
 
-      // Step 8: Check item availability and validate copy_id if provided
-      let selected_copy = null;
-      let available_copies_count = null;
-      let available_copies = [];
-
-      if (copy_id) {
-        // Validate the specific copy_id provided by the user
-        const copy_validation = await db.execute_query(
-          'SELECT * FROM LIBRARY_ITEM_COPIES WHERE id = ? AND library_item_id = ?',
-          [copy_id, library_item.id]
-        );
-
-        if (copy_validation.length === 0) {
-          return res.status(400).json({
-            error: 'Invalid copy',
-            message: `Copy ID ${copy_id} does not exist or does not belong to this library item`,
-            validation_failed: true,
-          });
-        }
-
-        selected_copy = copy_validation[0];
-
-        // Check if the copy can be reserved
-        // Allow reserving copies that are Available, Checked Out, or Unshelved
-        const reservable_statuses = ['Available', 'Checked Out', 'Unshelved'];
-        if (!reservable_statuses.includes(selected_copy.status)) {
-          return res.status(400).json({
-            error: 'Copy not reservable',
-            message: `Copy ID ${copy_id} has status "${selected_copy.status}" and cannot be reserved`,
-            validation_failed: true,
-          });
-        }
-
-        // If the selected copy is available, use it for immediate reservation
-        if (selected_copy.status === 'Available') {
-          available_copies = [selected_copy];
-        }
-      }
-
-      // Get count of available copies (for determining reservation status when no specific copy is selected)
-      available_copies_count = await db.execute_query(
-        'SELECT COUNT(*) as count FROM LIBRARY_ITEM_COPIES WHERE library_item_id = ? AND status = "Available"',
-        [library_item.id]
-      );
-
-      // If no copy_id was provided, fall back to querying for any available copy
-      if (!copy_id) {
-        available_copies = await db.execute_query(
-          'SELECT * FROM LIBRARY_ITEM_COPIES WHERE library_item_id = ? AND status = "Available" LIMIT 1',
-          [library_item.id]
-        );
+      const reservable_statuses = ['Available', 'Checked Out', 'Unshelved'];
+      if (!reservable_statuses.includes(copy.status)) {
+        return res.status(400).json({
+          error: 'Copy not reservable',
+          message: `Copy ID ${item_copy_id} has status "${copy.status}" and cannot be reserved`,
+          validation_failed: true,
+        });
       }
 
       // Step 9-10: Check if item is already reserved by this patron
       const existing_patron_reservation = await db.execute_query(
-        'SELECT * FROM RESERVATIONS WHERE library_item_id = ? AND patron_id = ? AND status IN ("waiting", "ready")',
-        [library_item.id, patron_id]
+        'SELECT id FROM RESERVATIONS WHERE item_copy_id = ? AND patron_id = ? AND status IN ("waiting", "ready")',
+        [item_copy_id, patron_id]
       );
 
       if (existing_patron_reservation.length > 0) {
@@ -288,38 +230,27 @@ router.post(
         });
       }
 
-      // Step 11: Check existing reservations
+      // Get existing reservations count for this copy
       const existing_reservations = await db.execute_query(
-        'SELECT COUNT(*) as count FROM RESERVATIONS WHERE library_item_id = ? AND status IN ("waiting", "ready")',
-        [library_item.id]
+        'SELECT COUNT(*) as count FROM RESERVATIONS WHERE item_copy_id = ? AND status IN ("waiting", "ready")',
+        [item_copy_id]
       );
 
-      const total_copies = await db.execute_query(
-        'SELECT COUNT(*) as count FROM LIBRARY_ITEM_COPIES WHERE library_item_id = ?',
-        [library_item.id]
-      );
-
-      // Step 12: Reservation allowed?
-      // If all copies are reserved or checked out, add to waitlist
-      const reservation_allowed =
-        available_copies_count[0].count > 0 ||
-        existing_reservations[0].count < total_copies[0].count;
+      const existing_count = existing_reservations[0].count;
 
       // Get next queue position
       const queue_position_result = await db.execute_query(
-        'SELECT COALESCE(MAX(queue_position), 0) + 1 as next_position FROM RESERVATIONS WHERE library_item_id = ? AND status IN ("waiting", "ready")',
-        [library_item.id]
+        'SELECT COALESCE(MAX(queue_position), 0) + 1 as next_position FROM RESERVATIONS WHERE item_copy_id = ? AND status IN ("waiting", "ready")',
+        [item_copy_id]
       );
 
       const queue_position = queue_position_result[0].next_position;
 
-      // Determine reservation status
-      // If a specific copy was selected and it's available, mark as "ready"
-      // If item is available now (any copy), mark as "ready" (ready for pickup)
-      // Otherwise, mark as "waiting" (in queue)
+      // Determine reservation status:
+      // - If copy is Available AND no other reservations exist, mark as "ready"
+      // - Otherwise, mark as "waiting" (copy is checked out, unshelved, or already has other reservations)
       const reservation_status =
-        (selected_copy && selected_copy.status === 'Available') ||
-        (reservation_allowed && available_copies_count[0].count > 0)
+        copy.status === 'Available' && existing_count === 0
           ? 'ready'
           : 'waiting';
 
@@ -331,7 +262,7 @@ router.post(
       expiry_date.setDate(expiry_date.getDate() + 5);
 
       const reservation_data = {
-        library_item_id: library_item.id,
+        item_copy_id: copy.id,
         patron_id,
         reservation_date: format_sql_datetime(reservation_date),
         expiry_date: format_sql_datetime(expiry_date),
@@ -341,69 +272,57 @@ router.post(
         updated_at: now,
       };
 
-      // Step 13: Create reservation record
-      const reservation_id = await db.create_record(
-        'RESERVATIONS',
-        reservation_data
-      );
+      // Wrap all database operations in a transaction for atomicity
+      await db.execute_transaction(async () => {
+        // Create reservation record
+        const reservation_id = await db.create_record(
+          'RESERVATIONS',
+          reservation_data
+        );
 
-      // Step 14: Update item status to Reserved (ready for pickup) if reservation is ready
-      // Use the selected copy if available, otherwise use the first available copy found
-      const copy_to_reserve =
-        selected_copy && selected_copy.status === 'Available'
-          ? selected_copy
-          : available_copies.length > 0
-            ? available_copies[0]
-            : null;
+        // Update copy status to Reserved only if reservation is ready
+        if (reservation_status === 'ready') {
+          await db.update_record('LIBRARY_ITEM_COPIES', item_copy_id, {
+            status: 'Reserved',
+            updated_at: now,
+          });
+        }
 
-      if (reservation_status === 'ready' && copy_to_reserve) {
-        await db.update_record('LIBRARY_ITEM_COPIES', copy_to_reserve.id, {
-          status: 'Reserved',
+        // Log transaction
+        const transaction_data = {
+          copy_id: item_copy_id,
+          patron_id,
+          transaction_type: 'Reservation',
+          status: reservation_status === 'ready' ? 'Active' : 'Waiting',
+          notes:
+            reservation_status === 'ready'
+              ? 'Item ready for pickup - on reserved shelf'
+              : `Patron in queue (position ${queue_position}) for this copy`,
+          created_at: now,
           updated_at: now,
+        };
+
+        await db.create_record('TRANSACTIONS', transaction_data);
+
+        // Response varies based on reservation status
+        res.status(201).json({
+          success: true,
+          message:
+            reservation_status === 'ready'
+              ? 'Reservation ready for pickup'
+              : `Added to waitlist at position ${queue_position}`,
+          data: {
+            ...reservation_data,
+            id: reservation_id,
+            patron_details: {
+              first_name: patron.first_name,
+              last_name: patron.last_name,
+              email: patron.email,
+            },
+          },
+          on_waitlist: reservation_status === 'waiting',
+          queue_position,
         });
-      }
-
-      // Step 16: Log reservation transaction
-      // Use the selected copy if provided, otherwise use the copy that was reserved (if any)
-      const transaction_copy_id = selected_copy
-        ? selected_copy.id
-        : copy_to_reserve
-          ? copy_to_reserve.id
-          : null;
-
-      const transaction_data = {
-        copy_id: transaction_copy_id,
-        patron_id,
-        location_id: 1, // Default branch
-        transaction_type: 'Reservation',
-        status: reservation_status === 'ready' ? 'Active' : 'Waiting',
-        notes:
-          reservation_status === 'ready'
-            ? 'Item ready for pickup - on reserved shelf'
-            : 'Patron waiting in queue for item',
-        created_at: now,
-        updated_at: now,
-      };
-
-      await db.create_record('TRANSACTIONS', transaction_data);
-
-      // Response varies based on reservation status
-      res.status(201).json({
-        success: true,
-        message:
-          reservation_status === 'ready'
-            ? 'Reservation ready for pickup'
-            : 'Added to waitlist',
-        data: {
-          ...reservation_data,
-          id: reservation_id,
-        },
-        on_waitlist: reservation_status === 'waiting',
-        patron_details: {
-          first_name: patron.first_name,
-          last_name: patron.last_name,
-          email: patron.email,
-        },
       });
     } catch (error) {
       res.status(500).json({
@@ -644,7 +563,7 @@ router.delete('/:id', async (req, res) => {
 
       // Check if there are waiting reservations that should be promoted
       const next_waiting_reservations = await db.execute_query(
-        'SELECT * FROM RESERVATIONS WHERE library_item_id = ? AND status = "waiting" ORDER BY queue_position LIMIT 1',
+        'SELECT * FROM RESERVATIONS WHERE item_copy_id = ? AND status = "waiting" ORDER BY queue_position LIMIT 1',
         [reservation.library_item_id]
       );
 

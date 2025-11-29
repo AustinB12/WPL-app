@@ -1,4 +1,10 @@
-import { useState, useCallback, type FC } from 'react';
+import {
+  useState,
+  useCallback,
+  type FC,
+  type SetStateAction,
+  useMemo,
+} from 'react';
 import {
   Typography,
   Button,
@@ -9,13 +15,8 @@ import {
   Stepper,
   Tooltip,
   Paper,
-  List,
-  ListItem,
-  ListItemButton,
-  ListItemText,
-  Card,
-  CardContent,
   Stack,
+  Chip,
 } from '@mui/material';
 import { LibraryAdd } from '@mui/icons-material';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -26,7 +27,7 @@ import { usePatronById } from '../hooks/usePatrons';
 import { ConfirmCheckoutDetails } from '../components/common/ConfirmCheckoutDetails';
 import type { Item_Copy_Result } from '../types';
 import { CheckoutReceipt } from '../components/common/CheckoutReceipt';
-import { useCopiesOfLibraryItem } from '../hooks/useCopies';
+import { useCopies, useCopiesOfLibraryItem } from '../hooks/useCopies';
 import { useLibraryItems } from '../hooks/useLibraryItems';
 import { useLibraryItemById } from '../hooks/useLibraryItems';
 import { ItemCopyStatusChip } from '../components/copies/ItemCopyStatusChip';
@@ -36,13 +37,14 @@ import { PageContainer, PageTitle } from '../components/common/PageBuilders';
 import { SearchWithNameOrId } from '../components/common/SearchWithNameOrId';
 import { useSnackbar } from '../hooks/useSnackbar';
 import { FineConfirmationDialog } from '../components/common/FineConfirmationDialog';
+import { BaseDataGrid } from '../components/common/BaseDataGrid';
+import type { GridColDef } from '@mui/x-data-grid/models/colDef';
+import ItemTypeChip from '../components/library_items/ItemTypeChip';
+import CopyNumbersOfItemChip from '../components/library_items/CopyNumbersOfItemChip';
+import SimpleGrid from '../components/common/SimpleGrid';
+import { useReservations } from '../hooks/useReservations';
 
-const STEPS = [
-  'Select Patron',
-  'Select Library Item',
-  'Select Copy',
-  'Confirm Details',
-] as string[];
+const STEPS = ['Select Patron', 'Select Copy', 'Confirm Details'] as string[];
 
 interface CheckOutFormData {
   patron_id: number;
@@ -50,11 +52,69 @@ interface CheckOutFormData {
   item: Item_Copy_Result | null;
 }
 
+const columns: GridColDef[] = [
+  {
+    field: 'id',
+    headerName: 'ID',
+    width: 90,
+    valueGetter: (value) => Number(value),
+  },
+  {
+    field: 'title',
+    headerName: 'Title',
+    width: 150,
+    editable: false,
+    flex: 1,
+  },
+  {
+    field: 'item_type',
+    headerName: 'Type',
+    width: 150,
+    editable: false,
+    renderCell: (params) => {
+      return <ItemTypeChip item_type={params.value} />;
+    },
+  },
+  {
+    field: 'total_copies',
+    headerName: 'Copies',
+    width: 80,
+    getSortComparator: (sortDirection) => (v1, v2) => {
+      const num1 = Number(v1.available);
+      const num2 = Number(v2.available);
+      return sortDirection === 'asc' ? num1 - num2 : num2 - num1;
+    },
+    valueGetter: (value, row) => {
+      return { total: Number(value), available: Number(row.available_copies) };
+    },
+    renderCell: (params) => {
+      return (
+        <CopyNumbersOfItemChip
+          available={params.value.available}
+          total={params.value.total}
+        />
+      );
+    },
+  },
+  {
+    field: 'description',
+    headerName: 'Description',
+    width: 200,
+    editable: false,
+    flex: 1,
+  },
+  {
+    field: 'publication_year',
+    headerName: 'Publication Year',
+    width: 130,
+    editable: false,
+  },
+];
+
 // Component for searching and selecting library items
 const LibraryItemSearchStep: FC<{
   onItemSelected: (item_id: number) => void;
-  selected_item_id?: number | null;
-}> = ({ onItemSelected, selected_item_id }) => {
+}> = ({ onItemSelected }) => {
   const { data: library_items, isLoading } = useLibraryItems();
   const [search_term, set_search_term] = useState('');
 
@@ -70,7 +130,7 @@ const LibraryItemSearchStep: FC<{
     }) || [];
 
   return (
-    <Box sx={{ p: 2 }}>
+    <Stack sx={{ p: 1, flex: 1, overflow: 'hidden' }}>
       <Typography variant="h6" gutterBottom>
         Search Library Items
       </Typography>
@@ -79,7 +139,16 @@ const LibraryItemSearchStep: FC<{
         search_term={search_term}
         set_search_term={set_search_term}
       />
-      <Paper sx={{ maxHeight: '60vh', overflow: 'auto' }}>
+      <Box sx={{ flex: 1, overflow: 'hidden' }}>
+        <BaseDataGrid
+          rows={filtered_items}
+          columns={columns}
+          loading={isLoading}
+          label="Library Items"
+          onRowClick={(params) => onItemSelected(Number(params.id))}
+        />
+      </Box>
+      {/* <Paper sx={{ maxHeight: '60vh', overflow: 'auto' }}>
         <List>
           {isLoading ? (
             <ListItem>
@@ -115,66 +184,98 @@ const LibraryItemSearchStep: FC<{
             ))
           )}
         </List>
-      </Paper>
-    </Box>
+      </Paper> */}
+    </Stack>
   );
 };
 
+const copies_cols: GridColDef[] = [
+  { field: 'id', headerName: 'ID', width: 60 },
+  {
+    field: 'copy_label',
+    headerName: 'Label',
+    width: 120,
+    renderCell: (params) => <Chip label={params.value} size="small" />,
+  },
+  { field: 'title', headerName: 'Title', width: 150, flex: 1 },
+  {
+    field: 'status',
+    headerName: 'Status',
+    width: 120,
+    renderCell: (params) => (
+      <ItemCopyStatusChip size="small" status={params.value} />
+    ),
+  },
+  {
+    field: 'item_type',
+    headerName: 'Type',
+    width: 120,
+    renderCell: (params) => <ItemTypeChip item_type={params.value} />,
+  },
+  {
+    field: 'condition',
+    headerName: 'Condition',
+    width: 120,
+    renderCell: (params) => (
+      <ItemCopyConditionChip size="small" condition={params.value} />
+    ),
+  },
+  // { field: 'current_branch_name', headerName: 'Location', width: 150 },
+  // { field: 'owning_branch_name', headerName: 'Owner', width: 150 },
+  // { field: 'notes', headerName: 'Notes', flex: 1 },
+];
+
 // Component for showing all copies of a library item
 const LibraryItemCopiesList: FC<{
-  library_item_id: number;
   on_copy_selected: (copy: Item_Copy_Result) => void;
-  selected_copy_id?: number | null;
   patron_id?: number;
-}> = ({ library_item_id, on_copy_selected, selected_copy_id, patron_id }) => {
+}> = ({ on_copy_selected, patron_id }) => {
   const { selected_branch } = useSelectedBranch();
-  const { data: copies, isLoading } = useCopiesOfLibraryItem(
-    library_item_id,
-    selected_branch?.id
+  const { data: copies, isLoading } = useCopies(
+    selected_branch ? selected_branch.id : 1,
+    'Available'
   );
-  const { data: library_item } = useLibraryItemById(library_item_id);
 
-  // Filter for available and reserved copies
-  // Show "Available" copies to everyone
-  // Show "Reserved" copies to everyone (backend will validate if patron has reservation)
-  const available_copies =
-    copies?.filter((copy) => {
-      const status = (copy.status || '').trim().toLowerCase();
-      return status === 'available' || status === 'reserved';
-    }) || [];
+  const [search_term, set_search_term] = useState('');
+
+  const { data: reservations } = useReservations(patron_id, 'ready');
+
+  const filtered_copies = useMemo(() => {
+    if (!search_term) return copies;
+    return copies?.filter((copy) =>
+      [
+        copy.id,
+        copy.current_branch_name,
+        copy.title,
+        copy.owning_branch_name,
+        copy.item_type,
+      ].some((value) =>
+        String(value).toLowerCase().includes(search_term.toLowerCase())
+      )
+    );
+  }, [copies, search_term]);
 
   return (
-    <Box sx={{ p: 2 }}>
+    <Stack sx={{ height: 1, overflow: 'hidden' }}>
       <Typography variant="h6" gutterBottom>
         Select a Copy
       </Typography>
-      {library_item && (
-        <Paper sx={{ p: 2, mb: 2, bgcolor: 'background.default' }}>
-          <Typography variant="subtitle1" fontWeight="bold">
-            {library_item.title}
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            Item ID: {library_item.id} | Type: {library_item.item_type}
-          </Typography>
-        </Paper>
-      )}
-      {isLoading ? (
-        <Typography>Loading copies...</Typography>
-      ) : available_copies.length === 0 ? (
-        <Alert severity="warning">
-          No available copies found for this item.
-        </Alert>
-      ) : (
-        <Box>
-          <Alert severity="info" sx={{ mb: 2 }}>
-            <Typography variant="body2">
-              <strong>Available</strong> copies can be checked out by anyone.
-              <br />
-              <strong>Reserved</strong> copies can only be checked out by the
-              patron who has the reservation.
-            </Typography>
-          </Alert>
-          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
+
+      <Stack sx={{ flex: 1, overflow: 'hidden' }}>
+        <SearchWithNameOrId
+          search_term={search_term}
+          set_search_term={set_search_term}
+          sx={{ mb: 2 }}
+        />
+        <Box sx={{ flex: 1, overflow: 'hidden' }}>
+          <SimpleGrid
+            rows={filtered_copies || []}
+            cols={copies_cols}
+            loading={isLoading}
+            on_row_click={(params) => on_copy_selected(params.row)}
+          />
+        </Box>
+        {/* <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
             {available_copies.map((copy) => {
               const isReserved =
                 (copy.status || '').trim().toLowerCase() === 'reserved';
@@ -301,10 +402,9 @@ const LibraryItemCopiesList: FC<{
                 </Card>
               );
             })}
-          </Box>
-        </Box>
-      )}
-    </Box>
+          </Box> */}
+      </Stack>
+    </Stack>
   );
 };
 
@@ -410,8 +510,7 @@ export const CheckOutItem: FC = () => {
 
   const is_next_disabled = () => {
     if (active_step === 0) return !form_data.patron_id;
-    if (active_step === 1) return !form_data.library_item_id;
-    if (active_step === 2) return !form_data.item;
+    if (active_step === 1) return !form_data.item;
     return false;
   };
 
@@ -491,24 +590,17 @@ export const CheckOutItem: FC = () => {
                     'local_branch_id',
                     'phone',
                     'birthday',
+                    'email',
                   ]}
                 />
               )}
               {active_step === 1 && (
-                <LibraryItemSearchStep
-                  onItemSelected={handle_library_item_selected}
-                  selected_item_id={form_data.library_item_id}
-                />
-              )}
-              {active_step === 2 && form_data.library_item_id && (
                 <LibraryItemCopiesList
-                  library_item_id={form_data.library_item_id}
                   on_copy_selected={handle_copy_selected}
-                  selected_copy_id={form_data.item?.id}
                   patron_id={form_data.patron_id}
                 />
               )}
-              {active_step === 3 && form_data.item && (
+              {active_step === 2 && form_data.item && (
                 <ConfirmCheckoutDetails
                   patron_id={form_data.patron_id}
                   copy={form_data.item}
