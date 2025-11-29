@@ -1,50 +1,52 @@
+// React & Core
+import { useState, useCallback, useMemo, type FC } from 'react';
+
+// Material-UI Components
 import {
-  useState,
-  useCallback,
-  type FC,
-  type SetStateAction,
-  useMemo,
-} from 'react';
-import {
-  Typography,
-  Button,
   Box,
-  Alert,
+  Button,
+  Chip,
+  Stack,
   Step,
   StepLabel,
   Stepper,
   Tooltip,
-  Paper,
-  Stack,
-  Chip,
+  Typography,
 } from '@mui/material';
 import { LibraryAdd } from '@mui/icons-material';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
-import { PatronsDataGrid } from '../components/patrons/PatronsDataGrid';
+import type { GridColDef } from '@mui/x-data-grid/models/colDef';
+
+// Custom Hooks
 import { useCheckoutBook } from '../hooks/useTransactions';
 import { usePatronById } from '../hooks/usePatrons';
+import { useCopies } from '../hooks/useCopies';
+import { useSelectedBranch } from '../hooks/useBranchHooks';
+import { useSnackbar } from '../hooks/useSnackbar';
+// TODO: Enable when implementing reservation filtering
+// import { useReservations } from '../hooks/useReservations';
+
+// Custom Components
+import { PatronsDataGrid } from '../components/patrons/PatronsDataGrid';
 import { ConfirmCheckoutDetails } from '../components/common/ConfirmCheckoutDetails';
-import type { Item_Copy_Result } from '../types';
 import { CheckoutReceipt } from '../components/common/CheckoutReceipt';
-import { useCopies, useCopiesOfLibraryItem } from '../hooks/useCopies';
-import { useLibraryItems } from '../hooks/useLibraryItems';
-import { useLibraryItemById } from '../hooks/useLibraryItems';
 import { ItemCopyStatusChip } from '../components/copies/ItemCopyStatusChip';
 import { ItemCopyConditionChip } from '../components/copies/ItemCopyConditionChip';
-import { useSelectedBranch } from '../hooks/useBranchHooks';
 import { PageContainer, PageTitle } from '../components/common/PageBuilders';
 import { SearchWithNameOrId } from '../components/common/SearchWithNameOrId';
-import { useSnackbar } from '../hooks/useSnackbar';
 import { FineConfirmationDialog } from '../components/common/FineConfirmationDialog';
-import { BaseDataGrid } from '../components/common/BaseDataGrid';
-import type { GridColDef } from '@mui/x-data-grid/models/colDef';
 import ItemTypeChip from '../components/library_items/ItemTypeChip';
-import CopyNumbersOfItemChip from '../components/library_items/CopyNumbersOfItemChip';
 import SimpleGrid from '../components/common/SimpleGrid';
-import { useReservations } from '../hooks/useReservations';
 
-const STEPS = ['Select Patron', 'Select Copy', 'Confirm Details'] as string[];
+// Types
+import type { Item_Copy_Result } from '../types';
+
+// ============================================================================
+// Constants & Types
+// ============================================================================
+
+const STEPS = ['Select Patron', 'Select Copy', 'Confirm Details'] as const;
 
 interface CheckOutFormData {
   patron_id: number;
@@ -52,144 +54,11 @@ interface CheckOutFormData {
   item: Item_Copy_Result | null;
 }
 
-const columns: GridColDef[] = [
-  {
-    field: 'id',
-    headerName: 'ID',
-    width: 90,
-    valueGetter: (value) => Number(value),
-  },
-  {
-    field: 'title',
-    headerName: 'Title',
-    width: 150,
-    editable: false,
-    flex: 1,
-  },
-  {
-    field: 'item_type',
-    headerName: 'Type',
-    width: 150,
-    editable: false,
-    renderCell: (params) => {
-      return <ItemTypeChip item_type={params.value} />;
-    },
-  },
-  {
-    field: 'total_copies',
-    headerName: 'Copies',
-    width: 80,
-    getSortComparator: (sortDirection) => (v1, v2) => {
-      const num1 = Number(v1.available);
-      const num2 = Number(v2.available);
-      return sortDirection === 'asc' ? num1 - num2 : num2 - num1;
-    },
-    valueGetter: (value, row) => {
-      return { total: Number(value), available: Number(row.available_copies) };
-    },
-    renderCell: (params) => {
-      return (
-        <CopyNumbersOfItemChip
-          available={params.value.available}
-          total={params.value.total}
-        />
-      );
-    },
-  },
-  {
-    field: 'description',
-    headerName: 'Description',
-    width: 200,
-    editable: false,
-    flex: 1,
-  },
-  {
-    field: 'publication_year',
-    headerName: 'Publication Year',
-    width: 130,
-    editable: false,
-  },
-];
+// ============================================================================
+// Column Definitions
+// ============================================================================
 
-// Component for searching and selecting library items
-const LibraryItemSearchStep: FC<{
-  onItemSelected: (item_id: number) => void;
-}> = ({ onItemSelected }) => {
-  const { data: library_items, isLoading } = useLibraryItems();
-  const [search_term, set_search_term] = useState('');
-
-  const filtered_items =
-    library_items?.filter((item) => {
-      if (!search_term.trim()) return true;
-      const search = search_term.toLowerCase();
-      return (
-        item.title.toLowerCase().includes(search) ||
-        item.id.toString().includes(search) ||
-        (item.item_type && item.item_type.toLowerCase().includes(search))
-      );
-    }) || [];
-
-  return (
-    <Stack sx={{ p: 1, flex: 1, overflow: 'hidden' }}>
-      <Typography variant="h6" gutterBottom>
-        Search Library Items
-      </Typography>
-      <SearchWithNameOrId
-        sx={{ mb: 2 }}
-        search_term={search_term}
-        set_search_term={set_search_term}
-      />
-      <Box sx={{ flex: 1, overflow: 'hidden' }}>
-        <BaseDataGrid
-          rows={filtered_items}
-          columns={columns}
-          loading={isLoading}
-          label="Library Items"
-          onRowClick={(params) => onItemSelected(Number(params.id))}
-        />
-      </Box>
-      {/* <Paper sx={{ maxHeight: '60vh', overflow: 'auto' }}>
-        <List>
-          {isLoading ? (
-            <ListItem>
-              <ListItemText primary="Loading..." />
-            </ListItem>
-          ) : filtered_items.length === 0 ? (
-            <ListItem>
-              <ListItemText primary="No items found" />
-            </ListItem>
-          ) : (
-            filtered_items.map((item) => (
-              <ListItem key={item.id} disablePadding>
-                <ListItemButton
-                  onClick={() => onItemSelected(item.id)}
-                  selected={selected_item_id === item.id}
-                  sx={{
-                    borderRadius: 1,
-                    '&.Mui-selected': {
-                      backgroundColor: 'primary.50',
-                      color: 'primary.main',
-                      '&:hover': {
-                        backgroundColor: 'primary.100',
-                      },
-                    },
-                  }}
-                >
-                  <ListItemText
-                    primary={item.title}
-                    secondary={`Item ID: ${item.id} | Type: ${item.item_type}`}
-                  />
-                </ListItemButton>
-              </ListItem>
-            ))
-          )}
-        </List>
-      </Paper> */}
-    </Stack>
-  );
-};
-
-const copies_cols: GridColDef[] = [
+const COPIES_GRID_COLUMNS: GridColDef[] = [
   { field: 'id', headerName: 'ID', width: 60 },
   {
     field: 'copy_label',
@@ -225,35 +94,56 @@ const copies_cols: GridColDef[] = [
   // { field: 'notes', headerName: 'Notes', flex: 1 },
 ];
 
-// Component for showing all copies of a library item
+// ============================================================================
+// Sub-Components
+// ============================================================================
+
+/**
+ * Component for displaying and selecting available library item copies
+ * Includes search functionality and filtering by patron reservations
+ */
 const LibraryItemCopiesList: FC<{
   on_copy_selected: (copy: Item_Copy_Result) => void;
-  patron_id?: number;
-}> = ({ on_copy_selected, patron_id }) => {
+  // TODO: Add patron_id when implementing reservation filtering
+  // patron_id?: number;
+}> = ({ on_copy_selected }) => {
+  // Branch and data hooks
   const { selected_branch } = useSelectedBranch();
-  const { data: copies, isLoading } = useCopies(
-    selected_branch ? selected_branch.id : 1,
+  const branch_id = selected_branch?.id ?? 1;
+
+  const { data: copies, isLoading: loading_copies } = useCopies(
+    branch_id,
     'Available'
   );
 
+  // TODO: Enable when implementing reservation filtering
+  // const { data: reservations } = useReservations(_patron_id, 'ready');
+
+  // Local state
   const [search_term, set_search_term] = useState('');
 
-  const { data: reservations } = useReservations(patron_id, 'ready');
-
+  // Filter copies based on search term
   const filtered_copies = useMemo(() => {
     if (!search_term) return copies;
-    return copies?.filter((copy) =>
-      [
+
+    const search_lower = search_term.toLowerCase();
+    return copies?.filter((copy) => {
+      const searchable_fields = [
         copy.id,
-        copy.current_branch_name,
         copy.title,
-        copy.owning_branch_name,
         copy.item_type,
-      ].some((value) =>
-        String(value).toLowerCase().includes(search_term.toLowerCase())
-      )
-    );
+        copy.current_branch_name,
+        copy.owning_branch_name,
+      ];
+
+      return searchable_fields.some((value) =>
+        String(value).toLowerCase().includes(search_lower)
+      );
+    });
   }, [copies, search_term]);
+
+  // TODO: Implement reservation filtering/highlighting
+  // Use reservations data to show which copies are reserved for this patron
 
   return (
     <Stack sx={{ height: 1, overflow: 'hidden' }}>
@@ -270,165 +160,49 @@ const LibraryItemCopiesList: FC<{
         <Box sx={{ flex: 1, overflow: 'hidden' }}>
           <SimpleGrid
             rows={filtered_copies || []}
-            cols={copies_cols}
-            loading={isLoading}
+            cols={COPIES_GRID_COLUMNS}
+            loading={loading_copies}
             on_row_click={(params) => on_copy_selected(params.row)}
           />
         </Box>
-        {/* <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
-            {available_copies.map((copy) => {
-              const isReserved =
-                (copy.status || '').trim().toLowerCase() === 'reserved';
-              const reservation = copy.reservation;
-              // Can select if: not reserved, or reserved and patron_id matches reservation patron_id
-              const canSelectReserved =
-                isReserved &&
-                reservation &&
-                patron_id &&
-                patron_id === reservation.patron_id;
-              // Cannot select if: reserved and (no reservation info or patron_id doesn't match)
-              const cannotSelectReserved =
-                isReserved &&
-                (!reservation ||
-                  !patron_id ||
-                  patron_id !== reservation.patron_id);
-
-              return (
-                <Card
-                  key={copy.id}
-                  sx={{
-                    cursor: cannotSelectReserved ? 'not-allowed' : 'pointer',
-                    minWidth: 280,
-                    flex: '1 1 280px',
-                    maxWidth: 400,
-                    border: '2px solid',
-                    borderColor:
-                      selected_copy_id === copy.id
-                        ? 'primary.main'
-                        : isReserved
-                        ? 'warning.main'
-                        : 'divider',
-                    bgcolor:
-                      selected_copy_id === copy.id
-                        ? 'primary.50'
-                        : isReserved
-                        ? 'warning.50'
-                        : 'background.paper',
-                    opacity: cannotSelectReserved ? 0.6 : 1,
-                    '&:hover': {
-                      boxShadow: cannotSelectReserved ? 0 : 2,
-                      borderColor: cannotSelectReserved
-                        ? 'warning.main'
-                        : isReserved
-                        ? 'warning.dark'
-                        : 'primary.main',
-                    },
-                  }}
-                  onClick={() => {
-                    if (!cannotSelectReserved) {
-                      on_copy_selected(copy);
-                    }
-                  }}
-                >
-                  <CardContent>
-                    <Typography variant="h6" gutterBottom>
-                      Copy ID: {copy.id}
-                    </Typography>
-                    <Box
-                      sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mb: 1 }}
-                    >
-                      <ItemCopyStatusChip status={copy.status} />
-                      {copy.condition && (
-                        <ItemCopyConditionChip condition={copy.condition} />
-                      )}
-                    </Box>
-                    {isReserved && (
-                      <Alert
-                        severity={canSelectReserved ? 'success' : 'warning'}
-                        sx={{ mt: 1, mb: 1 }}
-                      >
-                        <Typography
-                          variant="caption"
-                          fontWeight="bold"
-                          display="block"
-                          gutterBottom
-                        >
-                          {canSelectReserved
-                            ? '✓ Reserved for You'
-                            : 'Reserved'}
-                        </Typography>
-                        {reservation ? (
-                          <>
-                            <Typography variant="body2" sx={{ mt: 0.5 }}>
-                              Reserved for:{' '}
-                              <strong>
-                                {reservation.patron_name || 'Unknown Patron'}
-                              </strong>
-                              {reservation.queue_position && (
-                                <span>
-                                  {' '}
-                                  (Queue Position: #{reservation.queue_position}
-                                  )
-                                </span>
-                              )}
-                            </Typography>
-                            {cannotSelectReserved && (
-                              <Typography
-                                variant="caption"
-                                color="error.main"
-                                sx={{ mt: 0.5, display: 'block' }}
-                              >
-                                Only{' '}
-                                {reservation.patron_name ||
-                                  'the reserving patron'}{' '}
-                                can checkout this copy.
-                              </Typography>
-                            )}
-                          </>
-                        ) : (
-                          <Typography variant="body2" sx={{ mt: 0.5 }}>
-                            This copy is reserved. Only the reserving patron can
-                            checkout this copy.
-                          </Typography>
-                        )}
-                      </Alert>
-                    )}
-                    {copy.branch_name && (
-                      <Typography variant="body2" color="text.secondary">
-                        Branch: {copy.branch_name}
-                      </Typography>
-                    )}
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </Box> */}
       </Stack>
     </Stack>
   );
 };
 
+// ============================================================================
+// Main Component
+// ============================================================================
+
 export const CheckOutItem: FC = () => {
+  // ==============================
+  // State Management
+  // ==============================
+
+  // Form data state
   const [form_data, set_form_data] = useState<CheckOutFormData>({
     patron_id: 0,
     library_item_id: null,
     item: null,
   });
 
-  // const [queue_info, set_queue_info] = useState<Array<{
-  //   patron_id: number;
-  //   patron_name: string;
-  //   queue_position: number;
-  //   status: string;
-  // }> | null>(null);
-  const [receipt_open, set_receipt_open] = useState<boolean>(false);
+  // Stepper state
   const [active_step, set_active_step] = useState(0);
+
+  // Dialog states
+  const [receipt_open, set_receipt_open] = useState(false);
   const [fine_confirmation_open, set_fine_confirmation_open] = useState(false);
-  const [patron_balance, set_patron_balance] = useState<number>(0);
+
+  // Fine-related state
+  const [patron_balance, set_patron_balance] = useState(0);
   const [pending_checkout, set_pending_checkout] = useState<{
     patron_id: number;
     copy_id: number;
   } | null>(null);
+
+  // ==============================
+  // Hooks
+  // ==============================
 
   const { show_snackbar } = useSnackbar();
 
@@ -442,6 +216,10 @@ export const CheckOutItem: FC = () => {
   } = useCheckoutBook();
 
   const { data: selected_patron } = usePatronById(form_data.patron_id || 0);
+
+  // ==============================
+  // Event Handlers
+  // ==============================
 
   const handle_checkout_book = useCallback(
     (clear_fines: boolean = false) => {
@@ -476,30 +254,35 @@ export const CheckOutItem: FC = () => {
   );
 
   const handle_next = () => {
-    if (active_step === STEPS.length - 1) {
-      if (isSuccess || !!checkout_receipt) {
-        handle_reset();
-      } else {
-        // Check if patron has fines before checkout
-        if (selected_patron && selected_patron.balance > 0) {
-          set_patron_balance(selected_patron.balance);
-          set_pending_checkout({
-            patron_id: form_data.patron_id,
-            copy_id: form_data.item?.id || 0,
-          });
-          set_fine_confirmation_open(true);
-        } else {
-          handle_checkout_book(false);
-        }
-      }
+    // If not on final step, advance to next step
+    if (active_step < STEPS.length - 1) {
+      set_active_step((prev) => prev + 1);
       return;
     }
 
-    set_active_step((prev_step) => prev_step + 1);
+    // On final step: either reset or process checkout
+    if (isSuccess || checkout_receipt) {
+      handle_reset();
+      return;
+    }
+
+    // Check for outstanding fines before checkout
+    const has_fines = selected_patron && selected_patron.balance > 0;
+
+    if (has_fines) {
+      set_patron_balance(selected_patron.balance);
+      set_pending_checkout({
+        patron_id: form_data.patron_id,
+        copy_id: form_data.item?.id || 0,
+      });
+      set_fine_confirmation_open(true);
+    } else {
+      handle_checkout_book(false);
+    }
   };
 
   const handle_back = () => {
-    set_active_step((prev_step) => prev_step - 1);
+    set_active_step((prev) => prev - 1);
   };
 
   const handle_reset = () => {
@@ -508,47 +291,46 @@ export const CheckOutItem: FC = () => {
     reset();
   };
 
-  const is_next_disabled = () => {
-    if (active_step === 0) return !form_data.patron_id;
-    if (active_step === 1) return !form_data.item;
-    return false;
-  };
-
-  const get_next_button_label = () => {
-    if (active_step === STEPS.length - 1) {
-      return isSuccess ? 'Reset' : 'Complete';
-    }
-    return 'Next';
-  };
-
-  const get_tooltip_message = () => {
-    if (is_next_disabled()) {
-      const missing_item =
-        active_step === 0
-          ? 'patron'
-          : active_step === 1
-          ? 'library item'
-          : 'copy';
-      return `Select ${missing_item} to proceed`;
-    }
-    if (active_step === STEPS.length - 1) {
-      return isSuccess ? 'Reset' : 'Complete the transaction';
-    }
-    return 'Next Page';
-  };
-
   const handle_patron_selected = (patron_id: string) => {
     set_form_data((prev) => ({ ...prev, patron_id: Number(patron_id) }));
-  };
-
-  const handle_library_item_selected = (library_item_id: number) => {
-    set_form_data((prev) => ({ ...prev, library_item_id, item: null }));
   };
 
   const handle_copy_selected = (copy: Item_Copy_Result) => {
     reset();
     set_form_data((prev) => ({ ...prev, item: copy }));
   };
+
+  // ==============================
+  // Computed Values
+  // ==============================
+
+  const is_next_disabled = () => {
+    if (active_step === 0) return !form_data.patron_id;
+    if (active_step === 1) return !form_data.item;
+    return false;
+  };
+
+  const next_button_label =
+    active_step === STEPS.length - 1
+      ? isSuccess
+        ? 'Reset'
+        : 'Complete'
+      : 'Next';
+
+  const tooltip_message = (() => {
+    if (is_next_disabled()) {
+      const missing_item = active_step === 0 ? 'patron' : 'library item';
+      return `Select ${missing_item} to proceed`;
+    }
+    if (active_step === STEPS.length - 1) {
+      return isSuccess ? 'Reset' : 'Complete the transaction';
+    }
+    return 'Next Page';
+  })();
+
+  // ==============================
+  // Render
+  // ==============================
 
   return (
     <LocalizationProvider dateAdapter={AdapterDateFns}>
@@ -597,7 +379,8 @@ export const CheckOutItem: FC = () => {
               {active_step === 1 && (
                 <LibraryItemCopiesList
                   on_copy_selected={handle_copy_selected}
-                  patron_id={form_data.patron_id}
+                  // TODO: Pass patron_id when implementing reservation filtering
+                  // patron_id={form_data.patron_id}
                 />
               )}
               {active_step === 2 && form_data.item && (
@@ -619,20 +402,17 @@ export const CheckOutItem: FC = () => {
                 Back
               </Button>
               <Box sx={{ flex: '1 1 auto' }} />
-              <Tooltip
-                children={
-                  <span>
-                    <Button
-                      variant="outlined"
-                      onClick={handle_next}
-                      disabled={is_next_disabled()}
-                    >
-                      {get_next_button_label()}
-                    </Button>
-                  </span>
-                }
-                title={get_tooltip_message()}
-              ></Tooltip>
+              <Tooltip title={tooltip_message}>
+                <span>
+                  <Button
+                    variant="outlined"
+                    onClick={handle_next}
+                    disabled={is_next_disabled()}
+                  >
+                    {next_button_label}
+                  </Button>
+                </span>
+              </Tooltip>
             </Stack>
           </>
         )}

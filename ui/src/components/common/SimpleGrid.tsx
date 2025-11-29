@@ -62,7 +62,6 @@ export default function SimpleGrid({
 }: Simple_Grid_Props) {
   return (
     <DataGrid
-      autoHeight
       density="compact"
       rows={rows}
       columns={cols || default_cols}
@@ -74,6 +73,7 @@ export default function SimpleGrid({
       disableMultipleRowSelection
       onRowClick={on_row_click}
       sx={{
+        height: '100%',
         '--DataGrid-overlayHeight': overlay_height || '100px',
         '& .MuiDataGrid-cell:focus': {
           outline: 'none',
