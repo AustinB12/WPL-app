@@ -33,21 +33,21 @@ function handle_validation_errors(req, res, next) {
 /**
  * GET /api/v1/videos - Get all videos
  */
-router.get('/', function (req, res) {
+router.get('/', (_, res) => {
   const query = `SELECT v.*, li.title, li.description, li.publication_year, li.available
                FROM VIDEOS v
                JOIN LIBRARY_ITEMS li ON v.library_item_id = li.id
                ORDER BY li.title ASC`;
 
   db.execute_query(query)
-    .then(function (videos) {
+    .then((videos) => {
       res.json({
         success: true,
         count: videos.length,
         data: videos,
       });
     })
-    .catch(function (error) {
+    .catch((error) => {
       res.status(500).json({
         error: 'Failed to fetch videos',
         message: error.message,
@@ -58,14 +58,14 @@ router.get('/', function (req, res) {
 /**
  * GET /api/v1/videos/:id - Get single video
  */
-router.get('/:id', function (req, res) {
+router.get('/:id', (req, res) => {
   const query = `SELECT v.*, li.title, li.description, li.publication_year, li.available
                FROM VIDEOS v
                JOIN LIBRARY_ITEMS li ON v.library_item_id = li.id
                WHERE v.id = ?`;
 
   db.execute_query(query, [req.params.id])
-    .then(function (video) {
+    .then((video) => {
       if (!video || video.length === 0) {
         return res.status(404).json({
           error: 'Video not found',
@@ -77,7 +77,7 @@ router.get('/:id', function (req, res) {
         data: video[0],
       });
     })
-    .catch(function (error) {
+    .catch((error) => {
       res.status(500).json({
         error: 'Failed to fetch video',
         message: error.message,
@@ -88,9 +88,9 @@ router.get('/:id', function (req, res) {
 /**
  * POST /api/v1/videos - Create new video
  */
-router.post('/', validate_video, handle_validation_errors, function (req, res) {
+router.post('/', validate_video, handle_validation_errors, (req, res) => {
   db.get_by_id('LIBRARY_ITEMS', req.body.library_item_id)
-    .then(function (library_item) {
+    .then((library_item) => {
       if (!library_item) {
         return res.status(404).json({
           error: 'Library item not found',
@@ -116,7 +116,7 @@ router.post('/', validate_video, handle_validation_errors, function (req, res) {
         is_new_release: req.body.is_new_release || 0,
       };
 
-      return db.create_record('VIDEOS', video_data).then(function () {
+      return db.create_record('VIDEOS', video_data).then(() => {
         res.status(201).json({
           success: true,
           message: 'Video created successfully',
@@ -124,7 +124,7 @@ router.post('/', validate_video, handle_validation_errors, function (req, res) {
         });
       });
     })
-    .catch(function (error) {
+    .catch((error) => {
       res.status(500).json({
         error: 'Failed to create video',
         message: error.message,
@@ -135,56 +135,51 @@ router.post('/', validate_video, handle_validation_errors, function (req, res) {
 /**
  * PUT /api/v1/videos/:id - Update video
  */
-router.put(
-  '/:id',
-  validate_video,
-  handle_validation_errors,
-  function (req, res) {
-    db.get_by_id('VIDEOS', req.params.id)
-      .then(function (existing_video) {
-        if (!existing_video) {
-          return res.status(404).json({
-            error: 'Video not found',
-          });
-        }
-
-        return db
-          .update_record('VIDEOS', req.params.id, req.body)
-          .then(function (updated) {
-            if (updated) {
-              res.json({
-                success: true,
-                message: 'Video updated successfully',
-              });
-            } else {
-              res.status(500).json({
-                error: 'Failed to update video',
-              });
-            }
-          });
-      })
-      .catch(function (error) {
-        res.status(500).json({
-          error: 'Failed to update video',
-          message: error.message,
-        });
-      });
-  }
-);
-
-/**
- * DELETE /api/v1/videos/:id - Delete video
- */
-router.delete('/:id', function (req, res) {
+router.put('/:id', validate_video, handle_validation_errors, (req, res) => {
   db.get_by_id('VIDEOS', req.params.id)
-    .then(function (existing_video) {
+    .then((existing_video) => {
       if (!existing_video) {
         return res.status(404).json({
           error: 'Video not found',
         });
       }
 
-      return db.delete_record('VIDEOS', req.params.id).then(function (deleted) {
+      return db
+        .update_record('VIDEOS', req.params.id, req.body)
+        .then((updated) => {
+          if (updated) {
+            res.json({
+              success: true,
+              message: 'Video updated successfully',
+            });
+          } else {
+            res.status(500).json({
+              error: 'Failed to update video',
+            });
+          }
+        });
+    })
+    .catch((error) => {
+      res.status(500).json({
+        error: 'Failed to update video',
+        message: error.message,
+      });
+    });
+});
+
+/**
+ * DELETE /api/v1/videos/:id - Delete video
+ */
+router.delete('/:id', (req, res) => {
+  db.get_by_id('VIDEOS', req.params.id)
+    .then((existing_video) => {
+      if (!existing_video) {
+        return res.status(404).json({
+          error: 'Video not found',
+        });
+      }
+
+      return db.delete_record('VIDEOS', req.params.id).then((deleted) => {
         if (deleted) {
           res.json({
             success: true,
@@ -197,7 +192,7 @@ router.delete('/:id', function (req, res) {
         }
       });
     })
-    .catch(function (error) {
+    .catch((error) => {
       res.status(500).json({
         error: 'Failed to delete video',
         message: error.message,

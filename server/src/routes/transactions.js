@@ -90,7 +90,7 @@ router.get('/', async (req, res) => {
   try {
     const { patron_id, status, transaction_type, order_by } = req.query;
     let conditions = '';
-    let params = [];
+    const params = [];
 
     const filters = [];
     if (patron_id) {
@@ -107,7 +107,7 @@ router.get('/', async (req, res) => {
     }
 
     if (filters.length > 0) {
-      conditions = ' WHERE ' + filters.join(' AND ');
+      conditions = ` WHERE ${filters.join(' AND ')}`;
     }
 
     const query = `
@@ -175,9 +175,9 @@ router.get('/', async (req, res) => {
 // GET /api/v1/transactions/checkin-lookup/:copy_id - Get checked-out copy by Copy ID (barcode)
 router.get('/checkin-lookup/:copy_id', async (req, res) => {
   try {
-    const copy_id = parseInt(req.params.copy_id);
+    const copy_id = parseInt(req.params.copy_id, 10);
 
-    if (isNaN(copy_id)) {
+    if (Number.isNaN(copy_id)) {
       return res.status(400).json({
         error: 'Invalid Copy ID',
       });
@@ -200,7 +200,7 @@ router.get('/checkin-lookup/:copy_id', async (req, res) => {
       status_upper === 'RENEWED TWICE';
 
     if (!is_checked_out) {
-      return res.status(400).json({
+      return res.status(200).json({
         error: `This copy is not checked out. Current status: ${copy.status || 'null'}`,
       });
     }
@@ -214,7 +214,7 @@ router.get('/checkin-lookup/:copy_id', async (req, res) => {
     );
 
     if (transaction.length === 0) {
-      return res.status(404).json({
+      return res.status(200).json({
         error: 'No active checkout transaction found for this copy',
       });
     }
@@ -227,7 +227,7 @@ router.get('/checkin-lookup/:copy_id', async (req, res) => {
       checkout_transaction.patron_id
     );
     if (!patron) {
-      return res.status(404).json({
+      return res.status(200).json({
         error: 'Patron not found',
       });
     }
@@ -238,7 +238,7 @@ router.get('/checkin-lookup/:copy_id', async (req, res) => {
       copy.library_item_id
     );
     if (!library_item) {
-      return res.status(404).json({
+      return res.status(200).json({
         error: 'Library item not found',
       });
     }
@@ -271,8 +271,8 @@ router.get('/checkin-lookup/:copy_id', async (req, res) => {
     const is_overdue = today > due_date;
     const days_overdue = is_overdue
       ? Math.ceil(
-          (today.getTime() - due_date.getTime()) / (1000 * 60 * 60 * 24)
-        )
+        (today.getTime() - due_date.getTime()) / (1000 * 60 * 60 * 24)
+      )
       : 0;
     let fine_amount = days_overdue * 1.0; // $1.00 per day
     // Cap fine at book cost
@@ -892,8 +892,8 @@ router.post(
       .withMessage('Valid copy ID is required')
       .custom((value) => {
         // Handle both string and number inputs
-        const num = typeof value === 'number' ? value : parseInt(value);
-        if (isNaN(num) || num <= 0) {
+        const num = typeof value === 'number' ? value : parseInt(value, 10);
+        if (Number.isNaN(num) || num <= 0) {
           throw new Error('Copy ID must be a positive number');
         }
         return true;
@@ -1137,9 +1137,9 @@ router.post(
             updated_item_copy: updated_item_copy || null,
             reservation_fulfilled: reservation_fulfilled
               ? {
-                  ...reservation_fulfilled,
-                  patron: reserved_patron_info,
-                }
+                ...reservation_fulfilled,
+                patron: reserved_patron_info,
+              }
               : null,
           },
         });

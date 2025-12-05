@@ -1,6 +1,4 @@
-import { PageContainer, PageTitle } from '../components/common/PageBuilders';
 import { LocationCity } from '@mui/icons-material';
-import { useBranches } from '../hooks/useBranches';
 import {
   Card,
   CardActionArea,
@@ -9,6 +7,8 @@ import {
   Grid,
   Typography,
 } from '@mui/material';
+import { PageContainer, PageTitle } from '../components/common/PageBuilders';
+import { useBranches } from '../hooks/useBranches';
 import type { Branch } from '../types';
 
 export function BranchesPage() {

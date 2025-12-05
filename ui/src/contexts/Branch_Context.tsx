@@ -1,13 +1,13 @@
+import type { PropsWithChildren } from 'react';
 import {
   createContext,
-  useContext,
-  useState,
   useCallback,
+  useContext,
   useEffect,
+  useState,
 } from 'react';
-import type { Branch } from '../types';
-import type { PropsWithChildren } from 'react';
 import { useBranches } from '../hooks/useBranches';
+import type { Branch } from '../types';
 
 interface BranchContextType {
   branches: Branch[];

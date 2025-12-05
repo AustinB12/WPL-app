@@ -1,26 +1,26 @@
-import { useState, useEffect, type FC } from 'react';
+import { Edit } from '@mui/icons-material';
 import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  TextField,
   Button,
-  Grid,
-  Switch,
-  FormControlLabel,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
   FormControl,
+  FormControlLabel,
+  Grid,
   InputLabel,
-  Select,
   MenuItem,
+  Select,
+  Switch,
+  TextField,
 } from '@mui/material';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import dayjs, { Dayjs } from 'dayjs';
-import { Edit } from '@mui/icons-material';
-import type { Update_Patron_Data, Patron } from '../../types';
+import { type FC, useEffect, useState } from 'react';
 import { useBranchesContext } from '../../hooks/useBranchHooks';
+import type { Patron, Update_Patron_Data } from '../../types';
 
 interface Edit_Patron_Modal_Props {
   open: boolean;

@@ -1,26 +1,26 @@
-import { useState } from 'react';
+import type { SelectChangeEvent } from '@mui/material';
 import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
+  Alert,
+  Box,
   Button,
-  TextField,
+  CircularProgress,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
   FormControl,
   InputLabel,
-  Select,
   MenuItem,
-  Box,
-  Alert,
-  CircularProgress,
+  Select,
+  TextField,
 } from '@mui/material';
-import type { SelectChangeEvent } from '@mui/material';
+import { useState } from 'react';
+import { data_service } from '../../services/dataService';
 import {
   type Create_Library_Item_Form_Data,
   Library_Item_Type,
 } from '../../types';
 import { validate_required, validate_year } from '../../utils/validators';
-import { data_service } from '../../services/dataService';
 
 interface CreateLibraryItemDialogProps {
   open: boolean;
@@ -122,7 +122,7 @@ export const CreateLibraryItemDialog = ({
 
       on_success?.();
       on_close();
-    } catch (error: Error | unknown) {
+    } catch (error: unknown) {
       console.error('Error creating library item:', error);
       setSubmitError(
         error instanceof Error ? error.message : 'Failed to create library item'

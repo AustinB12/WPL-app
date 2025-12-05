@@ -1,22 +1,22 @@
 import type {
-  Transaction,
-  Reservation,
-  Library_Item,
-  Item_Copy,
   Branch,
-  Patron,
-  Create_Library_Item_Form_Data,
-  Item_Condition,
-  Item_Copy_Result,
-  Checkin_Receipt,
-  Update_Patron_Data,
-  Create_Patron_Data,
-  Library_Copy_Status,
   Check_Out_Details,
   Checked_Out_Copy,
-  ReshelveAllResult,
+  Checkin_Receipt,
+  Create_Library_Item_Form_Data,
+  Create_Patron_Data,
+  Item_Condition,
+  Item_Copy,
+  Item_Copy_Result,
+  Library_Copy_Status,
+  Library_Item,
   Loan_Duration,
+  Patron,
+  Reservation,
+  ReshelveAllResult,
   ReshelveResponseData,
+  Transaction,
+  Update_Patron_Data,
 } from '../types';
 import { Genre } from '../types';
 
@@ -57,9 +57,7 @@ const api_request = async <T>(
       );
     }
 
-    // Try to parse as JSON
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let data: any;
+    let data;
     try {
       data = JSON.parse(text);
     } catch {
@@ -85,7 +83,7 @@ const api_request = async <T>(
     }
 
     return data.data || data;
-  } catch (error: Error | unknown) {
+  } catch (error: unknown) {
     if (error instanceof Error) {
       throw error;
     }
@@ -121,19 +119,20 @@ export const data_service = {
     patron_id: number,
     copy_id: number,
     clear_fines: boolean = false
-  ): Promise<Transaction & Patron & Item_Copy & Library_Item> {
+  ): Promise<Check_Out_Details> {
     const checkout_data = {
       copy_id,
       patron_id,
       clear_fines,
     };
 
-    const receipt = await api_request<
-      Transaction & Patron & Item_Copy & Library_Item
-    >('/transactions/checkout', {
-      method: 'POST',
-      body: JSON.stringify(checkout_data),
-    });
+    const receipt = await api_request<Check_Out_Details>(
+      '/transactions/checkout',
+      {
+        method: 'POST',
+        body: JSON.stringify(checkout_data),
+      }
+    );
 
     return receipt;
   },
@@ -156,7 +155,7 @@ export const data_service = {
         method: 'POST',
         body: JSON.stringify(checkin_data),
       });
-    } catch (error: Error | unknown) {
+    } catch (error: unknown) {
       if (error instanceof Error && error.message.includes('404')) {
         return null;
       }
@@ -225,7 +224,7 @@ export const data_service = {
         }
       );
       return result;
-    } catch (error: Error | unknown) {
+    } catch (error: unknown) {
       if (error instanceof Error && error.message.includes('404')) {
         return null;
       }
@@ -246,7 +245,7 @@ export const data_service = {
         }
       );
       return result;
-    } catch (error: Error | unknown) {
+    } catch (error: unknown) {
       if (error instanceof Error && error.message.includes('404')) {
         return null;
       }
@@ -266,7 +265,7 @@ export const data_service = {
         }
       );
       return result;
-    } catch (error: Error | unknown) {
+    } catch (error: unknown) {
       if (error instanceof Error && error.message.includes('404')) {
         return null;
       }
@@ -323,7 +322,7 @@ export const data_service = {
         method: 'DELETE',
       });
       return null; // Deletion successful
-    } catch (error: Error | unknown) {
+    } catch (error: unknown) {
       if (error instanceof Error && error.message.includes('404')) {
         return null;
       }
@@ -338,7 +337,7 @@ export const data_service = {
   async get_library_item_by_id(item_id: number): Promise<Library_Item | null> {
     try {
       return await api_request<Library_Item>(`/library-items/${item_id}`);
-    } catch (error: Error | unknown) {
+    } catch (error: unknown) {
       if (error instanceof Error && error.message.includes('404')) {
         return null;
       }
@@ -429,7 +428,7 @@ export const data_service = {
     }
     try {
       return await api_request<Item_Copy_Result>(`/item-copies/${copy_id}`);
-    } catch (error: Error | unknown) {
+    } catch (error: unknown) {
       if (error instanceof Error && error.message.includes('404')) {
         return null;
       }
@@ -497,7 +496,7 @@ export const data_service = {
   async get_branch_by_id(branch_id: number): Promise<Branch | null> {
     try {
       return await api_request<Branch>(`/branches/${branch_id}`);
-    } catch (error: Error | unknown) {
+    } catch (error: unknown) {
       if (error instanceof Error && error.message.includes('404')) {
         return null;
       }
@@ -526,7 +525,7 @@ export const data_service = {
     }
     try {
       return await api_request<Patron>(`/patrons/${patron_id}`);
-    } catch (error: Error | unknown) {
+    } catch (error: unknown) {
       if (error instanceof Error && error.message.includes('404')) {
         return null;
       }
@@ -564,7 +563,7 @@ export const data_service = {
         '/reports/stats/overview'
       );
       return result.statistics;
-    } catch (error: Error | unknown) {
+    } catch (error: unknown) {
       // Return fallback statistics on error instead of throwing
       console.error('Failed to fetch stats:', error);
       return {
@@ -582,7 +581,7 @@ export const data_service = {
         '/settings/loan_durations'
       );
       return result;
-    } catch (error: Error | unknown) {
+    } catch (error: unknown) {
       // Return null on error instead of throwing
       console.error('Failed to fetch loan durations:', error);
       return null;

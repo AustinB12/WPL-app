@@ -1,4 +1,4 @@
-import { Snackbar, Alert, AlertTitle } from '@mui/material';
+import { Alert, AlertTitle, Snackbar } from '@mui/material';
 import { useSnackbar } from '../../hooks/useSnackbar';
 
 export const GlobalSnackbar = () => {

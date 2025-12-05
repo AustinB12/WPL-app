@@ -1,5 +1,5 @@
 import { Search } from '@mui/icons-material';
-import { InputAdornment, TextField, type SxProps } from '@mui/material';
+import { InputAdornment, type SxProps, TextField } from '@mui/material';
 
 interface Search_Props {
   search_term: string;

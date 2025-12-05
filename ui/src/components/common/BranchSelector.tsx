@@ -1,11 +1,11 @@
 import {
   Box,
-  InputLabel,
   FormControl,
+  InputLabel,
   MenuItem,
   Select,
-  Skeleton,
   type SelectChangeEvent,
+  Skeleton,
 } from '@mui/material';
 import {
   useBranchesContext,

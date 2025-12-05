@@ -1,33 +1,33 @@
 import {
-  Typography,
-  Box,
-  Paper,
-  Stack,
-  Divider,
-  FormControlLabel,
-  Switch,
-  TextField,
-  type SxProps,
-  type Theme,
-  Grid,
-  IconButton,
-} from '@mui/material';
-import {
-  useState,
-  useCallback,
-  memo,
-  type FC,
-  type JSX,
-  type PropsWithChildren,
-  useEffect,
-} from 'react';
-import {
   AccessTime,
   Info,
   NotificationsActive,
   Save,
   Settings as SettingsIcon,
 } from '@mui/icons-material';
+import {
+  Box,
+  Divider,
+  FormControlLabel,
+  Grid,
+  IconButton,
+  Paper,
+  Stack,
+  Switch,
+  type SxProps,
+  TextField,
+  type Theme,
+  Typography,
+} from '@mui/material';
+import {
+  type FC,
+  type JSX,
+  memo,
+  type PropsWithChildren,
+  useCallback,
+  useEffect,
+  useState,
+} from 'react';
 import { PageContainer, PageTitle } from '../components/common/PageBuilders';
 import { useSettings, useUpdateSettings } from '../hooks/useSettings';
 import { useSnackbar } from '../hooks/useSnackbar';

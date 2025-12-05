@@ -15,7 +15,9 @@ export function ReservationStatusChip({
     case 'cancelled':
       return <Chip variant="outlined" label="Cancelled" color="error" />;
     case 'ready':
-      return <Chip variant="outlined" label="Ready for Pickup" color="success" />;
+      return (
+        <Chip variant="outlined" label="Ready for Pickup" color="success" />
+      );
     case 'expired':
       return <Chip variant="outlined" label="Expired" color="warning" />;
     case 'waiting':

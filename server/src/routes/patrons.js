@@ -104,8 +104,8 @@ router.get('/search-for-renewal', async (req, res) => {
     let patron = null;
 
     // Try to parse as ID first
-    const patron_id = parseInt(query);
-    if (!isNaN(patron_id)) {
+    const patron_id = parseInt(query, 10);
+    if (!Number.isNaN(patron_id)) {
       patron = await db.get_by_id('PATRONS', patron_id);
     }
 
@@ -340,7 +340,7 @@ router.post(
       });
     } catch (error) {
       // Handle SQLite unique constraint violations
-      if (error.message && error.message.includes('UNIQUE constraint failed')) {
+      if (error.message?.includes('UNIQUE constraint failed')) {
         return res.status(409).json({
           error: 'Duplicate entry',
           message: 'A patron with this email already exists',

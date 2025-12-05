@@ -1,9 +1,9 @@
 import { type GridColDef } from '@mui/x-data-grid';
-import ItemTypeChip from '../library_items/ItemTypeChip';
-import { ItemCopyConditionChip } from '../copies/ItemCopyConditionChip';
-import { useCheckedOutCopies } from '../../hooks/useCopies';
 import { useSelectedBranch } from '../../hooks/useBranchHooks';
+import { useCheckedOutCopies } from '../../hooks/useCopies';
+import { ItemCopyConditionChip } from '../copies/ItemCopyConditionChip';
 import { ItemCopyStatusChip } from '../copies/ItemCopyStatusChip';
+import ItemTypeChip from '../library_items/ItemTypeChip';
 import { BaseDataGrid } from './BaseDataGrid';
 
 const columns: GridColDef[] = [

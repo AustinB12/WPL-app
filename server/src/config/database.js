@@ -1,14 +1,14 @@
-import sqlite3 from 'sqlite3';
-import { open } from 'sqlite';
 import dotenv from 'dotenv';
 import pico from 'picocolors';
+import { open } from 'sqlite';
+import sqlite3 from 'sqlite3';
 
 dotenv.config();
 
 const sqliteVerbose = sqlite3.verbose();
 const db_path = './library.db';
 
-console.log('Using database path: ' + db_path);
+console.log(`Using database path: ${db_path}`);
 
 let db = null;
 
@@ -272,7 +272,7 @@ async function create_tables() {
       );
     } catch (error) {
       // Column already exists, which is fine
-      if (error.message && error.message.includes('duplicate column name')) {
+      if (error.message?.includes('duplicate column name')) {
         // Silently ignore - column already exists
       } else {
         console.warn(
@@ -294,7 +294,7 @@ async function create_tables() {
       );
     } catch (error) {
       // Column already exists, which is fine
-      if (error.message && error.message.includes('duplicate column name')) {
+      if (error.message?.includes('duplicate column name')) {
         // Silently ignore - column already exists
       } else {
         console.warn(
@@ -516,7 +516,7 @@ async function execute_query(query, params = [], options = {}) {
     }
   } catch (error) {
     console.error('Database query error:', {
-      query: query.substring(0, 200) + '...',
+      query: `${query.substring(0, 200)}...`,
       params: params,
       error: error.message,
     });
@@ -746,7 +746,7 @@ async function get_database_stats() {
     journal_mode: stats[4],
     indexes: stats[5],
     estimated_size_mb:
-      (stats[2]['page_count'] * stats[3]['page_size']) / (1024 * 1024),
+      (stats[2].page_count * stats[3].page_size) / (1024 * 1024),
   };
 }
 

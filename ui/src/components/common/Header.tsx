@@ -1,16 +1,16 @@
-import { Link } from 'react-router-dom';
+import { DarkMode, LightMode, Menu } from '@mui/icons-material';
 import {
   AppBar,
   Box,
   IconButton,
+  Stack,
   Toolbar,
   Typography,
+  useColorScheme,
   useMediaQuery,
   useTheme,
-  Stack,
-  useColorScheme,
 } from '@mui/material';
-import { DarkMode, LightMode, Menu } from '@mui/icons-material';
+import { Link } from 'react-router-dom';
 import { BranchSelector } from './BranchSelector';
 
 export const Header = ({

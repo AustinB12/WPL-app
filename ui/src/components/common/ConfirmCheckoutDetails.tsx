@@ -1,41 +1,41 @@
-import { useEffect, useState, type FC, type ReactNode } from 'react';
 import {
-  Card,
-  CardContent,
-  Typography,
-  Box,
-  Chip,
-  Avatar,
+  CalendarToday,
+  LibraryBooks,
+  Person,
+  QrCode,
+} from '@mui/icons-material';
+import {
   Alert,
   AlertTitle,
-  Skeleton,
-  Grid,
-  Container,
-  Stack,
-  LinearProgress,
+  Avatar,
+  Box,
   Button,
+  Card,
+  CardContent,
+  Chip,
+  Container,
   Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
-  TextField,
+  Grid,
+  LinearProgress,
+  Skeleton,
   Snackbar,
+  Stack,
+  TextField,
+  Typography,
 } from '@mui/material';
-import {
-  Person,
-  CalendarToday,
-  LibraryBooks,
-  QrCode,
-} from '@mui/icons-material';
-import { is_overdue } from '../../utils/dateUtils';
-import { usePatronById, useUpdatePatron } from '../../hooks/usePatrons';
-import { useCopyById } from '../../hooks/useCopies';
-import { useLibraryItemById } from '../../hooks/useLibraryItems';
-import type { Item_Copy_Result } from '../../types';
-import { ItemCopyConditionChip } from '../copies/ItemCopyConditionChip';
-import { useSnackbar } from '../../hooks/useSnackbar';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import dayjs from 'dayjs';
+import { type FC, type ReactNode, useEffect, useState } from 'react';
+import { useCopyById } from '../../hooks/useCopies';
+import { useLibraryItemById } from '../../hooks/useLibraryItems';
+import { usePatronById, useUpdatePatron } from '../../hooks/usePatrons';
+import { useSnackbar } from '../../hooks/useSnackbar';
+import type { Item_Copy_Result } from '../../types';
+import { is_overdue } from '../../utils/dateUtils';
+import { ItemCopyConditionChip } from '../copies/ItemCopyConditionChip';
 
 interface ConfirmCheckoutDetailsProps {
   patron_id: number;
@@ -424,7 +424,6 @@ export const ConfirmCheckoutDetails: FC<ConfirmCheckoutDetailsProps> = ({
         <Snackbar
           open={hasOutstandingBalance || isCardExpired || hasTooManyBooks}
           anchorOrigin={{ horizontal: 'center', vertical: 'bottom' }}
-          onClose={() => {}}
         >
           <Stack columnGap={2} direction={'row'}>
             {hasOutstandingBalance && (
@@ -609,8 +608,8 @@ export const ConfirmCheckoutDetails: FC<ConfirmCheckoutDetailsProps> = ({
                       hasTooManyBooks
                         ? 'error'
                         : active_checkout_count >= 15
-                        ? 'warning'
-                        : 'default'
+                          ? 'warning'
+                          : 'default'
                     }
                     sx={{ fontWeight: 600 }}
                   />

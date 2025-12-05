@@ -1,14 +1,14 @@
-import type { FC } from 'react';
-import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Button,
-  Typography,
-  Alert,
-} from '@mui/material';
 import { Delete } from '@mui/icons-material';
+import {
+  Alert,
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Typography,
+} from '@mui/material';
+import type { FC } from 'react';
 import type { Patron } from '../../types';
 
 interface Delete_Patron_Modal_Props {

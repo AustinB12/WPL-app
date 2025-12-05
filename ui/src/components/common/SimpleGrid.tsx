@@ -1,12 +1,12 @@
-import {
-  DataGrid,
-  GridActionsCell,
-  GridActionsCellItem,
-  type DataGridProps,
-  type GridColDef,
-} from '@mui/x-data-grid';
 import { CheckCircle } from '@mui/icons-material';
 import Button from '@mui/material/Button';
+import {
+  DataGrid,
+  type DataGridProps,
+  GridActionsCell,
+  GridActionsCellItem,
+  type GridColDef,
+} from '@mui/x-data-grid';
 
 const default_cols: GridColDef[] = [
   { field: 'id', headerName: 'Copy ID', width: 90 },
@@ -32,7 +32,6 @@ const default_cols: GridColDef[] = [
               {'Reshelve'}
             </Button>
           }
-          onClick={() => {}}
           showInMenu={false}
           title="Reshelve"
         />

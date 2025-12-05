@@ -1,8 +1,8 @@
 import { type GridColDef } from '@mui/x-data-grid';
 import { useTransactions } from '../../hooks/useTransactions';
+import { BaseDataGrid } from '../common/BaseDataGrid';
 import { TransactionStatusChip } from './TransactionStatusChip';
 import { TransactionTypeChip } from './TransactionTypeChip';
-import { BaseDataGrid } from '../common/BaseDataGrid';
 
 const transaction_cols: GridColDef[] = [
   {

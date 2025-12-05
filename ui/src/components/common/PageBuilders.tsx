@@ -2,9 +2,9 @@ import {
   Container,
   Skeleton,
   Stack,
-  Typography,
   type SxProps,
   type Theme,
+  Typography,
 } from '@mui/material';
 import { type PropsWithChildren } from 'react';
 

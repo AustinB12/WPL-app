@@ -42,6 +42,14 @@ export function TransactionTypeChip({
           color="success"
         />
       );
+    case 'RESERVATION':
+      return (
+        <Chip
+          variant={is_light ? 'filled' : 'outlined'}
+          label="Reservation"
+          color="primary"
+        />
+      );
     case 'LOST':
       return (
         <Chip

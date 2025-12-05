@@ -1,32 +1,32 @@
+import { Delete, Edit, PersonAdd } from '@mui/icons-material';
+import { Avatar, Box, Button, Chip, Stack, Typography } from '@mui/material';
 import {
   GridActionsCellItem,
   type GridColDef,
   type GridRenderCellParams,
   type GridRowSelectionModel,
 } from '@mui/x-data-grid';
-import { useDeferredValue, useState, type FC } from 'react';
-import { is_overdue } from '../../utils/dateUtils';
-import { Box, Chip, Typography, Stack, Button, Avatar } from '@mui/material';
+import { type FC, useDeferredValue, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { BaseDataGrid } from '../common/BaseDataGrid';
-import { Delete, Edit, PersonAdd } from '@mui/icons-material';
 import {
   useAllPatrons,
   useCreatePatron,
-  useUpdatePatron,
   useDeletePatronById,
+  useUpdatePatron,
 } from '../../hooks/usePatrons';
-import New_Patron_Modal from './NewPatronModal';
-import { EditPatronModal } from './EditPatronModal';
-import { DeletePatronModal } from './DeletePatronModal';
+import { useSnackbar } from '../../hooks/useSnackbar';
 import type {
   Create_Patron_Data,
-  Update_Patron_Data,
   Patron,
+  Update_Patron_Data,
 } from '../../types';
+import { is_overdue } from '../../utils/dateUtils';
+import { BaseDataGrid } from '../common/BaseDataGrid';
 import { SearchWithNameOrId } from '../common/SearchWithNameOrId';
+import { DeletePatronModal } from './DeletePatronModal';
+import { EditPatronModal } from './EditPatronModal';
+import New_Patron_Modal from './NewPatronModal';
 import { PatronsStatusChip } from './PatronsStatusChip';
-import { useSnackbar } from '../../hooks/useSnackbar';
 
 const NoResultsOverlay = () => {
   return (

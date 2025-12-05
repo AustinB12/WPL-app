@@ -28,7 +28,7 @@ const handle_validation_errors = (req, res, next) => {
 };
 
 // GET /api/v1/branches - Get all branches
-router.get('/', async (req, res) => {
+router.get('/', async (_req, res) => {
   try {
     const branches = await db.get_all(
       'BRANCHES',

@@ -1,14 +1,14 @@
-import type { FC } from 'react';
 import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Button,
   Alert,
   AlertTitle,
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
   Typography,
 } from '@mui/material';
+import type { FC } from 'react';
 
 interface FineConfirmationDialogProps {
   open: boolean;

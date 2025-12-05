@@ -1,6 +1,6 @@
-import sqlite3 from 'sqlite3';
-import { open } from 'sqlite';
 import pico from 'picocolors';
+import { open } from 'sqlite';
+import sqlite3 from 'sqlite3';
 
 const sqliteVerbose = sqlite3.verbose();
 const db_path = './library.db';

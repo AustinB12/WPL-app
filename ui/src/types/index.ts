@@ -2,6 +2,7 @@ export type Transaction_Type =
   | 'CHECKOUT'
   | 'CHECKIN'
   | 'RESHELVE'
+  | 'RESERVATION'
   | 'BALANCE'
   | 'RENEWAL'
   | 'DAMAGED'
@@ -12,6 +13,7 @@ export type Transaction_Status =
   | 'Returned'
   | 'Overdue'
   | 'Lost'
+  | 'Waiting'
   | 'Completed';
 
 export interface Transaction {
@@ -440,11 +442,18 @@ interface Check_Out_Copy extends Item_Copy {
   total_copies: number;
 }
 
-export type Check_Out_Details = {
-  transaction: Check_Out_Transaction;
-  patron: Patron;
-  item_copy: Check_Out_Copy;
-  library_item: Library_Item;
+export type Check_Out_Details = Check_Out_Transaction &
+  Patron &
+  Check_Out_Copy &
+  Library_Item & {
+    reservation: Reservation_Info;
+  };
+
+type Reservation_Info = {
+  reservation_id: number;
+  queue_position: number;
+  status: string;
+  was_reserved: boolean;
 };
 
 export interface Checkin_Receipt {
@@ -519,6 +528,13 @@ export interface ReshelveAllResult {
   reservations_promoted: number;
   results: ReshelveResult[];
   failed: ReshelveError[];
+}
+
+export type Checkin_Lookup_Result = {
+  item: Library_Item;
+  copy: Item_Copy;
+  patron: Patron;
+  transaction: Checkin_Receipt;
 }
 
 //! == SNACKBAR TYPES == //

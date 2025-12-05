@@ -1,8 +1,8 @@
 import express from 'express';
 import { body, validationResult } from 'express-validator';
+import pico from 'picocolors';
 import * as db from '../config/database.js';
 import { format_sql_datetime } from '../utils.js';
-import pico from 'picocolors';
 
 const router = express.Router();
 
@@ -70,9 +70,9 @@ router.get('/', async (req, res) => {
     // Process expired reservations before fetching
     await process_expired_reservations();
 
-    const { patron_id, status, library_item_id, item_copy_id } = req.query;
+    const { patron_id, status, item_copy_id } = req.query;
     let conditions = '';
-    let params = [];
+    const params = [];
 
     const filters = [];
     if (patron_id) {
@@ -83,17 +83,12 @@ router.get('/', async (req, res) => {
       filters.push('r.status = ?');
       params.push(status);
     }
-    if (library_item_id) {
-      filters.push('ic.library_item_id = ?');
-      params.push(library_item_id);
-    }
     if (item_copy_id) {
       filters.push('r.item_copy_id = ?');
       params.push(item_copy_id);
     }
-
     if (filters.length > 0) {
-      conditions = ' WHERE ' + filters.join(' AND ');
+      conditions = ` WHERE ${filters.join(' AND ')}`;
     }
 
     const query = `
@@ -140,12 +135,16 @@ router.get('/:id', async (req, res) => {
         p.first_name,
         p.last_name,
         p.email,
-        ci.title,
-        ci.item_type,
-        ci.description
+        li.title,
+        li.item_type,
+        li.description,
+        ic.id as copy_id,
+        ic.status as copy_status,
+        ic.condition as copy_condition
       FROM RESERVATIONS r
       JOIN PATRONS p ON r.patron_id = p.id
-      JOIN LIBRARY_ITEMS ci ON r.library_item_id = ci.id
+      JOIN LIBRARY_ITEM_COPIES ic ON r.item_copy_id = ic.id
+      JOIN LIBRARY_ITEMS li ON ic.library_item_id = li.id
       WHERE r.id = ?
     `;
 
@@ -353,8 +352,8 @@ router.put('/:id/fulfill', async (req, res) => {
 
     // Check if item is available
     const available_copies = await db.execute_query(
-      'SELECT * FROM LIBRARY_ITEM_COPIES WHERE library_item_id = ? AND status = "Available" LIMIT 1',
-      [reservation.library_item_id]
+      'SELECT * FROM LIBRARY_ITEM_COPIES WHERE item_copy_id = ? AND status = "Available" LIMIT 1',
+      [reservation.item_copy_id]
     );
 
     if (available_copies.length === 0) {
@@ -397,8 +396,8 @@ router.put('/:id/fulfill', async (req, res) => {
 
     // Update queue positions for remaining reservations
     await db.execute_query(
-      'UPDATE RESERVATIONS SET queue_position = queue_position - 1 WHERE library_item_id = ? AND queue_position > ? AND status = "waiting"',
-      [reservation.library_item_id, reservation.queue_position]
+      'UPDATE RESERVATIONS SET queue_position = queue_position - 1 WHERE item_copy_id = ? AND queue_position > ? AND status = "waiting"',
+      [reservation.item_copy_id, reservation.queue_position]
     );
 
     res.json({
@@ -470,7 +469,7 @@ router.get('/validate-patron/:patron_id', async (req, res) => {
 
 // PUT /api/v1/reservations/expire-old - Expire reservations older than 5 days
 // Should be called periodically (e.g., daily cron job)
-router.put('/expire-old', async (req, res) => {
+router.put('/expire-old', async (_, res) => {
   try {
     const today = format_sql_datetime(new Date());
 
@@ -491,8 +490,8 @@ router.put('/expire-old', async (req, res) => {
 
       // Get the reserved copy and make it available again
       const reserved_copies = await db.execute_query(
-        'SELECT * FROM LIBRARY_ITEM_COPIES WHERE library_item_id = ? AND status = "Reserved" LIMIT 1',
-        [reservation.library_item_id]
+        'SELECT * FROM LIBRARY_ITEM_COPIES WHERE id = ? AND status = "Reserved" LIMIT 1',
+        [reservation.item_copy_id]
       );
 
       if (reserved_copies.length > 0) {
@@ -557,14 +556,14 @@ router.delete('/:id', async (req, res) => {
     // If there was a reserved copy, we need to handle it carefully
     if (reservation.status === 'ready') {
       const reserved_copies = await db.execute_query(
-        'SELECT * FROM LIBRARY_ITEM_COPIES WHERE library_item_id = ? AND status = "Reserved"',
-        [reservation.library_item_id]
+        'SELECT * FROM LIBRARY_ITEM_COPIES WHERE item_copy_id = ? AND status = "Reserved"',
+        [reservation.item_copy_id]
       );
 
       // Check if there are waiting reservations that should be promoted
       const next_waiting_reservations = await db.execute_query(
         'SELECT * FROM RESERVATIONS WHERE item_copy_id = ? AND status = "waiting" ORDER BY queue_position LIMIT 1',
-        [reservation.library_item_id]
+        [reservation.item_copy_id]
       );
 
       if (next_waiting_reservations.length > 0 && reserved_copies.length > 0) {
@@ -593,8 +592,8 @@ router.delete('/:id', async (req, res) => {
 
     // Update queue positions for remaining reservations
     await db.execute_query(
-      'UPDATE RESERVATIONS SET queue_position = queue_position - 1 WHERE library_item_id = ? AND queue_position > ? AND status IN ("waiting", "ready")',
-      [reservation.library_item_id, reservation.queue_position]
+      'UPDATE RESERVATIONS SET queue_position = queue_position - 1 WHERE item_copy_id = ? AND queue_position > ? AND status IN ("waiting", "ready")',
+      [reservation.item_copy_id, reservation.queue_position]
     );
 
     // Log transaction

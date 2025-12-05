@@ -1,8 +1,8 @@
-import { type FC } from 'react';
 import { List, ListItem, Skeleton } from '@mui/material';
-import { ListViewCell } from '../common/ListViewCell';
 import { blueberryTwilightPalette } from '@mui/x-charts/colorPalettes';
+import { type FC } from 'react';
 import { useAllPatrons } from '../../hooks/usePatrons';
+import { ListViewCell } from '../common/ListViewCell';
 
 const colors = blueberryTwilightPalette('dark'); // 6 colors available
 

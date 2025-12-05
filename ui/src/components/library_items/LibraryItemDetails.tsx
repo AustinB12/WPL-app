@@ -1,12 +1,12 @@
-import { Stack, Typography, Box, Paper } from '@mui/material';
+import { MenuBook, Newspaper, PersonalVideo } from '@mui/icons-material';
+import HeadsetIcon from '@mui/icons-material/Headset';
+import { Box, Paper, Stack, Typography } from '@mui/material';
+import { useBranches } from '../../hooks/useBranches';
+import { useCopiesOfLibraryItem } from '../../hooks/useCopies';
 import type { Branch, Library_Item } from '../../types';
 import { Library_Item_Type } from '../../types';
 import { DetailsDrawer } from '../common/DetailsDrawer';
-import { useCopiesOfLibraryItem } from '../../hooks/useCopies';
-import { useBranches } from '../../hooks/useBranches';
 import { CopiesTable } from './LibraryItemCopiesTable';
-import HeadsetIcon from '@mui/icons-material/Headset';
-import { MenuBook, Newspaper, PersonalVideo } from '@mui/icons-material';
 
 interface ItemDetailsProps {
   is_open: boolean;
@@ -181,7 +181,11 @@ const CopiesSection = ({
   item: Library_Item;
   branches: Branch[];
 }) => {
-  const { data: copies, isLoading: loading, error } = useCopiesOfLibraryItem(item.id);
+  const {
+    data: copies,
+    isLoading: loading,
+    error,
+  } = useCopiesOfLibraryItem(item.id);
 
   return (
     <Paper elevation={1} sx={{ py: 2, px: 0 }}>

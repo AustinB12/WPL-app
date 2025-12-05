@@ -1,51 +1,51 @@
+import { CheckCircle, ErrorOutline, Input } from '@mui/icons-material';
 import {
-  Typography,
-  FormControl,
-  InputLabel,
-  MenuItem,
-  Select,
-  TextField,
-  Grid,
-  Button,
-  Chip,
-  Box,
-  Step,
-  StepLabel,
-  Stepper,
-  Tooltip,
   Alert,
-  CircularProgress,
-  Divider,
-  Stack,
+  AlertTitle,
+  Box,
+  Button,
   Card,
   CardContent,
-  AlertTitle,
   CardHeader,
-  Paper,
-  Snackbar,
+  Chip,
+  CircularProgress,
+  Divider,
+  FormControl,
+  Grid,
+  InputLabel,
   List,
   ListItem,
   ListItemButton,
   ListItemText,
+  MenuItem,
+  Paper,
+  Select,
+  Snackbar,
+  Stack,
+  Step,
+  StepLabel,
+  Stepper,
+  TextField,
+  Tooltip,
+  Typography,
 } from '@mui/material';
-import { useState, useEffect, type FC } from 'react';
 import { type SelectChangeEvent } from '@mui/material/Select';
-import { useBranchesContext, useSelectedBranch } from '../hooks/useBranchHooks';
-import { get_condition_color } from '../utils/colors';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-import type { CheckInFormData, Item_Condition } from '../types';
+import dayjs from 'dayjs';
+import { type FC, useEffect, useState } from 'react';
+import { PageContainer, PageTitle } from '../components/common/PageBuilders';
+import { ConfirmCheckInCard } from '../components/copies/ConfirmCheckInCard';
+import ItemTypeChip from '../components/library_items/ItemTypeChip';
+import { useBranchesContext, useSelectedBranch } from '../hooks/useBranchHooks';
+import { useCopyById } from '../hooks/useCopies';
 import {
-  useReturnBook,
   useCheckedOutItems,
   useCheckOutDetails,
+  useReturnBook,
 } from '../hooks/useTransactions';
-import { useCopyById } from '../hooks/useCopies';
-import { CheckCircle, ErrorOutline, Input } from '@mui/icons-material';
-import { PageContainer, PageTitle } from '../components/common/PageBuilders';
-import ItemTypeChip from '../components/library_items/ItemTypeChip';
-import { ConfirmCheckInCard } from '../components/copies/ConfirmCheckInCard';
-import dayjs from 'dayjs';
+import type { CheckInFormData, Item_Condition } from '../types';
+import { get_condition_color } from '../utils/colors';
 
 const conditions: Item_Condition[] = [
   'New',
@@ -112,94 +112,6 @@ export const CheckInItem: FC = () => {
       }));
     }
   }, [item_info_result]);
-
-  // // Fetch copy details when copy ID (barcode) is entered
-  // const fetch_item_details = async (copy_id: number) => {
-  //   set_loading_details(true);
-  //   set_error_message(null);
-  //   set_item_info(null);
-  //   set_selected_copy(null);
-
-  //   try {
-  //     const response = await fetch(
-  //       `${API_BASE_URL}/transactions/checkin-lookup/${copy_id}`
-  //     );
-
-  //     // Get response as text first to check if it's JSON
-  //     const text = await response.text();
-
-  //     // Check if response is HTML (error page)
-  //     if (
-  //       text.trim().startsWith('<!DOCTYPE') ||
-  //       text.trim().startsWith('<html')
-  //     ) {
-  //       throw new Error(
-  //         `Server returned HTML instead of JSON. HTTP ${response.status}: ${response.statusText}`
-  //       );
-  //     }
-
-  //     // Try to parse as JSON
-  //     let data;
-  //     try {
-  //       data = JSON.parse(text);
-  //     } catch {
-  //       throw new Error(
-  //         `Invalid JSON response from server. HTTP ${response.status}: ${response.statusText}`
-  //       );
-  //     }
-
-  //     if (!response.ok) {
-  //       throw new Error(data.error || data.message || 'Failed to lookup copy');
-  //     }
-
-  //     // Set item info
-  //     set_item_info(data.data.item);
-
-  //     // Create CopyInfo object from the response (single copy lookup)
-  //     const copyInfo: CopyInfo = {
-  //       copy_id: data.data.copy.copy_id,
-  //       copy_label: data.data.copy.copy_label,
-  //       copy_number: data.data.copy.copy_number,
-  //       total_copies: data.data.copy.total_copies,
-  //       status: data.data.copy.status,
-  //       condition: data.data.copy.condition,
-  //       patron_name: data.data.patron.patron_name,
-  //       patron_id: data.data.patron.id,
-  //       due_date: data.data.transaction.due_date,
-  //       is_overdue: data.data.transaction.is_overdue,
-  //       days_overdue: data.data.transaction.days_overdue,
-  //       fine_amount: data.data.transaction.fine_amount,
-  //     };
-
-  //     // Auto-select the copy and move to review step
-  //     set_selected_copy(copyInfo);
-  //     set_form_data((prev) => ({
-  //       ...prev,
-  //       copy_id: copyInfo.copy_id,
-  //     }));
-
-  //     // Only set condition if it's a valid condition value
-  //     const copy_condition = copyInfo.condition as string;
-  //     if (
-  //       copy_condition &&
-  //       conditions.includes(copy_condition as Item_Condition)
-  //     ) {
-  //       set_condition(copy_condition as Item_Condition);
-  //     } else {
-  //       // Default to 'Good' if condition is invalid or missing
-  //       set_condition('Good');
-  //     }
-
-  //     // Advance to step 1 to show book info and allow condition/notes entry
-  //     set_active_step(1);
-  //   } catch (error: Error | unknown) {
-  //     set_error_message(
-  //       error instanceof Error ? error.message : 'Failed to load copy details'
-  //     );
-  //   } finally {
-  //     set_loading_details(false);
-  //   }
-  // };
 
   const handle_lookup_item = () => {
     const copy_id = parseInt(item_id_input);
@@ -298,11 +210,11 @@ export const CheckInItem: FC = () => {
   useEffect(() => {
     fetch_item_details();
     fetch_checkout_details();
-  }, [fetch_checkout_details, fetch_item_details, item_id_input]);
+  }, [fetch_checkout_details, fetch_item_details]);
 
   return (
     <LocalizationProvider dateAdapter={AdapterDateFns}>
-      <PageContainer>
+      <PageContainer width="xl">
         <PageTitle title="Check In Item" Icon_Component={Input} />
         <Stepper
           activeStep={active_step}
@@ -873,7 +785,7 @@ export const CheckInItem: FC = () => {
                           }
                         </Typography>
                         <Typography variant="body2" color="text.secondary">
-                          {`Checked Out By: ${check_out_details.patron.first_name} ${check_out_details.patron.last_name} (ID: ${check_out_details.patron.id})`}
+                          {`Checked Out By: ${check_out_details.first_name} ${check_out_details.last_name} (ID: ${check_out_details.id})`}
                           {/* {loading_checked_out ? (
                           <Box
                             sx={{
@@ -1007,18 +919,18 @@ export const CheckInItem: FC = () => {
                         <Typography variant="body2" color="text.secondary">
                           Due Date:{' '}
                           {new Date(
-                            check_out_details.transaction?.due_date || ''
+                            check_out_details?.due_date || ''
                           ).toLocaleDateString()}
-                          {check_out_details.transaction?.is_overdue && (
+                          {check_out_details?.is_overdue && (
                             <Chip
-                              label={`Overdue ${check_out_details.transaction?.days_overdue} days`}
+                              label={`Overdue ${check_out_details?.days_overdue} days`}
                               color="error"
                               size="small"
                               sx={{ ml: 1 }}
                             />
                           )}
                         </Typography>
-                        {check_out_details.transaction?.is_overdue && (
+                        {check_out_details?.is_overdue && (
                           <Typography
                             variant="body2"
                             color="error"
@@ -1026,9 +938,7 @@ export const CheckInItem: FC = () => {
                             sx={{ mt: 1 }}
                           >
                             Late Fee: $
-                            {check_out_details.transaction?.fine_amount.toFixed(
-                              2
-                            )}
+                            {check_out_details?.fine_amount.toFixed(2)}
                           </Typography>
                         )}
                       </Paper>
@@ -1141,8 +1051,8 @@ export const CheckInItem: FC = () => {
                           active_step === 0 ? 'item' : 'copy'
                         } to proceed`
                       : active_step === steps.length - 1
-                      ? 'Finish Check-In'
-                      : 'Next page'
+                        ? 'Finish Check-In'
+                        : 'Next page'
                   }
                 ></Tooltip>
               </Box>

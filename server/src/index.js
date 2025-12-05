@@ -1,20 +1,18 @@
-import express from 'express';
 import cors from 'cors';
-import helmet from 'helmet';
 import dotenv from 'dotenv';
+import express from 'express';
 import rateLimit from 'express-rate-limit';
+import helmet from 'helmet';
 import pico from 'picocolors';
-
-import library_items_routes from './routes/library_items.js';
-import item_copies_routes from './routes/library_item_copies.js';
-import patrons_routes from './routes/patrons.js';
-import transactions_routes from './routes/transactions.js';
-import reservations_routes from './routes/reservations.js';
 import branches_routes from './routes/library_branches.js';
+import item_copies_routes from './routes/library_item_copies.js';
+import library_items_routes from './routes/library_items.js';
+import patrons_routes from './routes/patrons.js';
 import reports_routes from './routes/reports.js';
+import reservations_routes from './routes/reservations.js';
 import settings_routes from './routes/settings.js';
+import transactions_routes from './routes/transactions.js';
 
-// Load environment variables
 dotenv.config();
 
 const app = express();
@@ -26,9 +24,8 @@ const is_dev =
   process.env.NODE_ENV !== 'production' ||
   !process.env.NODE_ENV;
 
-const url = is_dev ? '127.0.0.1' : '0.0.0.0';
+const url = is_dev ? 'localhost' : '0.0.0.0';
 
-// CORS configuration
 app.use(
   cors({
     referredPolicy: 'no-referrer',
@@ -50,31 +47,31 @@ app.use(express.urlencoded({ extended: true })); // Parse URL-encoded bodies
 // Rate limiting
 const limiter = rateLimit({
   windowMs:
-    parseInt(process.env.RATE_LIMIT_WINDOW_MS || '9000') || 15 * 60 * 1000, // 15 minutes
-  max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS || '9000') || 100, // limit each IP to 100 requests per windowMs
+    parseInt(process.env.RATE_LIMIT_WINDOW_MS || '9000', 10) || 15 * 60 * 1000, // 15 minutes
+  max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS || '9000', 10) || 100, // limit each IP to 100 requests per windowMs
   message: 'Too many requests from this IP, please try again later.',
 });
 app.use(limiter);
 
 // Default route
-app.get('/', function (_req, res) {
+app.get('/', (_req, res) => {
   res.json({
     message: 'Library Management System API',
     version: '1.0.0',
     endpoints: {
       health: '/health',
-      library_items: api_base + '/library-items',
-      patrons: api_base + '/patrons',
-      transactions: api_base + '/transactions',
-      reservations: api_base + '/reservations',
-      branches: api_base + '/branches',
-      item_copies: api_base + '/item-copies',
-      settings: api_base + '/settings',
+      library_items: `${api_base}/library-items`,
+      patrons: `${api_base}/patrons`,
+      transactions: `${api_base}/transactions`,
+      reservations: `${api_base}/reservations`,
+      branches: `${api_base}/branches`,
+      item_copies: `${api_base}/item-copies`,
+      settings: `${api_base}/settings`,
     },
   });
 });
 
-app.get('/health', function (req, res) {
+app.get('/health', (_req, res) => {
   res.status(200).json({
     status: 'healthy',
     uptime: process.uptime(),
@@ -83,17 +80,17 @@ app.get('/health', function (req, res) {
 });
 
 // Mount API routes
-app.use(api_base + '/library-items', library_items_routes);
-app.use(api_base + '/patrons', patrons_routes);
-app.use(api_base + '/transactions', transactions_routes);
-app.use(api_base + '/reservations', reservations_routes);
-app.use(api_base + '/branches', branches_routes);
-app.use(api_base + '/item-copies', item_copies_routes);
-app.use(api_base + '/reports', reports_routes);
-app.use(api_base + '/settings', settings_routes);
+app.use(`${api_base}/library-items`, library_items_routes);
+app.use(`${api_base}/patrons`, patrons_routes);
+app.use(`${api_base}/transactions`, transactions_routes);
+app.use(`${api_base}/reservations`, reservations_routes);
+app.use(`${api_base}/branches`, branches_routes);
+app.use(`${api_base}/item-copies`, item_copies_routes);
+app.use(`${api_base}/reports`, reports_routes);
+app.use(`${api_base}/settings`, settings_routes);
 
 // 404 handler (must come after routes)
-app.use(function (req, res) {
+app.use((req, res) => {
   res.status(404).json({
     error: 'Route not found',
     path: req.originalUrl,
@@ -101,7 +98,7 @@ app.use(function (req, res) {
 });
 
 // Error handler
-app.use(function (err, req, res, next) {
+app.use((err, _req, res, _next) => {
   console.error('Error:', err.message);
   res.status(500).json({
     error: 'Internal server error',
@@ -113,7 +110,7 @@ app.use(function (err, req, res, next) {
 });
 
 // Start server
-const server = app.listen(PORT, url, function () {
+const server = app.listen(PORT, url, () => {
   console.log(
     pico.bgGreen(
       pico.bold(

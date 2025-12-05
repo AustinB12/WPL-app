@@ -1,9 +1,9 @@
-import { Outlet } from 'react-router-dom';
-import { Header } from './Header';
-import { Sidebar } from './Sidebar';
 import { Box } from '@mui/material';
 import { useState } from 'react';
+import { Outlet } from 'react-router-dom';
 import { Branch_Provider } from '../../contexts/Branch_Context';
+import { Header } from './Header';
+import { Sidebar } from './Sidebar';
 
 export const Layout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);

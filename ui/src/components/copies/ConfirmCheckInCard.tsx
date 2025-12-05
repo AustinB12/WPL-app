@@ -1,12 +1,12 @@
-import { Grid, Paper, Typography, Divider, Alert } from '@mui/material';
+import { Warning } from '@mui/icons-material';
+import { Alert, Divider, Grid, Paper, Typography } from '@mui/material';
+import { useState } from 'react';
 import type {
   Branch,
   Check_Out_Details,
   CheckInFormData,
   Item_Copy_Result,
 } from '../../types';
-import { Warning } from '@mui/icons-material';
-import { useState } from 'react';
 
 export const ConfirmCheckInCard = ({
   item_info,
@@ -71,10 +71,10 @@ export const ConfirmCheckInCard = ({
                   PATRON INFORMATION
                 </Typography>
                 <Typography variant="body1" fontWeight="600">
-                  {`${checkout_details.patron.first_name} ${checkout_details.patron.last_name}`}
+                  {`${checkout_details.first_name} ${checkout_details.last_name}`}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
-                  Patron ID: {checkout_details.patron.id}
+                  Patron ID: {checkout_details.id}
                 </Typography>
               </Grid>
 
@@ -92,10 +92,8 @@ export const ConfirmCheckInCard = ({
                 </Typography>
                 <Typography variant="body2" color="text.primary">
                   Due Date:
-                  {checkout_details.transaction?.due_date
-                    ? new Date(
-                        checkout_details.transaction.due_date
-                      ).toLocaleDateString()
+                  {checkout_details.due_date
+                    ? new Date(checkout_details.due_date).toLocaleDateString()
                     : 'N/A'}
                 </Typography>
                 <Typography variant="body2" color="text.primary">
@@ -121,7 +119,7 @@ export const ConfirmCheckInCard = ({
                 )}
               </Grid>
 
-              {checkout_details.transaction.is_overdue && (
+              {checkout_details.is_overdue && (
                 <>
                   <Grid size={{ xs: 12 }}>
                     <Divider />
@@ -129,11 +127,10 @@ export const ConfirmCheckInCard = ({
                   <Grid size={{ xs: 12 }}>
                     <Alert severity="warning" icon={<Warning />} sx={{ py: 1 }}>
                       <Typography variant="body2" fontWeight="600">
-                        Overdue by {checkout_details.transaction.days_overdue}{' '}
-                        days
+                        Overdue by {checkout_details.days_overdue} days
                       </Typography>
                       <Typography variant="body2">
-                        {`Late fee of $${checkout_details.transaction.fine_amount.toFixed(
+                        {`Late fee of $${checkout_details.fine_amount.toFixed(
                           2
                         )} will be added to patron's account`}
                       </Typography>

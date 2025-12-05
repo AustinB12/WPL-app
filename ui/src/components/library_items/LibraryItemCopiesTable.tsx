@@ -1,15 +1,15 @@
 import {
+  Box,
+  Chip,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
   TableRow,
-  Chip,
   Typography,
-  Box,
 } from '@mui/material';
-import type { Item_Copy, Branch } from '../../types';
+import type { Branch, Item_Copy } from '../../types';
 import { get_condition_color, get_status_color } from '../../utils/colors';
 
 interface CopiesTableProps {
@@ -59,9 +59,7 @@ export const CopiesTable = ({ copies, branches }: CopiesTableProps) => {
       >
         <TableHead>
           <TableRow>
-            <TableCell sx={{ minWidth: { xs: 80, sm: 120 } }}>
-              Copy
-            </TableCell>
+            <TableCell sx={{ minWidth: { xs: 80, sm: 120 } }}>Copy</TableCell>
             <TableCell sx={{ minWidth: { xs: 60, sm: 100 } }}>Branch</TableCell>
             <TableCell sx={{ minWidth: { xs: 80, sm: 100 } }}>Status</TableCell>
             <TableCell sx={{ minWidth: { xs: 70, sm: 90 } }}>

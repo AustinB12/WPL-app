@@ -1,6 +1,6 @@
-import { useState, useCallback, type ReactNode } from 'react';
+import { type ReactNode, useCallback, useState } from 'react';
 import { Snackbar_Context } from '../hooks/useSnackbar';
-import type { Snackbar_State, Snackbar_Options } from '../types';
+import type { Snackbar_Options, Snackbar_State } from '../types';
 
 interface Snackbar_Provider_Props {
   children: ReactNode;

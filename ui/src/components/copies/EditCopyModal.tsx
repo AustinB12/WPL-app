@@ -1,32 +1,32 @@
 import {
+  Button,
   Dialog,
-  DialogTitle,
+  DialogActions,
   DialogContent,
   DialogContentText,
-  DialogActions,
-  Button,
-  TextField,
+  DialogTitle,
   FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
   Grid,
+  InputLabel,
+  MenuItem,
+  Select,
+  TextField,
   Tooltip,
 } from '@mui/material';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import dayjs, { Dayjs } from 'dayjs';
 import { useEffect, useState } from 'react';
 import type {
-  Item_Condition,
-  Library_Copy_Status,
   Branch,
+  Item_Condition,
   Item_Copy_Result,
+  Library_Copy_Status,
 } from '../../types';
-import { ItemCopyStatusChip } from './ItemCopyStatusChip';
-import { ItemCopyConditionChip } from './ItemCopyConditionChip';
-import { DatePicker } from '@mui/x-date-pickers/DatePicker';
-import dayjs, { Dayjs } from 'dayjs';
 import { format_sql_datetime } from '../../utils/dateUtils';
-import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
-import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { ItemCopyConditionChip } from './ItemCopyConditionChip';
+import { ItemCopyStatusChip } from './ItemCopyStatusChip';
 
 interface Edit_Copy_Modal_Props {
   open: boolean;
@@ -103,7 +103,7 @@ export const EditCopyModal = ({
         due_date: copy?.due_date || '',
       });
     }
-  }, [copy, branches]);
+  }, [copy]);
 
   const handle_save = () => {
     if (form_data.current_branch_id !== 0) {

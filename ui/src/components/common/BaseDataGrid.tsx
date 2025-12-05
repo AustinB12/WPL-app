@@ -1,36 +1,36 @@
+import { Settings } from '@mui/icons-material';
+import CancelIcon from '@mui/icons-material/Cancel';
+import CheckIcon from '@mui/icons-material/Check';
+import FilterListIcon from '@mui/icons-material/FilterList';
+import SearchIcon from '@mui/icons-material/Search';
+import ViewColumnIcon from '@mui/icons-material/ViewColumn';
+import {
+  Badge,
+  IconButton,
+  InputAdornment,
+  ListItemIcon,
+  ListItemText,
+  Menu,
+  MenuItem,
+  styled,
+  TextField,
+  Tooltip,
+  Typography,
+} from '@mui/material';
 import {
   ColumnsPanelTrigger,
   DataGrid,
+  type DataGridProps,
   FilterPanelTrigger,
+  type GridDensity,
   QuickFilter,
   QuickFilterClear,
   QuickFilterControl,
   QuickFilterTrigger,
   Toolbar,
   ToolbarButton,
-  type DataGridProps,
-  type GridDensity,
 } from '@mui/x-data-grid';
 import { useState } from 'react';
-import {
-  Typography,
-  Tooltip,
-  Badge,
-  IconButton,
-  Menu,
-  MenuItem,
-  ListItemIcon,
-  ListItemText,
-  InputAdornment,
-  TextField,
-  styled,
-} from '@mui/material';
-import CheckIcon from '@mui/icons-material/Check';
-import { Settings } from '@mui/icons-material';
-import ViewColumnIcon from '@mui/icons-material/ViewColumn';
-import FilterListIcon from '@mui/icons-material/FilterList';
-import CancelIcon from '@mui/icons-material/Cancel';
-import SearchIcon from '@mui/icons-material/Search';
 
 interface BaseDataGridProps extends DataGridProps {
   hidden_columns?: string[];

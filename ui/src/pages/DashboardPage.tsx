@@ -1,24 +1,23 @@
+import {
+  AttachMoney,
+  Dashboard,
+  EventNote,
+  LibraryBooks,
+} from '@mui/icons-material';
+import {
+  Box,
+  Card,
+  CardContent,
+  Grid,
+  Skeleton,
+  Typography,
+} from '@mui/material';
+import { PieChart } from '@mui/x-charts/PieChart';
 import type { FC, PropsWithChildren } from 'react';
 import { memo, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { PieChart } from '@mui/x-charts/PieChart';
-import {
-  Typography,
-  Grid,
-  Card,
-  CardContent,
-  Box,
-  Skeleton,
-} from '@mui/material';
-import {
-  LibraryBooks,
-  EventNote,
-  AttachMoney,
-  Dashboard,
-} from '@mui/icons-material';
-
-import { useStats } from '../hooks/useStats';
 import { PageContainer, PageTitle } from '../components/common/PageBuilders';
+import { useStats } from '../hooks/useStats';
 
 // Constant style objects to prevent re-creation
 const LINK_STYLE = { textDecoration: 'none' };

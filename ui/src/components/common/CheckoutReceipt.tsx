@@ -1,33 +1,33 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { type FC } from 'react';
-import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Button,
-  Box,
-  Typography,
-  Divider,
-  Paper,
-  IconButton,
-  Alert,
-  AlertTitle,
-  Chip,
-} from '@mui/material';
 import {
   CheckCircle,
   Close,
   EventNote,
   PersonRemove,
 } from '@mui/icons-material';
-import type { Item_Copy, Library_Item, Patron, Transaction } from '../../types';
+import {
+  Alert,
+  AlertTitle,
+  Box,
+  Button,
+  Chip,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Divider,
+  IconButton,
+  Paper,
+  Stack,
+  Typography,
+} from '@mui/material';
+import { type FC } from 'react';
 import { useSelectedBranch } from '../../hooks/useBranchHooks';
+import type { Check_Out_Details } from '../../types';
 
 interface CheckoutReceiptProps {
   open: boolean;
   on_close: () => void;
-  receipt?: Item_Copy & Library_Item & Patron & Transaction;
+  receipt?: Check_Out_Details;
 }
 
 export const CheckoutReceipt: FC<CheckoutReceiptProps> = ({
@@ -49,17 +49,15 @@ export const CheckoutReceipt: FC<CheckoutReceiptProps> = ({
       fullWidth
       slotProps={{
         paper: {
-          sx: { borderRadius: 2 },
+          sx: { borderRadius: 3 },
         },
       }}
     >
       <DialogTitle sx={{ pb: 1 }}>
-        <Box
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-          }}
+        <Stack
+          direction="row"
+          alignItems="center"
+          justifyContent="space-between"
         >
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <CheckCircle sx={{ color: 'success.main', fontSize: 32 }} />
@@ -69,7 +67,7 @@ export const CheckoutReceipt: FC<CheckoutReceiptProps> = ({
               </Typography>
               {receipt &&
                 receipt.reservation &&
-                (receipt.reservation as any).was_reserved && (
+                receipt.reservation.was_reserved && (
                   <Typography
                     variant="caption"
                     color="success.main"
@@ -89,76 +87,67 @@ export const CheckoutReceipt: FC<CheckoutReceiptProps> = ({
           <IconButton onClick={handle_close} size="small">
             <Close />
           </IconButton>
-        </Box>
+        </Stack>
       </DialogTitle>
 
       <DialogContent>
-        {receipt &&
-          receipt.reservation &&
-          (receipt as any).reservation.was_reserved && (
-            <Alert
-              severity="success"
-              icon={<EventNote />}
+        {receipt && receipt.reservation && receipt.reservation.was_reserved && (
+          <Alert
+            severity="success"
+            icon={<EventNote />}
+            sx={{
+              mb: 3,
+              border: '2px solid',
+              borderColor: 'success.main',
+              bgcolor: 'success.50',
+            }}
+          >
+            <AlertTitle sx={{ fontWeight: 'bold', fontSize: '1.1rem' }}>
+              ✓ Reservation Fulfilled - Patron Left Queue
+            </AlertTitle>
+            <Typography variant="body1" sx={{ mb: 1, fontWeight: 500 }}>
+              This checkout fulfilled an active reservation.
+            </Typography>
+            <Box
               sx={{
-                mb: 3,
-                border: '2px solid',
-                borderColor: 'success.main',
-                bgcolor: 'success.50',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1,
+                flexWrap: 'wrap',
+                mt: 1,
               }}
             >
-              <AlertTitle sx={{ fontWeight: 'bold', fontSize: '1.1rem' }}>
-                ✓ Reservation Fulfilled - Patron Left Queue
-              </AlertTitle>
-              <Typography variant="body1" sx={{ mb: 1, fontWeight: 500 }}>
-                This checkout fulfilled an active reservation.
-              </Typography>
-              <Box
-                sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 1,
-                  flexWrap: 'wrap',
-                  mt: 1,
-                }}
-              >
-                <Chip
-                  icon={<EventNote />}
-                  label={`Queue Position: #${
-                    (receipt as any).reservation.queue_position
-                  }`}
-                  color="info"
-                  size="small"
-                  sx={{ fontWeight: 600 }}
-                />
-                <Chip
-                  icon={<PersonRemove />}
-                  label="Removed from Queue"
-                  color="success"
-                  size="small"
-                  sx={{ fontWeight: 600 }}
-                />
-              </Box>
-            </Alert>
-          )}
+              <Chip
+                icon={<EventNote />}
+                label={`Queue Position: #${receipt.reservation.queue_position}`}
+                color="info"
+                size="small"
+                sx={{ fontWeight: 600 }}
+              />
+              <Chip
+                icon={<PersonRemove />}
+                label="Removed from Queue"
+                color="success"
+                size="small"
+                sx={{ fontWeight: 600 }}
+              />
+            </Box>
+          </Alert>
+        )}
         <Paper
           elevation={0}
           sx={{
-            bgcolor: 'background.paper',
-            border: '2px solid',
-            borderColor: 'success.main',
             p: 3,
-            mb: 2,
-            borderRadius: 3,
+            mb: 1,
           }}
         >
           {receipt && (
             <>
-              {/* Patron Information */}
               <Box sx={{ mb: 2 }}>
                 <Typography
                   variant="subtitle2"
-                  color="text.secondary"
                   gutterBottom
+                  fontWeight="bold"
                 >
                   PATRON INFORMATION
                 </Typography>
@@ -172,16 +161,25 @@ export const CheckoutReceipt: FC<CheckoutReceiptProps> = ({
                     Name: {receipt.first_name} {receipt.last_name}
                   </Typography>
                 )}
+                {receipt?.email && (
+                  <Typography variant="body2">
+                    Email: {receipt.email}
+                  </Typography>
+                )}
+                {receipt?.phone && (
+                  <Typography variant="body2">
+                    Phone: {receipt.phone}
+                  </Typography>
+                )}
               </Box>
 
               <Divider sx={{ my: 2 }} />
 
-              {/* Book/Item Information */}
               <Box sx={{ mb: 2 }}>
                 <Typography
                   variant="subtitle2"
-                  color="text.secondary"
                   gutterBottom
+                  fontWeight="bold"
                 >
                   BOOK INFORMATION
                 </Typography>
@@ -208,8 +206,8 @@ export const CheckoutReceipt: FC<CheckoutReceiptProps> = ({
                   <Box sx={{ mb: 2 }}>
                     <Typography
                       variant="subtitle2"
-                      color="text.secondary"
                       gutterBottom
+                      fontWeight="bold"
                     >
                       BRANCH INFORMATION
                     </Typography>
@@ -233,12 +231,11 @@ export const CheckoutReceipt: FC<CheckoutReceiptProps> = ({
                 </>
               )}
 
-              {/* Due Date Information */}
               <Box sx={{ mb: 2 }}>
                 <Typography
                   variant="subtitle2"
-                  color="text.secondary"
                   gutterBottom
+                  fontWeight="bold"
                 >
                   DUE DATE
                 </Typography>
@@ -261,8 +258,7 @@ export const CheckoutReceipt: FC<CheckoutReceiptProps> = ({
                 </Typography>
                 <Typography variant="body2" component="div" sx={{ pl: 2 }}>
                   • Books: 4 weeks
-                  <br />
-                  • Movies: 1 week
+                  <br />• Movies: 1 week
                   <br />• New (movies): 3 days
                 </Typography>
               </Box>
@@ -272,7 +268,7 @@ export const CheckoutReceipt: FC<CheckoutReceiptProps> = ({
           <Divider sx={{ my: 2 }} />
 
           {/* Item Availability Notice */}
-          {(receipt as any)?.reservation?.was_reserved && (
+          {receipt?.reservation?.was_reserved && (
             <Alert
               severity="warning"
               sx={{ mb: 2, border: '1px solid', borderColor: 'warning.main' }}

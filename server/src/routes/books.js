@@ -34,21 +34,21 @@ function handle_validation_errors(req, res, next) {
 /**
  * GET /api/v1/books - Get all books with library item details
  */
-router.get('/', function (req, res) {
+router.get('/', (_req, res) => {
   const query = `SELECT b.*, li.title, li.description, li.publication_year, li.available
                FROM BOOKS b
                JOIN LIBRARY_ITEMS li ON b.library_item_id = li.id
                ORDER BY li.title`;
 
   db.execute_query(query)
-    .then(function (books) {
+    .then((books) => {
       res.json({
         success: true,
         count: books.length,
         data: books,
       });
     })
-    .catch(function (error) {
+    .catch((error) => {
       res.status(500).json({
         error: 'Failed to fetch books',
         message: error.message,
@@ -59,14 +59,14 @@ router.get('/', function (req, res) {
 /**
  * GET /api/v1/books/:id - Get single book
  */
-router.get('/:id', function (req, res) {
+router.get('/:id', (req, res) => {
   const query = `SELECT b.*, li.title, li.description, li.publication_year, li.available, li.cost, li.condition
                FROM BOOKS b
                JOIN LIBRARY_ITEMS li ON b.library_item_id = li.id
                WHERE b.id = ?`;
 
   db.execute_query(query, [req.params.id])
-    .then(function (book) {
+    .then((book) => {
       if (!book || book.length === 0) {
         return res.status(404).json({
           error: 'Book not found',
@@ -78,7 +78,7 @@ router.get('/:id', function (req, res) {
         data: book[0],
       });
     })
-    .catch(function (error) {
+    .catch((error) => {
       res.status(500).json({
         error: 'Failed to fetch book',
         message: error.message,
@@ -89,10 +89,10 @@ router.get('/:id', function (req, res) {
 /**
  * POST /api/v1/books - Create new book
  */
-router.post('/', validate_book, handle_validation_errors, function (req, res) {
+router.post('/', validate_book, handle_validation_errors, (req, res) => {
   // Verify library item exists and is a BOOK type
   db.get_by_id('LIBRARY_ITEMS', req.body.library_item_id)
-    .then(function (library_item) {
+    .then((library_item) => {
       if (!library_item) {
         return res.status(404).json({
           error: 'Library item not found',
@@ -115,7 +115,7 @@ router.post('/', validate_book, handle_validation_errors, function (req, res) {
         library_item_id: req.body.library_item_id,
       };
 
-      return db.create_record('BOOKS', book_data).then(function () {
+      return db.create_record('BOOKS', book_data).then(() => {
         res.status(201).json({
           success: true,
           message: 'Book created successfully',
@@ -123,7 +123,7 @@ router.post('/', validate_book, handle_validation_errors, function (req, res) {
         });
       });
     })
-    .catch(function (error) {
+    .catch((error) => {
       res.status(500).json({
         error: 'Failed to create book',
         message: error.message,
@@ -134,56 +134,51 @@ router.post('/', validate_book, handle_validation_errors, function (req, res) {
 /**
  * PUT /api/v1/books/:id - Update book
  */
-router.put(
-  '/:id',
-  validate_book,
-  handle_validation_errors,
-  function (req, res) {
-    db.get_by_id('BOOKS', req.params.id)
-      .then(function (existing_book) {
-        if (!existing_book) {
-          return res.status(404).json({
-            error: 'Book not found',
-          });
-        }
-
-        return db
-          .update_record('BOOKS', req.params.id, req.body)
-          .then(function (updated) {
-            if (updated) {
-              res.json({
-                success: true,
-                message: 'Book updated successfully',
-              });
-            } else {
-              res.status(500).json({
-                error: 'Failed to update book',
-              });
-            }
-          });
-      })
-      .catch(function (error) {
-        res.status(500).json({
-          error: 'Failed to update book',
-          message: error.message,
-        });
-      });
-  }
-);
-
-/**
- * DELETE /api/v1/books/:id - Delete book
- */
-router.delete('/:id', function (req, res) {
+router.put('/:id', validate_book, handle_validation_errors, (req, res) => {
   db.get_by_id('BOOKS', req.params.id)
-    .then(function (existing_book) {
+    .then((existing_book) => {
       if (!existing_book) {
         return res.status(404).json({
           error: 'Book not found',
         });
       }
 
-      return db.delete_record('BOOKS', req.params.id).then(function (deleted) {
+      return db
+        .update_record('BOOKS', req.params.id, req.body)
+        .then((updated) => {
+          if (updated) {
+            res.json({
+              success: true,
+              message: 'Book updated successfully',
+            });
+          } else {
+            res.status(500).json({
+              error: 'Failed to update book',
+            });
+          }
+        });
+    })
+    .catch((error) => {
+      res.status(500).json({
+        error: 'Failed to update book',
+        message: error.message,
+      });
+    });
+});
+
+/**
+ * DELETE /api/v1/books/:id - Delete book
+ */
+router.delete('/:id', (req, res) => {
+  db.get_by_id('BOOKS', req.params.id)
+    .then((existing_book) => {
+      if (!existing_book) {
+        return res.status(404).json({
+          error: 'Book not found',
+        });
+      }
+
+      return db.delete_record('BOOKS', req.params.id).then((deleted) => {
         if (deleted) {
           res.json({
             success: true,
@@ -196,7 +191,7 @@ router.delete('/:id', function (req, res) {
         }
       });
     })
-    .catch(function (error) {
+    .catch((error) => {
       res.status(500).json({
         error: 'Failed to delete book',
         message: error.message,

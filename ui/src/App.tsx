@@ -1,22 +1,22 @@
-import { Routes, Route } from 'react-router-dom';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { GlobalStyles, useTheme } from '@mui/material';
-
-import { Layout } from './components/common/Layout';
-import { LibraryItemsPage } from './pages/LibraryItemsPage';
-import { Patrons } from './pages/Patrons';
-import { CheckInItem } from './pages/CheckInItem';
-import { CheckOutItem } from './pages/CheckOutItem';
-import { PatronPage } from './pages/PatronPage';
-import { lazy } from 'react';
-import { SearchPage } from './pages/SearchPage';
-import { RenewItem } from './pages/RenewItem';
-import { SnackbarProvider } from './contexts/SnackbarContext';
-import { GlobalSnackbar } from './components/common/GlobalSnackbar';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-import { Library_Item_Page } from './pages/LibraryItemPage';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { lazy } from 'react';
+import { Route, Routes } from 'react-router-dom';
+import { GlobalSnackbar } from './components/common/GlobalSnackbar';
+import { Layout } from './components/common/Layout';
+import { SnackbarProvider } from './contexts/SnackbarContext';
 import { BranchPage } from './pages/BranchPage';
+import { CheckInItem } from './pages/CheckInItem';
+import { CheckInNew } from './pages/CheckInNew';
+import { CheckOutItem } from './pages/CheckOutItem';
+import { Library_Item_Page } from './pages/LibraryItemPage';
+import { LibraryItemsPage } from './pages/LibraryItemsPage';
+import { PatronPage } from './pages/PatronPage';
+import { Patrons } from './pages/Patrons';
+import { RenewItem } from './pages/RenewItem';
+import { SearchPage } from './pages/SearchPage';
 
 const BranchesPage = lazy(() =>
   import('./pages/BranchesPage').then((module) => ({
@@ -129,8 +129,8 @@ function App() {
               <Route path="checkin" element={<CheckInItem />} />
               <Route path="renew" element={<RenewItem />} />
               <Route path="check-in" element={<CheckInItem />} />
+              <Route path="check-in-new" element={<CheckInNew />} />
               <Route path="check-out" element={<CheckOutItem />} />
-              {/* <Route path="reshelve" element={<ReshelveItemPage />} /> */}
               <Route path="reshelve-new" element={<ReshelveItemsPageNew />} />
               <Route path="renewals" element={<RenewalsPage />} />
               <Route path="settings" element={<SettingsPage />} />

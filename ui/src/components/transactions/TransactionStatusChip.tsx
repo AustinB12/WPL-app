@@ -50,6 +50,14 @@ export function TransactionStatusChip({
           color="warning"
         />
       );
+    case 'WAITING':
+      return (
+        <Chip
+          variant={is_light ? 'filled' : 'outlined'}
+          label="Waiting"
+          color="warning"
+        />
+      );
     default:
       return (
         <Chip variant={is_light ? 'filled' : 'outlined'} label="Unknown" />

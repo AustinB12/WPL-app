@@ -1,4 +1,4 @@
-import { Chip, useTheme, type ChipProps } from '@mui/material';
+import { Chip, type ChipProps, useTheme } from '@mui/material';
 import type { JSX } from 'react';
 import { Genre } from '../../types';
 

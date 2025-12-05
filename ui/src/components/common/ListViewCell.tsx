@@ -1,7 +1,7 @@
 import { Avatar, Chip, Stack, Typography } from '@mui/material';
-import type { Patron } from '../../types';
 import { isAfter } from 'date-fns';
 import { Link } from 'react-router-dom';
+import type { Patron } from '../../types';
 
 const today = new Date();
 

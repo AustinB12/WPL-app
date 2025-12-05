@@ -1,6 +1,6 @@
 import { SsidChart } from '@mui/icons-material';
-import { TransactionsDataGrid } from '../components/transactions/TransactionsDataGrid';
 import { PageContainer, PageTitle } from '../components/common/PageBuilders';
+import { TransactionsDataGrid } from '../components/transactions/TransactionsDataGrid';
 
 export const TransactionsPage = () => {
   return (

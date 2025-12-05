@@ -50,5 +50,5 @@ export const get_status_color = (status: string): ChipColor => {
 };
 
 export const get_condition_color = (condition?: string): ChipColor => {
-  return condition ? CONDITION_COLOR_MAP[condition] ?? 'default' : 'default';
+  return condition ? (CONDITION_COLOR_MAP[condition] ?? 'default') : 'default';
 };

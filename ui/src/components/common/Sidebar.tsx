@@ -1,33 +1,33 @@
-import { Link, useLocation } from 'react-router-dom';
 import {
+  Autorenew,
+  Book,
+  BookmarkAdd,
+  CheckCircle,
+  Dashboard,
+  EventNote,
+  Groups2,
+  Home,
+  Input,
+  LocationCity,
+  Output,
+  Settings,
+  SsidChart,
+  TableRows,
+} from '@mui/icons-material';
+import {
+  Box,
+  Divider,
   Drawer,
   List,
   ListItem,
   ListItemButton,
   ListItemIcon,
   ListItemText,
-  Box,
-  Divider,
   Toolbar,
   useMediaQuery,
   useTheme,
 } from '@mui/material';
-import {
-  Home,
-  SsidChart,
-  Groups2,
-  Book,
-  Output,
-  Input,
-  Autorenew,
-  TableRows,
-  Settings,
-  CheckCircle,
-  BookmarkAdd,
-  EventNote,
-  Dashboard,
-  LocationCity,
-} from '@mui/icons-material';
+import { Link, useLocation } from 'react-router-dom';
 
 export const drawerWidth = 240;
 
@@ -61,6 +61,7 @@ export const Sidebar = ({
 
   const action_items = [
     { text: 'Check In', path: '/check-in', icon: <Input /> },
+    { text: 'Check In New', path: '/check-in-new', icon: <Input /> },
     {
       text: 'Check Out',
       path: '/check-out',

@@ -54,7 +54,7 @@ router.get('/', async (req, res) => {
     const { library_item_id, branch_id, status, condition, other_status } =
       req.query;
     let conditions = '';
-    let params = [];
+    const params = [];
 
     const filters = [];
     if (library_item_id) {
@@ -80,7 +80,7 @@ router.get('/', async (req, res) => {
     }
 
     if (filters.length > 0) {
-      conditions = ' WHERE ' + filters.join(' AND ');
+      conditions = ` WHERE ${filters.join(' AND ')}`;
     }
 
     const query = `
@@ -186,7 +186,7 @@ router.get('/checked-out', async (req, res) => {
       params.push(condition);
     }
 
-    const conditions = ' WHERE ' + filters.join(' AND ');
+    const conditions = ` WHERE ${filters.join(' AND ')}`;
 
     const query = `
       SELECT 
