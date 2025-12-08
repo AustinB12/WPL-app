@@ -271,8 +271,8 @@ router.get('/checkin-lookup/:copy_id', async (req, res) => {
     const is_overdue = today > due_date;
     const days_overdue = is_overdue
       ? Math.ceil(
-        (today.getTime() - due_date.getTime()) / (1000 * 60 * 60 * 24)
-      )
+          (today.getTime() - due_date.getTime()) / (1000 * 60 * 60 * 24)
+        )
       : 0;
     let fine_amount = days_overdue * 1.0; // $1.00 per day
     // Cap fine at book cost
@@ -1137,9 +1137,9 @@ router.post(
             updated_item_copy: updated_item_copy || null,
             reservation_fulfilled: reservation_fulfilled
               ? {
-                ...reservation_fulfilled,
-                patron: reserved_patron_info,
-              }
+                  ...reservation_fulfilled,
+                  patron: reserved_patron_info,
+                }
               : null,
           },
         });
