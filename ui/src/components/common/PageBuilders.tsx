@@ -8,21 +8,25 @@ import {
 } from '@mui/material';
 import { type PropsWithChildren } from 'react';
 
+interface Page_Container_Props {
+  sx?: SxProps<Theme>;
+  width?: 'xl' | 'lg' | 'md' | 'sm';
+  scroll?: boolean;
+}
+
 export const PageContainer = ({
   width = 'lg',
   children,
+  scroll = false,
   sx,
-}: PropsWithChildren<{
-  sx?: SxProps<Theme>;
-  width?: 'xl' | 'lg' | 'md' | 'sm';
-}>) => {
+}: PropsWithChildren<Page_Container_Props>) => {
   return (
     <Container
       maxWidth={width}
       sx={{
         py: 3,
         height: 1,
-        overflow: 'hidden',
+        overflow: scroll ? 'auto' : 'hidden',
         display: 'flex',
         flexDirection: 'column',
         gap: 2,

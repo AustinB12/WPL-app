@@ -36,7 +36,7 @@ export function ItemCopyConditionChip({
           size={size}
           variant={is_light ? 'filled' : 'outlined'}
           label="Good"
-          color="primary"
+          color="success"
         />
       );
     case 'Fair':
@@ -45,7 +45,7 @@ export function ItemCopyConditionChip({
           size={size}
           variant={is_light ? 'filled' : 'outlined'}
           label="Fair"
-          color="secondary"
+          color="primary"
         />
       );
     case 'Poor':
@@ -63,7 +63,7 @@ export function ItemCopyConditionChip({
           size={size}
           variant={is_light ? 'filled' : 'outlined'}
           label="Digital"
-          color="info"
+          color="secondary"
         />
       );
     default:
@@ -71,7 +71,7 @@ export function ItemCopyConditionChip({
         <Chip
           size={size}
           variant={is_light ? 'filled' : 'outlined'}
-          label="Unknown"
+          label="info"
         />
       );
   }

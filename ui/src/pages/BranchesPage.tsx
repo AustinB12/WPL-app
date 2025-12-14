@@ -37,6 +37,7 @@ function BranchCard({ branch }: { branch: Branch }) {
           component="img"
           height="140"
           image={branch?.cover_image}
+          loading="lazy"
           alt={`Cover image of ${branch.branch_name}`}
         />
         <CardContent>

@@ -1,4 +1,4 @@
-import { ErrorOutline, Input } from '@mui/icons-material';
+import { ErrorOutline, InfoOutline, Input } from '@mui/icons-material';
 import {
   Alert,
   Button,
@@ -117,11 +117,17 @@ export const CheckInNew: FC = () => {
     barcode_input_ref.current?.focus();
   };
 
-  const has_valid_item = item_info && !error_message;
+  const has_valid_item =
+    item_info &&
+    ['CHECKED OUT', 'RESERVED'].includes(item_info.status.toUpperCase()) &&
+    !error_message;
+
+  const found_available_item =
+    item_info && item_info.status.toUpperCase() === 'AVAILABLE';
 
   return (
     <LocalizationProvider dateAdapter={AdapterDateFns}>
-      <PageContainer width="xl">
+      <PageContainer width="xl" scroll={true}>
         <PageTitle title="Check In Item" Icon_Component={Input} />
 
         <Stack spacing={3}>
@@ -132,7 +138,7 @@ export const CheckInNew: FC = () => {
             </Typography>
             <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
               Scan the barcode or manually enter the Copy ID to check in an
-              item.
+              item. {item_info?.status}
             </Typography>
 
             <Stack direction="row" spacing={2}>
@@ -186,6 +192,17 @@ export const CheckInNew: FC = () => {
               on_cancel={handle_cancel}
               is_processing={is_returning}
             />
+          )}
+
+          {found_available_item && (
+            <Alert
+              severity="info"
+              sx={{ mt: 2 }}
+              icon={<InfoOutline />}
+              onClose={() => set_barcode_input('')}
+            >
+              {'Item is not currently checked out.'}
+            </Alert>
           )}
 
           {/* Recent Check-Ins */}

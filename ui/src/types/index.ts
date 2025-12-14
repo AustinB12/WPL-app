@@ -397,6 +397,7 @@ export type Library_Copy_Status =
 export interface Item_Copy {
   id: number;
   library_item_id: number;
+  checked_out_by: number;
   branch_id: number;
   status: Library_Copy_Status;
   condition?: Item_Condition;
@@ -535,7 +536,7 @@ export type Checkin_Lookup_Result = {
   copy: Item_Copy;
   patron: Patron;
   transaction: Checkin_Receipt;
-}
+};
 
 //! == SNACKBAR TYPES == //
 

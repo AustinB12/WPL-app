@@ -144,11 +144,7 @@ export const CheckoutReceipt: FC<CheckoutReceiptProps> = ({
           {receipt && (
             <>
               <Box sx={{ mb: 2 }}>
-                <Typography
-                  variant="subtitle2"
-                  gutterBottom
-                  fontWeight="bold"
-                >
+                <Typography variant="subtitle2" gutterBottom fontWeight="bold">
                   PATRON INFORMATION
                 </Typography>
                 {receipt.patron_id && (
@@ -176,11 +172,7 @@ export const CheckoutReceipt: FC<CheckoutReceiptProps> = ({
               <Divider sx={{ my: 2 }} />
 
               <Box sx={{ mb: 2 }}>
-                <Typography
-                  variant="subtitle2"
-                  gutterBottom
-                  fontWeight="bold"
-                >
+                <Typography variant="subtitle2" gutterBottom fontWeight="bold">
                   BOOK INFORMATION
                 </Typography>
                 {receipt?.title && (
@@ -232,11 +224,7 @@ export const CheckoutReceipt: FC<CheckoutReceiptProps> = ({
               )}
 
               <Box sx={{ mb: 2 }}>
-                <Typography
-                  variant="subtitle2"
-                  gutterBottom
-                  fontWeight="bold"
-                >
+                <Typography variant="subtitle2" gutterBottom fontWeight="bold">
                   DUE DATE
                 </Typography>
                 <Typography

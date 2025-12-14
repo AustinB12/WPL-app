@@ -12,7 +12,6 @@ import {
   Button,
   Card,
   CardContent,
-  Chip,
   Collapse,
   Divider,
   FormControl,
@@ -25,11 +24,8 @@ import {
 } from '@mui/material';
 // import dayjs from 'dayjs';
 import { type FC, useState } from 'react';
-import type {
-  Item_Condition,
-  Item_Copy_Result,
-} from '../../types';
-import { get_condition_color } from '../../utils/colors';
+import type { Item_Condition, Item_Copy_Result } from '../../types';
+import { ItemCopyConditionChip } from '../copies/ItemCopyConditionChip';
 import ItemTypeChip from '../library_items/ItemTypeChip';
 
 interface QuickCheckInCardProps {
@@ -59,7 +55,7 @@ export const QuickCheckInCard: FC<QuickCheckInCardProps> = ({
   >(item_info.condition);
   const [notes, set_notes] = useState('');
 
-  const has_reservation = !!item_info.reservation;
+  const has_reservation = item_info.status === 'Reserved';
 
   const handle_confirm = () => {
     on_confirm(new_condition, notes || undefined);
@@ -106,10 +102,7 @@ export const QuickCheckInCard: FC<QuickCheckInCardProps> = ({
               <Typography variant="body2" color="text.secondary">
                 {item_info.copy_label}
               </Typography>
-              <ItemTypeChip
-                item_type={item_info.item_type}
-                size="small"
-              />
+              <ItemTypeChip item_type={item_info.item_type} size="small" />
             </Stack>
           </Box>
 
@@ -121,7 +114,7 @@ export const QuickCheckInCard: FC<QuickCheckInCardProps> = ({
               Checked Out By
             </Typography>
             <Typography variant="body1">
-              {`${item_info.patron_first_name} ${item_info.patron_last_name} ID: ${item_info.patron_id}`}
+              {`${item_info.patron_first_name} ${item_info.patron_last_name} ID: ${item_info.checked_out_by}`}
             </Typography>
           </Box>
 
@@ -167,7 +160,9 @@ export const QuickCheckInCard: FC<QuickCheckInCardProps> = ({
           {/* Reservation Alert */}
           {has_reservation && (
             <Alert severity="info" icon={<Info />} sx={{ borderRadius: 2 }}>
-              <AlertTitle>Reservation Pending</AlertTitle>
+              <AlertTitle sx={{ fontWeight: 600 }}>
+                Reservation Pending
+              </AlertTitle>
               This item has a reservation. It will be marked as "Ready for
               Pickup" for{' '}
               {item_info.reservation?.patron_name || 'the next patron in queue'}
@@ -182,14 +177,7 @@ export const QuickCheckInCard: FC<QuickCheckInCardProps> = ({
             <Typography variant="subtitle2" color="text.secondary" gutterBottom>
               Current Condition
             </Typography>
-            <Chip
-              label={item_info.condition}
-              sx={{
-                bgcolor: get_condition_color(item_info.condition || 'Good'),
-                color: 'white',
-                fontWeight: 600,
-              }}
-            />
+            <ItemCopyConditionChip condition={item_info?.condition || 'Good'} />
           </Box>
 
           {/* Expandable Condition & Notes Section */}
@@ -222,14 +210,9 @@ export const QuickCheckInCard: FC<QuickCheckInCardProps> = ({
                   >
                     {conditions.map((condition) => (
                       <MenuItem key={condition} value={condition}>
-                        <Chip
-                          label={condition}
+                        <ItemCopyConditionChip
+                          condition={condition}
                           size="small"
-                          sx={{
-                            bgcolor: get_condition_color(condition),
-                            color: 'white',
-                            fontWeight: 600,
-                          }}
                         />
                       </MenuItem>
                     ))}

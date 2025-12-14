@@ -369,15 +369,15 @@ router.get('/item/:library_item_id', async (req, res) => {
     const reservation_info =
       first_reservation.length > 0
         ? {
-            id: first_reservation[0].reservation_id,
-            patron_id: first_reservation[0].patron_id,
-            patron_name:
-              first_reservation[0].first_name && first_reservation[0].last_name
-                ? `${first_reservation[0].first_name} ${first_reservation[0].last_name}`
-                : null,
-            status: first_reservation[0].reservation_status,
-            queue_position: first_reservation[0].queue_position,
-          }
+          id: first_reservation[0].reservation_id,
+          patron_id: first_reservation[0].patron_id,
+          patron_name:
+            first_reservation[0].first_name && first_reservation[0].last_name
+              ? `${first_reservation[0].first_name} ${first_reservation[0].last_name}`
+              : null,
+          status: first_reservation[0].reservation_status,
+          queue_position: first_reservation[0].queue_position,
+        }
         : null;
 
     // Get all copies for this library item, optionally filtered by branch
@@ -446,20 +446,64 @@ router.get('/item/:library_item_id', async (req, res) => {
 router.get('/:id', async (req, res) => {
   try {
     const query = `
-      SELECT
+      SELECT 
         lic.*,
-        li.title,
-        li.item_type,
-        li.description,
-        li.publication_year,
-        b.branch_name AS owning_branch_name,
-        cb.branch_name AS current_branch_name,
-        COUNT(*) OVER() AS total_copies_count
+        ci.title,
+        ci.item_type,
+        ci.publication_year,
+        ci.description,
+        ci.congress_code,
+        b.id as current_branch_id,
+        b.branch_name as current_branch_name,
+        bb.id as owning_branch_id,
+        bb.branch_name as owning_branch_name,
+        bk.author,
+        bk.publisher,
+        bk.genre as book_genre,
+        bk.number_of_pages,
+        v.director,
+        v.studio,
+        v.format as video_format,
+        v.duration_minutes,
+        v.rating as video_rating,
+        v.genre as video_genre,
+        ab.narrator,
+        ab.duration_in_seconds as audiobook_duration,
+        ab.publisher as audiobook_publisher,
+        ab.genre as audiobook_genre,
+        va.artist as vinyl_artist,
+        va.color as vinyl_color,
+        va.number_of_tracks as vinyl_tracks,
+        va.genre as vinyl_genre,
+        cd.artist as cd_artist,
+        cd.record_label,
+        cd.number_of_tracks as cd_tracks,
+        cd.genre as cd_genre,
+        per.pages as periodical_pages,
+        per.issue_number as periodical_issue_number,
+        per.publication_date as periodical_publication_date,
+        mag.subscription_cost as magazine_subscription_cost,
+        mag.publisher as magazine_publisher,
+        mag.issue_number as magazine_issue_number,
+        mag.publication_month as magazine_publication_month,
+        mag.publication_year as magazine_publication_year,
+        p.first_name AS patron_first_name,
+        p.last_name AS patron_last_name,
+        ROW_NUMBER() OVER (PARTITION BY lic.library_item_id ORDER BY lic.id) as copy_number,
+        COUNT(*) OVER (PARTITION BY lic.library_item_id) as total_copies
       FROM LIBRARY_ITEM_COPIES lic
-      JOIN LIBRARY_ITEMS li ON lic.library_item_id = li.id
-      JOIN BRANCHES b ON lic.owning_branch_id = b.id
-      JOIN BRANCHES cb ON lic.current_branch_id = cb.id
-      WHERE lic.id = ?
+      JOIN LIBRARY_ITEMS ci ON lic.library_item_id = ci.id
+      LEFT JOIN PATRONS p ON lic.checked_out_by = p.id
+      LEFT JOIN BRANCHES b ON lic.current_branch_id = b.id
+      LEFT JOIN BRANCHES bb ON lic.owning_branch_id = bb.id
+      LEFT JOIN BOOKS bk ON (ci.id = bk.library_item_id AND ci.item_type = 'BOOK')
+      LEFT JOIN VIDEOS v ON (ci.id = v.library_item_id AND ci.item_type = 'VIDEO')
+      LEFT JOIN AUDIOBOOKS ab ON (ci.id = ab.library_item_id AND ci.item_type = 'AUDIOBOOK')
+      LEFT JOIN VINYL_ALBUMS va ON (ci.id = va.library_item_id AND ci.item_type = 'VINYL_ALBUM')
+      LEFT JOIN CDS cd ON (ci.id = cd.library_item_id AND ci.item_type = 'CD')
+      LEFT JOIN PERIODICALS per ON (ci.id = per.library_item_id AND ci.item_type = 'PERIODICAL')
+      LEFT JOIN MAGAZINES mag ON (ci.id = mag.library_item_id AND ci.item_type = 'MAGAZINE')
+      WHERE lic.id = ?;
     `;
 
     const results = await db.execute_query(query, [req.params.id]);
