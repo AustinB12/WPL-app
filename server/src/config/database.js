@@ -1,12 +1,12 @@
-import dotenv from 'dotenv';
-import pico from 'picocolors';
-import { open } from 'sqlite';
-import sqlite3 from 'sqlite3';
+import dotenv from "dotenv";
+import pico from "picocolors";
+import { open } from "sqlite";
+import sqlite3 from "sqlite3";
 
 dotenv.config();
 
 const sqliteVerbose = sqlite3.verbose();
-const db_path = './library.db';
+const db_path = "./library.db";
 
 console.log(`Using database path: ${db_path}`);
 
@@ -16,17 +16,17 @@ let db = null;
  * Initialize database connection
  */
 async function init_database() {
-  try {
-    db = await open({
-      filename: db_path,
-      driver: sqliteVerbose.Database,
-    });
+	try {
+		db = await open({
+			filename: db_path,
+			driver: sqliteVerbose.Database
+		});
 
-    // Enable foreign keys
-    await db.exec('PRAGMA foreign_keys = ON;');
+		// Enable foreign keys
+		await db.exec("PRAGMA foreign_keys = ON;");
 
-    // Performance optimization PRAGMAs
-    await db.exec(`
+		// Performance optimization PRAGMAs
+		await db.exec(`
       PRAGMA journal_mode = WAL;          -- Write-Ahead Logging for better concurrency
       PRAGMA synchronous = NORMAL;        -- Balance between safety and performance
       PRAGMA cache_size = 10000;          -- 10MB cache (10000 * 1KB pages)
@@ -35,30 +35,30 @@ async function init_database() {
       PRAGMA optimize;                    -- Analyze and optimize query planner
     `);
 
-    // Create tables if they don't exist
-    await create_tables();
+		// Create tables if they don't exist
+		await create_tables();
 
-    console.log(pico.bgGreen(pico.bold('🔌 SQLite DB Connected ')));
-    return db;
-  } catch (error) {
-    const errorMessage =
-      error instanceof Error ? error.message : 'Unknown error';
-    console.error('Database connection failed:', errorMessage);
-    throw error;
-  }
+		console.log(pico.bgGreen(pico.bold("🔌 SQLite DB Connected ")));
+		return db;
+	} catch (error) {
+		const errorMessage =
+			error instanceof Error ? error.message : "Unknown error";
+		console.error("Database connection failed:", errorMessage);
+		throw error;
+	}
 }
 
 /**
  * Create database tables
  */
 async function create_tables() {
-  if (!db) {
-    throw new Error(pico.bgRed(pico.bold('<< DB initialization failed >>')));
-  }
+	if (!db) {
+		throw new Error(pico.bgRed(pico.bold("<< DB initialization failed >>")));
+	}
 
-  try {
-    // Create BRANCHES table first (referenced by other tables)
-    await db.exec(`
+	try {
+		// Create BRANCHES table first (referenced by other tables)
+		await db.exec(`
       CREATE TABLE IF NOT EXISTS BRANCHES (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         branch_name TEXT NOT NULL DEFAULT 'Default Branch Name',
@@ -73,8 +73,8 @@ async function create_tables() {
       );
     `);
 
-    // Create library_items table
-    await db.exec(`
+		// Create library_items table
+		await db.exec(`
       CREATE TABLE IF NOT EXISTS LIBRARY_ITEMS (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         title TEXT NOT NULL,
@@ -87,11 +87,10 @@ async function create_tables() {
       )
     `);
 
-    // Create patrons table
-    await db.exec(`
+		// Create patrons table
+		await db.exec(`
       CREATE TABLE IF NOT EXISTS PATRONS (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
         first_name TEXT NOT NULL,
         last_name TEXT NOT NULL,
         email TEXT UNIQUE,
@@ -103,12 +102,14 @@ async function create_tables() {
         is_active BOOLEAN NOT NULL DEFAULT 1,
         image_url TEXT,
         local_branch_id INTEGER DEFAULT 1,
+        created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (local_branch_id) REFERENCES BRANCHES(id) ON DELETE SET NULL
       )
     `);
 
-    // Create BOOKS table (extends LIBRARY_ITEMS)
-    await db.exec(`
+		// Create BOOKS table (extends LIBRARY_ITEMS)
+		await db.exec(`
       CREATE TABLE IF NOT EXISTS BOOKS (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         library_item_id INTEGER NOT NULL,
@@ -122,8 +123,8 @@ async function create_tables() {
       )
     `);
 
-    // Create VIDEOS table (subclass of LIBRARY_ITEMS)
-    await db.exec(`
+		// Create VIDEOS table (subclass of LIBRARY_ITEMS)
+		await db.exec(`
       CREATE TABLE IF NOT EXISTS VIDEOS (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         director TEXT,
@@ -140,8 +141,8 @@ async function create_tables() {
       )
     `);
 
-    // Create VINYL_ALBUMS table (subclass of LIBRARY_ITEMS)
-    await db.exec(`
+		// Create VINYL_ALBUMS table (subclass of LIBRARY_ITEMS)
+		await db.exec(`
       CREATE TABLE IF NOT EXISTS VINYL_ALBUMS (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         genre TEXT,
@@ -156,8 +157,8 @@ async function create_tables() {
       );
     `);
 
-    // Create Audiobooks table (subclass of LIBRARY_ITEMS)
-    await db.exec(`
+		// Create Audiobooks table (subclass of LIBRARY_ITEMS)
+		await db.exec(`
       CREATE TABLE IF NOT EXISTS AUDIOBOOKS (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         duration_in_seconds INTEGER,
@@ -173,8 +174,8 @@ async function create_tables() {
       );
     `);
 
-    // Create Magazines table (subclass of LIBRARY_ITEMS)
-    await db.exec(`
+		// Create Magazines table (subclass of LIBRARY_ITEMS)
+		await db.exec(`
       CREATE TABLE IF NOT EXISTS MAGAZINES (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         subscription_cost REAL,
@@ -187,8 +188,8 @@ async function create_tables() {
       );
     `);
 
-    // Create CDs table (subclass of LIBRARY_ITEMS)
-    await db.exec(`
+		// Create CDs table (subclass of LIBRARY_ITEMS)
+		await db.exec(`
       CREATE TABLE IF NOT EXISTS CDS (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         cover_image_url TEXT,
@@ -201,8 +202,8 @@ async function create_tables() {
         FOREIGN KEY (library_item_id) REFERENCES LIBRARY_ITEMS(id) ON DELETE CASCADE
       );`);
 
-    // Create Periodicals table (subclass of LIBRARY_ITEMS)
-    await db.exec(`
+		// Create Periodicals table (subclass of LIBRARY_ITEMS)
+		await db.exec(`
       CREATE TABLE IF NOT EXISTS PERIODICALS (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         pages INTEGER,
@@ -212,8 +213,8 @@ async function create_tables() {
         FOREIGN KEY (library_item_id) REFERENCES LIBRARY_ITEMS(id) ON DELETE CASCADE
       );`);
 
-    // Create library_item_copies table
-    await db.exec(`
+		// Create library_item_copies table
+		await db.exec(`
       CREATE TABLE IF NOT EXISTS LIBRARY_ITEM_COPIES (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         library_item_id INTEGER NOT NULL,
@@ -235,8 +236,8 @@ async function create_tables() {
       );
     `);
 
-    // Create reservations table
-    await db.exec(`
+		// Create reservations table
+		await db.exec(`
       CREATE TABLE IF NOT EXISTS RESERVATIONS (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         item_copy_id INTEGER NOT NULL,
@@ -254,82 +255,77 @@ async function create_tables() {
       )
     `);
 
-    // Create Loan Durations table
-    await db.exec(`
+		// Create Loan Durations table
+		await db.exec(`
       CREATE TABLE IF NOT EXISTS LOAN_DURATIONS (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT UNIQUE NOT NULL,
         duration INTEGER NOT NULL
       );`);
 
-    // Migration: Add fulfillment_date column if it doesn't exist (for existing databases)
-    try {
-      await db.exec(
-        'ALTER TABLE RESERVATIONS ADD COLUMN fulfillment_date DATETIME'
-      );
-      console.log(
-        pico.green('✓ Added fulfillment_date column to RESERVATIONS table')
-      );
-    } catch (error) {
-      // Column already exists, which is fine
-      if (error.message?.includes('duplicate column name')) {
-        // Silently ignore - column already exists
-      } else {
-        console.warn(
-          pico.yellow(
-            '⚠ Could not add fulfillment_date column (may already exist):'
-          ),
-          error.message
-        );
-      }
-    }
+		// Migration: Add fulfillment_date column if it doesn't exist (for existing databases)
+		try {
+			await db.exec(
+				"ALTER TABLE RESERVATIONS ADD COLUMN fulfillment_date DATETIME"
+			);
+			console.log(
+				pico.green("✓ Added fulfillment_date column to RESERVATIONS table")
+			);
+		} catch (error) {
+			// Column already exists, which is fine
+			if (error.message?.includes("duplicate column name")) {
+				// Silently ignore - column already exists
+			} else {
+				console.warn(
+					pico.yellow(
+						"⚠ Could not add fulfillment_date column (may already exist):"
+					),
+					error.message
+				);
+			}
+		}
 
-    // Migration: Add local_branch_id column to PATRONS if it doesn't exist (for existing databases)
-    try {
-      await db.exec(
-        'ALTER TABLE PATRONS ADD COLUMN local_branch_id INTEGER DEFAULT 1'
-      );
-      console.log(
-        pico.green('✓ Added local_branch_id column to PATRONS table')
-      );
-    } catch (error) {
-      // Column already exists, which is fine
-      if (error.message?.includes('duplicate column name')) {
-        // Silently ignore - column already exists
-      } else {
-        console.warn(
-          pico.yellow(
-            '⚠ Could not add local_branch_id column (may already exist):'
-          ),
-          error.message
-        );
-      }
-    }
+		// Migration: Add local_branch_id column to PATRONS if it doesn't exist (for existing databases)
+		try {
+			await db.exec(
+				"ALTER TABLE PATRONS ADD COLUMN local_branch_id INTEGER DEFAULT 1"
+			);
+			console.log(
+				pico.green("✓ Added local_branch_id column to PATRONS table")
+			);
+		} catch (error) {
+			// Column already exists, which is fine
+			if (error.message?.includes("duplicate column name")) {
+				// Silently ignore - column already exists
+			} else {
+				console.warn(
+					pico.yellow(
+						"⚠ Could not add local_branch_id column (may already exist):"
+					),
+					error.message
+				);
+			}
+		}
 
-    // Create transactions table
-    await db.exec(`
-      CREATE TABLE IF NOT EXISTS TRANSACTIONS (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        copy_id INTEGER,
-        patron_id INTEGER,
-        location_id INTEGER,
-        transaction_type TEXT NOT NULL,
-        checkout_date DATE,
-        due_date DATE,
-        return_date DATE,
-        fine_amount REAL DEFAULT 0.00,
-        status TEXT DEFAULT 'Active',
-        notes TEXT,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (copy_id) REFERENCES LIBRARY_ITEM_COPIES(id) ON DELETE CASCADE,
-        FOREIGN KEY (patron_id) REFERENCES PATRONS(id) ON DELETE CASCADE,
-        FOREIGN KEY (location_id) REFERENCES BRANCHES(id) ON DELETE SET NULL
-      )
+		// Create item transactions table
+		await db.exec(`
+      CREATE TABLE IF NOT EXISTS ITEM_TRANSACTIONS (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,               
+		transaction_type TEXT NOT NULL,        -- 'check-in' or 'check-out' or 'reshelve' or 'relocate'
+		date DATETIME NOT NULL,               -- Date and time of the transaction
+		patron_id INTEGER,           -- ID of the patron involved in the transaction, null if not applicable
+		item_copy_id INTEGER NOT NULL,        -- ID of the library item copy involved
+		location_id INTEGER,        -- ID of the branch/location where the transaction took place
+		notes TEXT,                        -- Additional notes about the transaction
+		created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+		FOREIGN KEY (patron_id) REFERENCES PATRONS(id),
+		FOREIGN KEY (item_copy_id) REFERENCES LIBRARY_ITEM_COPIES(id),
+		FOREIGN KEY (location_id) REFERENCES BRANCHES(id)
+);
     `);
 
-    // Create FINES table
-    await db.exec(`
+		// Create FINES table
+		await db.exec(`
       CREATE TABLE IF NOT EXISTS FINES (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         transaction_id INTEGER NOT NULL,
@@ -341,13 +337,13 @@ async function create_tables() {
         payment_method TEXT,
         notes TEXT,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (transaction_id) REFERENCES TRANSACTIONS(id) ON DELETE CASCADE,
+        FOREIGN KEY (transaction_id) REFERENCES ITEM_TRANSACTIONS(id) ON DELETE CASCADE,
         FOREIGN KEY (patron_id) REFERENCES PATRONS(id) ON DELETE CASCADE
       )
     `);
 
-    // Create optimized indexes for better performance
-    await db.exec(`
+		// Create optimized indexes for better performance
+		await db.exec(`
       -- Core entity indexes
       CREATE INDEX IF NOT EXISTS idx_library_items_type ON LIBRARY_ITEMS(item_type);
       CREATE INDEX IF NOT EXISTS idx_library_items_year ON LIBRARY_ITEMS(publication_year);
@@ -367,12 +363,9 @@ async function create_tables() {
       CREATE INDEX IF NOT EXISTS idx_patrons_card_expiry ON PATRONS(card_expiration_date) WHERE is_active = 1;
       
       -- Transaction indexes - critical for reports and active checkouts
-      CREATE INDEX IF NOT EXISTS idx_transactions_status ON TRANSACTIONS(status);
-      CREATE INDEX IF NOT EXISTS idx_transactions_patron ON TRANSACTIONS(patron_id);
-      CREATE INDEX IF NOT EXISTS idx_transactions_copy ON TRANSACTIONS(copy_id);
-      CREATE INDEX IF NOT EXISTS idx_transactions_dates ON TRANSACTIONS(checkout_date, due_date, return_date);
-      CREATE INDEX IF NOT EXISTS idx_transactions_overdue ON TRANSACTIONS(status, due_date) WHERE status = 'Active';
-      CREATE INDEX IF NOT EXISTS idx_transactions_type_status ON TRANSACTIONS(transaction_type, status);
+      CREATE INDEX IF NOT EXISTS idx_transactions_patron ON ITEM_TRANSACTIONS(patron_id);
+      CREATE INDEX IF NOT EXISTS idx_transactions_copy ON ITEM_TRANSACTIONS(item_copy_id);
+      CREATE INDEX IF NOT EXISTS idx_transactions_type ON ITEM_TRANSACTIONS(transaction_type);
       
       -- Reservation indexes for queue management
       CREATE INDEX IF NOT EXISTS idx_reservations_status ON RESERVATIONS(status);
@@ -397,14 +390,14 @@ async function create_tables() {
       CREATE INDEX IF NOT EXISTS idx_vinyl_albums_library_item ON VINYL_ALBUMS(library_item_id);
     `);
 
-    // Insert default branch if none exists
-    await db.exec(`
+		// Insert default branch if none exists
+		await db.exec(`
       INSERT OR IGNORE INTO BRANCHES (id, branch_name, is_main) 
       VALUES (1, 'Main Library', 1)
     `);
 
-    // Create update triggers
-    await db.exec(`
+		// Create update triggers
+		await db.exec(`
       CREATE TRIGGER IF NOT EXISTS update_library_items_timestamp 
       AFTER UPDATE ON LIBRARY_ITEMS 
       BEGIN 
@@ -422,36 +415,51 @@ async function create_tables() {
       BEGIN 
         UPDATE RESERVATIONS SET updated_at = CURRENT_TIMESTAMP WHERE id = NEW.id; 
       END;
-
-      CREATE TRIGGER IF NOT EXISTS update_transactions_timestamp 
-      AFTER UPDATE ON TRANSACTIONS 
-      BEGIN 
-        UPDATE TRANSACTIONS SET updated_at = CURRENT_TIMESTAMP WHERE id = NEW.id; 
-      END;
     `);
 
-    console.log(pico.bgGreen(pico.bold('🔨 DB Tables Created Successfully')));
-  } catch (error) {
-    const errorMessage =
-      error instanceof Error ? error.message : 'Unknown error';
-    console.error(
-      pico.bgRed(pico.bold('Error Creating DB Tables: ')) + errorMessage
-    );
-    throw error;
-  }
+		// Migration: Drop old TRANSACTIONS table if it exists (renamed to ITEM_TRANSACTIONS)
+		try {
+			// Temporarily disable foreign keys to allow table drop
+			await db.exec("PRAGMA foreign_keys = OFF;");
+			await db.exec("DROP TABLE IF EXISTS TRANSACTIONS");
+			// Re-enable foreign keys
+			await db.exec("PRAGMA foreign_keys = ON;");
+			console.log(
+				pico.yellow("✓ Migrated old TRANSACTIONS table to ITEM_TRANSACTIONS")
+			);
+		} catch (migration_error) {
+			// If we can't drop it, that's okay - the table might not exist
+			console.log(pico.gray("  (No old TRANSACTIONS table found to migrate)"));
+			// Ensure foreign keys are re-enabled
+			try {
+				await db.exec("PRAGMA foreign_keys = ON;");
+			} catch (e) {
+				// Ignore
+			}
+		}
+
+		console.log(pico.bgGreen(pico.bold("🔨 DB Tables Created Successfully")));
+	} catch (error) {
+		const errorMessage =
+			error instanceof Error ? error.message : "Unknown error";
+		console.error(
+			pico.bgRed(pico.bold("Error Creating DB Tables: ")) + errorMessage
+		);
+		throw error;
+	}
 }
 
 /**
  * Get DB instance
  */
 async function get_database() {
-  if (!db) {
-    return await init_database();
-  }
-  if (!db) {
-    throw new Error('Failed to initialize database');
-  }
-  return db;
+	if (!db) {
+		return await init_database();
+	}
+	if (!db) {
+		throw new Error("Failed to initialize database");
+	}
+	return db;
 }
 
 // Initialize database connection
@@ -465,63 +473,63 @@ init_database();
  * @returns {Promise<Array|Object>} Query result
  */
 async function execute_query(query, params = [], options = {}) {
-  try {
-    const database = await get_database();
-    const trimmedQuery = query.trim().toLowerCase();
+	try {
+		const database = await get_database();
+		const trimmedQuery = query.trim().toLowerCase();
 
-    // Performance: Use prepared statements for repeated queries
-    if (options.prepare) {
-      const stmt = await database.prepare(query);
-      try {
-        if (trimmedQuery.startsWith('select')) {
-          return await stmt.all(params);
-        } else {
-          return await stmt.run(params);
-        }
-      } finally {
-        await stmt.finalize();
-      }
-    }
+		// Performance: Use prepared statements for repeated queries
+		if (options.prepare) {
+			const stmt = await database.prepare(query);
+			try {
+				if (trimmedQuery.startsWith("select")) {
+					return await stmt.all(params);
+				} else {
+					return await stmt.run(params);
+				}
+			} finally {
+				await stmt.finalize();
+			}
+		}
 
-    // Optimize based on query type
-    if (trimmedQuery.startsWith('select')) {
-      // For SELECT queries that might return large results
-      if (options.limit && !query.toLowerCase().includes('limit')) {
-        query += ` LIMIT ${options.limit}`;
-      }
-      return await database.all(query, params);
-    } else if (trimmedQuery.startsWith('insert') && options.batch) {
-      // Batch insert optimization
-      return await database.exec(query);
-    } else if (trimmedQuery.startsWith('with')) {
-      // CTE queries (Common Table Expressions)
-      return await database.all(query, params);
-    } else {
-      // For INSERT, UPDATE, DELETE queries
-      const result = await database.run(query, params);
+		// Optimize based on query type
+		if (trimmedQuery.startsWith("select")) {
+			// For SELECT queries that might return large results
+			if (options.limit && !query.toLowerCase().includes("limit")) {
+				query += ` LIMIT ${options.limit}`;
+			}
+			return await database.all(query, params);
+		} else if (trimmedQuery.startsWith("insert") && options.batch) {
+			// Batch insert optimization
+			return await database.exec(query);
+		} else if (trimmedQuery.startsWith("with")) {
+			// CTE queries (Common Table Expressions)
+			return await database.all(query, params);
+		} else {
+			// For INSERT, UPDATE, DELETE queries
+			const result = await database.run(query, params);
 
-      // Add performance metrics for monitoring
-      if (options.includeMetrics) {
-        return {
-          ...result,
-          performance: {
-            changes: result.changes,
-            lastID: result.lastID,
-            queryType: trimmedQuery.split(' ')[0].toUpperCase(),
-          },
-        };
-      }
+			// Add performance metrics for monitoring
+			if (options.includeMetrics) {
+				return {
+					...result,
+					performance: {
+						changes: result.changes,
+						lastID: result.lastID,
+						queryType: trimmedQuery.split(" ")[0].toUpperCase()
+					}
+				};
+			}
 
-      return result;
-    }
-  } catch (error) {
-    console.error('Database query error:', {
-      query: `${query.substring(0, 200)}...`,
-      params: params,
-      error: error.message,
-    });
-    throw error;
-  }
+			return result;
+		}
+	} catch (error) {
+		console.error("Database query error:", {
+			query: `${query.substring(0, 200)}...`,
+			params: params,
+			error: error.message
+		});
+		throw error;
+	}
 }
 
 /**
@@ -531,10 +539,10 @@ async function execute_query(query, params = [], options = {}) {
  * @param {Array} params - Parameters for the conditions
  * @returns {Promise<Array>} Array of records
  */
-async function get_all(table_name, conditions = '', params = []) {
-  const query = `SELECT * FROM ${table_name} ${conditions}`;
-  const result = await execute_query(query, params);
-  return Array.isArray(result) ? result : [];
+async function get_all(table_name, conditions = "", params = []) {
+	const query = `SELECT * FROM ${table_name} ${conditions}`;
+	const result = await execute_query(query, params);
+	return Array.isArray(result) ? result : [];
 }
 
 /**
@@ -544,12 +552,12 @@ async function get_all(table_name, conditions = '', params = []) {
  * @returns {Promise<Object|null>} The record object or null if not found
  */
 async function get_by_id(table_name, id) {
-  const query = `SELECT * FROM ${table_name} WHERE id = ?`;
-  const results = await execute_query(query, [id]);
-  if (Array.isArray(results) && results.length > 0) {
-    return results[0];
-  }
-  return null;
+	const query = `SELECT * FROM ${table_name} WHERE id = ?`;
+	const results = await execute_query(query, [id]);
+	if (Array.isArray(results) && results.length > 0) {
+		return results[0];
+	}
+	return null;
 }
 
 /**
@@ -559,14 +567,14 @@ async function get_by_id(table_name, id) {
  * @returns {Promise<Array>} Array of record objects (empty array if none found)
  */
 async function get_by_ids(table_name, ids) {
-  if (!Array.isArray(ids) || ids.length === 0) {
-    return [];
-  }
+	if (!Array.isArray(ids) || ids.length === 0) {
+		return [];
+	}
 
-  const placeholders = ids.map(() => '?').join(', ');
-  const query = `SELECT * FROM ${table_name} WHERE id IN (${placeholders})`;
-  const results = await execute_query(query, ids);
-  return Array.isArray(results) ? results : [];
+	const placeholders = ids.map(() => "?").join(", ");
+	const query = `SELECT * FROM ${table_name} WHERE id IN (${placeholders})`;
+	const results = await execute_query(query, ids);
+	return Array.isArray(results) ? results : [];
 }
 
 /**
@@ -576,15 +584,15 @@ async function get_by_ids(table_name, ids) {
  * @returns {Promise<number|undefined>} The last inserted ID or undefined
  */
 async function create_record(table_name, data) {
-  const fields = Object.keys(data).join(', ');
-  const placeholders = Object.keys(data)
-    .map(() => '?')
-    .join(', ');
-  const values = Object.values(data);
+	const fields = Object.keys(data).join(", ");
+	const placeholders = Object.keys(data)
+		.map(() => "?")
+		.join(", ");
+	const values = Object.values(data);
 
-  const query = `INSERT INTO ${table_name} (${fields}) VALUES (${placeholders})`;
-  const result = await execute_query(query, values);
-  return !Array.isArray(result) ? result.lastID : undefined;
+	const query = `INSERT INTO ${table_name} (${fields}) VALUES (${placeholders})`;
+	const result = await execute_query(query, values);
+	return !Array.isArray(result) ? result.lastID : undefined;
 }
 
 /**
@@ -595,14 +603,14 @@ async function create_record(table_name, data) {
  * @returns {Promise<boolean>} True if the record was updated, false otherwise
  */
 async function update_record(table_name, id, data) {
-  const fields = Object.keys(data)
-    .map((key) => `${key} = ?`)
-    .join(', ');
-  const values = Object.values(data).concat([id]);
+	const fields = Object.keys(data)
+		.map((key) => `${key} = ?`)
+		.join(", ");
+	const values = Object.values(data).concat([id]);
 
-  const query = `UPDATE ${table_name} SET ${fields} WHERE id = ?`;
-  const result = await execute_query(query, values);
-  return !Array.isArray(result) ? (result.changes || 0) > 0 : false;
+	const query = `UPDATE ${table_name} SET ${fields} WHERE id = ?`;
+	const result = await execute_query(query, values);
+	return !Array.isArray(result) ? (result.changes || 0) > 0 : false;
 }
 
 /**
@@ -612,9 +620,9 @@ async function update_record(table_name, id, data) {
  * @returns {Promise<boolean>} True if the record was deleted, false otherwise
  */
 async function delete_record(table_name, id) {
-  const query = `DELETE FROM ${table_name} WHERE id = ?`;
-  const result = await execute_query(query, [id]);
-  return !Array.isArray(result) ? (result.changes || 0) > 0 : false;
+	const query = `DELETE FROM ${table_name} WHERE id = ?`;
+	const result = await execute_query(query, [id]);
+	return !Array.isArray(result) ? (result.changes || 0) > 0 : false;
 }
 
 /**
@@ -623,60 +631,60 @@ async function delete_record(table_name, id) {
  * @returns {Promise<Object>} Batch operation results
  */
 async function execute_batch(operations) {
-  const database = await get_database();
+	const database = await get_database();
 
-  try {
-    await database.exec('BEGIN TRANSACTION');
+	try {
+		await database.exec("BEGIN TRANSACTION");
 
-    const results = [];
-    let totalChanges = 0;
+		const results = [];
+		let totalChanges = 0;
 
-    for (const op of operations) {
-      let result;
+		for (const op of operations) {
+			let result;
 
-      switch (op.type) {
-        case 'insert':
-          result = await create_record(op.table, op.data);
-          results.push({ type: 'insert', id: result, table: op.table });
-          totalChanges++;
-          break;
+			switch (op.type) {
+				case "insert":
+					result = await create_record(op.table, op.data);
+					results.push({ type: "insert", id: result, table: op.table });
+					totalChanges++;
+					break;
 
-        case 'update':
-          result = await update_record(op.table, op.id, op.data);
-          results.push({
-            type: 'update',
-            success: result,
-            table: op.table,
-            id: op.id,
-          });
-          if (result) totalChanges++;
-          break;
+				case "update":
+					result = await update_record(op.table, op.id, op.data);
+					results.push({
+						type: "update",
+						success: result,
+						table: op.table,
+						id: op.id
+					});
+					if (result) totalChanges++;
+					break;
 
-        case 'delete':
-          result = await delete_record(op.table, op.id);
-          results.push({
-            type: 'delete',
-            success: result,
-            table: op.table,
-            id: op.id,
-          });
-          if (result) totalChanges++;
-          break;
-      }
-    }
+				case "delete":
+					result = await delete_record(op.table, op.id);
+					results.push({
+						type: "delete",
+						success: result,
+						table: op.table,
+						id: op.id
+					});
+					if (result) totalChanges++;
+					break;
+			}
+		}
 
-    await database.exec('COMMIT');
+		await database.exec("COMMIT");
 
-    return {
-      success: true,
-      totalOperations: operations.length,
-      totalChanges,
-      results,
-    };
-  } catch (error) {
-    await database.exec('ROLLBACK');
-    throw error;
-  }
+		return {
+			success: true,
+			totalOperations: operations.length,
+			totalChanges,
+			results
+		};
+	} catch (error) {
+		await database.exec("ROLLBACK");
+		throw error;
+	}
 }
 
 /**
@@ -688,38 +696,38 @@ async function execute_batch(operations) {
  * @returns {Promise<Array>} Search results
  */
 async function search_records(
-  table_name,
-  search_term,
-  search_fields = [],
-  options = {}
+	table_name,
+	search_term,
+	search_fields = [],
+	options = {}
 ) {
-  const limit = options.limit || 50;
-  const offset = options.offset || 0;
+	const limit = options.limit || 50;
+	const offset = options.offset || 0;
 
-  if (!search_fields.length) {
-    // Fallback to basic search if no fields specified
-    return get_all(table_name, `LIMIT ${limit} OFFSET ${offset}`);
-  }
+	if (!search_fields.length) {
+		// Fallback to basic search if no fields specified
+		return get_all(table_name, `LIMIT ${limit} OFFSET ${offset}`);
+	}
 
-  // Build LIKE conditions for each field
-  const conditions = search_fields
-    .map((field) => `${field} LIKE ?`)
-    .join(' OR ');
-  const params = search_fields.map(() => `%${search_term}%`);
+	// Build LIKE conditions for each field
+	const conditions = search_fields
+		.map((field) => `${field} LIKE ?`)
+		.join(" OR ");
+	const params = search_fields.map(() => `%${search_term}%`);
 
-  const query = `
+	const query = `
     SELECT * FROM ${table_name} 
     WHERE ${conditions}
     ORDER BY 
       CASE 
-        ${search_fields.map((field) => `WHEN ${field} LIKE '${search_term}%' THEN 1`).join(' ')}
+        ${search_fields.map((field) => `WHEN ${field} LIKE '${search_term}%' THEN 1`).join(" ")}
         ELSE 2 
       END,
       id
     LIMIT ${limit} OFFSET ${offset}
   `;
 
-  return execute_query(query, params);
+	return execute_query(query, params);
 }
 
 /**
@@ -727,27 +735,27 @@ async function search_records(
  * @returns {Promise<Object>} Database statistics
  */
 async function get_database_stats() {
-  const database = await get_database();
+	const database = await get_database();
 
-  const stats = await Promise.all([
-    database.get('PRAGMA database_list'),
-    database.get('PRAGMA cache_size'),
-    database.get('PRAGMA page_count'),
-    database.get('PRAGMA page_size'),
-    database.get('PRAGMA journal_mode'),
-    database.all('SELECT name, sql FROM sqlite_master WHERE type="index"'),
-  ]);
+	const stats = await Promise.all([
+		database.get("PRAGMA database_list"),
+		database.get("PRAGMA cache_size"),
+		database.get("PRAGMA page_count"),
+		database.get("PRAGMA page_size"),
+		database.get("PRAGMA journal_mode"),
+		database.all('SELECT name, sql FROM sqlite_master WHERE type="index"')
+	]);
 
-  return {
-    database_info: stats[0],
-    cache_size: stats[1],
-    page_count: stats[2],
-    page_size: stats[3],
-    journal_mode: stats[4],
-    indexes: stats[5],
-    estimated_size_mb:
-      (stats[2].page_count * stats[3].page_size) / (1024 * 1024),
-  };
+	return {
+		database_info: stats[0],
+		cache_size: stats[1],
+		page_count: stats[2],
+		page_size: stats[3],
+		journal_mode: stats[4],
+		indexes: stats[5],
+		estimated_size_mb:
+			(stats[2].page_count * stats[3].page_size) / (1024 * 1024)
+	};
 }
 
 /**
@@ -756,29 +764,29 @@ async function get_database_stats() {
  * @returns {Promise<*>} Result from the callback
  */
 async function execute_transaction(callback) {
-  const database = await get_database();
-  try {
-    await database.exec('BEGIN TRANSACTION');
-    const result = await callback(database);
-    await database.exec('COMMIT');
-    return result;
-  } catch (error) {
-    await database.exec('ROLLBACK');
-    throw error;
-  }
+	const database = await get_database();
+	try {
+		await database.exec("BEGIN TRANSACTION");
+		const result = await callback(database);
+		await database.exec("COMMIT");
+		return result;
+	} catch (error) {
+		await database.exec("ROLLBACK");
+		throw error;
+	}
 }
 
 export {
-  get_database as db,
-  execute_query,
-  get_all,
-  get_by_id,
-  get_by_ids,
-  create_record,
-  update_record,
-  delete_record,
-  execute_batch,
-  search_records,
-  get_database_stats,
-  execute_transaction,
+	get_database as db,
+	execute_query,
+	get_all,
+	get_by_id,
+	get_by_ids,
+	create_record,
+	update_record,
+	delete_record,
+	execute_batch,
+	search_records,
+	get_database_stats,
+	execute_transaction
 };
