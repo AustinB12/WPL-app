@@ -57,7 +57,7 @@ async function create_tables() {
 	}
 
 	try {
-		// Create BRANCHES table first (referenced by other tables)
+		// Create all tables in a single batch execution for performance
 		await db.exec(`
       CREATE TABLE IF NOT EXISTS BRANCHES (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -71,10 +71,7 @@ async function create_tables() {
         secondary_color TEXT,
         description TEXT
       );
-    `);
 
-		// Create library_items table
-		await db.exec(`
       CREATE TABLE IF NOT EXISTS LIBRARY_ITEMS (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         title TEXT NOT NULL,
@@ -84,11 +81,8 @@ async function create_tables() {
         congress_code TEXT DEFAULT '0000-0000',
         created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
         updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
-      )
-    `);
+      );
 
-		// Create patrons table
-		await db.exec(`
       CREATE TABLE IF NOT EXISTS PATRONS (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         first_name TEXT NOT NULL,
@@ -105,11 +99,8 @@ async function create_tables() {
         created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
         updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (local_branch_id) REFERENCES BRANCHES(id) ON DELETE SET NULL
-      )
-    `);
+      );
 
-		// Create BOOKS table (extends LIBRARY_ITEMS)
-		await db.exec(`
       CREATE TABLE IF NOT EXISTS BOOKS (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         library_item_id INTEGER NOT NULL,
@@ -120,11 +111,8 @@ async function create_tables() {
         number_of_pages INTEGER,
         created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (library_item_id) REFERENCES LIBRARY_ITEMS(id) ON DELETE CASCADE
-      )
-    `);
+      );
 
-		// Create VIDEOS table (subclass of LIBRARY_ITEMS)
-		await db.exec(`
       CREATE TABLE IF NOT EXISTS VIDEOS (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         director TEXT,
@@ -138,11 +126,8 @@ async function create_tables() {
         library_item_id INTEGER NOT NULL,
         is_new_release BOOLEAN NOT NULL DEFAULT 0,
         FOREIGN KEY (library_item_id) REFERENCES LIBRARY_ITEMS(id) ON DELETE CASCADE
-      )
-    `);
+      );
 
-		// Create VINYL_ALBUMS table (subclass of LIBRARY_ITEMS)
-		await db.exec(`
       CREATE TABLE IF NOT EXISTS VINYL_ALBUMS (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         genre TEXT,
@@ -155,10 +140,7 @@ async function create_tables() {
         library_item_id INTEGER NOT NULL,
         FOREIGN KEY (library_item_id) REFERENCES LIBRARY_ITEMS(id) ON DELETE CASCADE
       );
-    `);
 
-		// Create Audiobooks table (subclass of LIBRARY_ITEMS)
-		await db.exec(`
       CREATE TABLE IF NOT EXISTS AUDIOBOOKS (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         duration_in_seconds INTEGER,
@@ -172,10 +154,7 @@ async function create_tables() {
         library_item_id INTEGER NOT NULL,
         FOREIGN KEY (library_item_id) REFERENCES LIBRARY_ITEMS(id) ON DELETE CASCADE
       );
-    `);
 
-		// Create Magazines table (subclass of LIBRARY_ITEMS)
-		await db.exec(`
       CREATE TABLE IF NOT EXISTS MAGAZINES (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         subscription_cost REAL,
@@ -186,10 +165,7 @@ async function create_tables() {
         library_item_id INTEGER NOT NULL,
         FOREIGN KEY (library_item_id) REFERENCES LIBRARY_ITEMS(id) ON DELETE CASCADE
       );
-    `);
 
-		// Create CDs table (subclass of LIBRARY_ITEMS)
-		await db.exec(`
       CREATE TABLE IF NOT EXISTS CDS (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         cover_image_url TEXT,
@@ -200,10 +176,8 @@ async function create_tables() {
         duration_seconds INTEGER,
         library_item_id INTEGER NOT NULL,
         FOREIGN KEY (library_item_id) REFERENCES LIBRARY_ITEMS(id) ON DELETE CASCADE
-      );`);
+      );
 
-		// Create Periodicals table (subclass of LIBRARY_ITEMS)
-		await db.exec(`
       CREATE TABLE IF NOT EXISTS PERIODICALS (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         pages INTEGER,
@@ -211,10 +185,8 @@ async function create_tables() {
         publication_date DATE,
         library_item_id INTEGER NOT NULL,
         FOREIGN KEY (library_item_id) REFERENCES LIBRARY_ITEMS(id) ON DELETE CASCADE
-      );`);
+      );
 
-		// Create library_item_copies table
-		await db.exec(`
       CREATE TABLE IF NOT EXISTS LIBRARY_ITEM_COPIES (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         library_item_id INTEGER NOT NULL,
@@ -234,10 +206,7 @@ async function create_tables() {
         FOREIGN KEY (current_branch_id) REFERENCES BRANCHES(id) ON DELETE SET NULL,
         FOREIGN KEY (checked_out_by) REFERENCES PATRONS(id) ON DELETE SET NULL
       );
-    `);
 
-		// Create reservations table
-		await db.exec(`
       CREATE TABLE IF NOT EXISTS RESERVATIONS (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         item_copy_id INTEGER NOT NULL,
@@ -252,80 +221,28 @@ async function create_tables() {
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (item_copy_id) REFERENCES LIBRARY_ITEM_COPIES(id) ON DELETE CASCADE,
         FOREIGN KEY (patron_id) REFERENCES PATRONS(id) ON DELETE CASCADE
-      )
-    `);
+      );
 
-		// Create Loan Durations table
-		await db.exec(`
       CREATE TABLE IF NOT EXISTS LOAN_DURATIONS (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT UNIQUE NOT NULL,
         duration INTEGER NOT NULL
-      );`);
+      );
 
-		// Migration: Add fulfillment_date column if it doesn't exist (for existing databases)
-		try {
-			await db.exec(
-				"ALTER TABLE RESERVATIONS ADD COLUMN fulfillment_date DATETIME"
-			);
-			console.log(
-				pico.green("✓ Added fulfillment_date column to RESERVATIONS table")
-			);
-		} catch (error) {
-			// Column already exists, which is fine
-			if (error.message?.includes("duplicate column name")) {
-				// Silently ignore - column already exists
-			} else {
-				console.warn(
-					pico.yellow(
-						"⚠ Could not add fulfillment_date column (may already exist):"
-					),
-					error.message
-				);
-			}
-		}
-
-		// Migration: Add local_branch_id column to PATRONS if it doesn't exist (for existing databases)
-		try {
-			await db.exec(
-				"ALTER TABLE PATRONS ADD COLUMN local_branch_id INTEGER DEFAULT 1"
-			);
-			console.log(
-				pico.green("✓ Added local_branch_id column to PATRONS table")
-			);
-		} catch (error) {
-			// Column already exists, which is fine
-			if (error.message?.includes("duplicate column name")) {
-				// Silently ignore - column already exists
-			} else {
-				console.warn(
-					pico.yellow(
-						"⚠ Could not add local_branch_id column (may already exist):"
-					),
-					error.message
-				);
-			}
-		}
-
-		// Create item transactions table
-		await db.exec(`
       CREATE TABLE IF NOT EXISTS ITEM_TRANSACTIONS (
-		id INTEGER PRIMARY KEY AUTOINCREMENT,               
-		transaction_type TEXT NOT NULL,        -- 'check-in' or 'check-out' or 'reshelve' or 'relocate'
-		date DATETIME NOT NULL,               -- Date and time of the transaction
-		patron_id INTEGER,           -- ID of the patron involved in the transaction, null if not applicable
-		item_copy_id INTEGER NOT NULL,        -- ID of the library item copy involved
-		location_id INTEGER,        -- ID of the branch/location where the transaction took place
-		notes TEXT,                        -- Additional notes about the transaction
-		created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-		FOREIGN KEY (patron_id) REFERENCES PATRONS(id),
-		FOREIGN KEY (item_copy_id) REFERENCES LIBRARY_ITEM_COPIES(id),
-		FOREIGN KEY (location_id) REFERENCES BRANCHES(id)
-);
-    `);
+        id INTEGER PRIMARY KEY AUTOINCREMENT,               
+        transaction_type TEXT NOT NULL,
+        date DATETIME NOT NULL,
+        patron_id INTEGER,
+        item_copy_id INTEGER NOT NULL,
+        location_id INTEGER,
+        notes TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (patron_id) REFERENCES PATRONS(id),
+        FOREIGN KEY (item_copy_id) REFERENCES LIBRARY_ITEM_COPIES(id),
+        FOREIGN KEY (location_id) REFERENCES BRANCHES(id)
+      );
 
-		// Create FINES table
-		await db.exec(`
       CREATE TABLE IF NOT EXISTS FINES (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         transaction_id INTEGER NOT NULL,
@@ -339,7 +256,7 @@ async function create_tables() {
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (transaction_id) REFERENCES ITEM_TRANSACTIONS(id) ON DELETE CASCADE,
         FOREIGN KEY (patron_id) REFERENCES PATRONS(id) ON DELETE CASCADE
-      )
+      );
     `);
 
 		// Create optimized indexes for better performance
@@ -390,14 +307,11 @@ async function create_tables() {
       CREATE INDEX IF NOT EXISTS idx_vinyl_albums_library_item ON VINYL_ALBUMS(library_item_id);
     `);
 
-		// Insert default branch if none exists
+		// Insert default branch and create triggers in single batch
 		await db.exec(`
       INSERT OR IGNORE INTO BRANCHES (id, branch_name, is_main) 
-      VALUES (1, 'Main Library', 1)
-    `);
-
-		// Create update triggers
-		await db.exec(`
+      VALUES (1, 'Main Library', 1);
+      
       CREATE TRIGGER IF NOT EXISTS update_library_items_timestamp 
       AFTER UPDATE ON LIBRARY_ITEMS 
       BEGIN 
@@ -416,27 +330,6 @@ async function create_tables() {
         UPDATE RESERVATIONS SET updated_at = CURRENT_TIMESTAMP WHERE id = NEW.id; 
       END;
     `);
-
-		// Migration: Drop old TRANSACTIONS table if it exists (renamed to ITEM_TRANSACTIONS)
-		try {
-			// Temporarily disable foreign keys to allow table drop
-			await db.exec("PRAGMA foreign_keys = OFF;");
-			await db.exec("DROP TABLE IF EXISTS TRANSACTIONS");
-			// Re-enable foreign keys
-			await db.exec("PRAGMA foreign_keys = ON;");
-			console.log(
-				pico.yellow("✓ Migrated old TRANSACTIONS table to ITEM_TRANSACTIONS")
-			);
-		} catch (migration_error) {
-			// If we can't drop it, that's okay - the table might not exist
-			console.log(pico.gray("  (No old TRANSACTIONS table found to migrate)"));
-			// Ensure foreign keys are re-enabled
-			try {
-				await db.exec("PRAGMA foreign_keys = ON;");
-			} catch (e) {
-				// Ignore
-			}
-		}
 
 		console.log(pico.bgGreen(pico.bold("🔨 DB Tables Created Successfully")));
 	} catch (error) {

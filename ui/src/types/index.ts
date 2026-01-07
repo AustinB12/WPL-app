@@ -38,6 +38,31 @@ export type Item_Transaction_DB_Type = {
 
 export type Patron_DB_Type = {
 	id: number;
+	first_name: string;
+	last_name: string;
+	balance: number;
+	birthday: string | null;
+	email: string | null;
+	phone: string | null;
+	card_expiration_date: string;
+	image_url: string | null;
+	is_active: boolean;
+	local_branch_id: number;
+	created_at: string;
+	updated_at: string;
+};
+
+export type Reservation_DB_Type = {
+	id: number;
+	item_copy_id: number;
+	patron_id: number;
+	reservation_date: string;
+	expiry_date: string;
+	status: ReservationStatus;
+	queue_position: number;
+	fullfillment_date: string | null;
+	created_at: string;
+	updated_at: string;
 };
 
 export type Transaction_Type =
@@ -85,19 +110,10 @@ export type ReservationStatus =
 	| "expired"
 	| "waiting";
 
-export interface Reservation {
-	id: number;
-	library_item_id: number;
-	patron_id: number;
-	reservation_date: string;
-	expiry_date: string;
-	status: ReservationStatus;
-	queue_position?: number;
-	title: string;
-	item_type: Library_Item_Type;
-	first_name?: string;
-	last_name?: string;
-}
+export type Reservation = Reservation_DB_Type &
+	Pick<Patron_DB_Type, "first_name" | "last_name" | "email"> &
+	Pick<Library_Item_DB_Type, "title" | "item_type" | "description"> &
+	Pick<Library_Item_Copy_DB_Type, "status" | "condition">;
 
 export interface Fine {
 	id: number;

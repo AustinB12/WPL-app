@@ -1439,10 +1439,11 @@ router.post(
 			const was_reshelved = final_status === "Available";
 
 			await db.create_record("ITEM_TRANSACTIONS", {
-				copy_id,
+				item_copy_id: copy_id,
 				patron_id: was_reshelved ? null : waiting_reservations[0].patron_id,
 				transaction_type: was_reshelved ? "RESHELVE" : "RESERVATION PROMOTION",
-				created_at: now
+				created_at: now,
+				date: now
 			});
 
 			// Update item copy status
@@ -1562,7 +1563,7 @@ router.post(
 						const was_reshelved = final_status === "Available";
 
 						await db.create_record("ITEM_TRANSACTIONS", {
-							item_copy_id,
+							item_copy_id: copy_id,
 							patron_id: was_reshelved
 								? null
 								: waiting_reservations[0].patron_id,
@@ -1644,7 +1645,7 @@ router.post(
 
 			// Check if there's an active reservation for this item
 			const active_reservation = await db.execute_query(
-				'SELECT id FROM RESERVATIONS WHERE library_item_id = ? AND status IN ("ready", "waiting") ORDER BY queue_position LIMIT 1',
+				'SELECT id FROM RESERVATIONS WHERE item_copy_id = ? AND status IN ("ready", "waiting") ORDER BY queue_position LIMIT 1',
 				[item_copy.library_item_id]
 			);
 
@@ -1659,7 +1660,7 @@ router.post(
 			// Find the most recent reshelve transaction
 			const transaction_results = await db.execute_query(
 				`SELECT id FROM ITEM_TRANSACTIONS 
-         WHERE copy_id = ? AND UPPER(transaction_type) IN ('RESHELVE', 'RESERVATION PROMOTION') 
+         WHERE item_copy_id = ? AND UPPER(transaction_type) IN ('RESHELVE', 'RESERVATION PROMOTION') 
          ORDER BY created_at DESC LIMIT 1`,
 				[copy_id]
 			);

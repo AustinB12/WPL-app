@@ -98,7 +98,6 @@ router.get("/", async (req, res) => {
         li.title,
         li.item_type,
         li.description,
-        ic.id as copy_id,
         ic.status as copy_status,
         ic.condition as copy_condition
       FROM RESERVATIONS r

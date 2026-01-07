@@ -19,6 +19,7 @@ import { SearchPage } from "./pages/SearchPage";
 import { Library_Item_Copy_Page } from "./pages/LibraryItemCopyPage";
 import { Full_Page_Loading } from "./components/common/Full_Page_Loading";
 import { HomePage } from "./pages/HomePage";
+import { ReserveItemPage } from "./pages/ReserveItemPage";
 
 const BranchesPage = lazy(() =>
 	import("./pages/BranchesPage").then((module) => ({
@@ -136,7 +137,7 @@ function App() {
 								<Route path="renewals" element={<RenewalsPage />} />
 								<Route path="settings" element={<SettingsPage />} />
 								<Route path="available" element={<MarkAvailablePage />} />
-								<Route path="reserve" element={<ReservationsPage />} />
+								<Route path="reserve" element={<ReserveItemPage />} />
 							</Route>
 						</Routes>
 						<GlobalSnackbar />
