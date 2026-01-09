@@ -1,27 +1,27 @@
-import { Delete, Edit, ReadMore } from '@mui/icons-material';
-import { Box } from '@mui/material';
+import { Delete, Edit, ReadMore } from "@mui/icons-material";
+import { Box } from "@mui/material";
 import {
   GridActionsCellItem,
   type GridColDef,
   type GridRowId,
-} from '@mui/x-data-grid';
-import { useCallback, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+} from "@mui/x-data-grid";
+import { useCallback, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   useDeleteLibraryItem,
   useLibraryItems,
   useUpdateLibraryItem,
-} from '../../hooks/useLibraryItems';
-import { useSnackbar } from '../../hooks/useSnackbar';
+} from "../../hooks/useLibraryItems";
+import { useSnackbar } from "../../hooks/useSnackbar";
 import {
   type Create_Library_Item_Form_Data,
   type Library_Item,
-} from '../../types';
-import { BaseDataGrid } from '../common/BaseDataGrid';
-import { DeleteLibraryItem } from './DeleteLibraryItem';
-import { EditLibraryItem } from './EditLibraryItem';
-import ItemTypeChip from './ItemTypeChip';
-import { LibraryItemDetails } from './LibraryItemDetails';
+} from "../../types";
+import { BaseDataGrid } from "../common/BaseDataGrid";
+import { DeleteLibraryItem } from "./DeleteLibraryItem";
+import { EditLibraryItem } from "./EditLibraryItem";
+import ItemTypeChip from "./ItemTypeChip";
+import { LibraryItemDetails } from "./LibraryItemDetails";
 
 export const LibraryItemDataGrid = () => {
   const { show_snackbar } = useSnackbar();
@@ -43,17 +43,17 @@ export const LibraryItemDataGrid = () => {
       set_delete_dialog_open(false);
       set_item_to_delete(null);
       show_snackbar({
-        message: 'Library item deleted successfully',
-        severity: 'success',
-        title: 'Success',
+        message: "Library item deleted successfully",
+        severity: "success",
+        title: "Success",
       });
     },
     onError: (error) => {
       set_delete_dialog_open(false);
       show_snackbar({
         message: error.message,
-        severity: 'error',
-        title: 'Error',
+        severity: "error",
+        title: "Error",
       });
     },
   });
@@ -63,16 +63,16 @@ export const LibraryItemDataGrid = () => {
       set_edit_dialog_open(false);
       set_item_to_edit(null);
       show_snackbar({
-        message: 'Library item updated successfully',
-        severity: 'success',
-        title: 'Success',
+        message: "Library item updated successfully",
+        severity: "success",
+        title: "Success",
       });
     },
     onError: (error) => {
       show_snackbar({
         message: error.message,
-        severity: 'error',
-        title: 'Error',
+        severity: "error",
+        title: "Error",
       });
     },
   });
@@ -81,8 +81,8 @@ export const LibraryItemDataGrid = () => {
   if (error) {
     show_snackbar({
       message: error.message,
-      severity: 'error',
-      title: error.name || 'Error',
+      severity: "error",
+      title: error.name || "Error",
     });
   }
 
@@ -136,21 +136,21 @@ export const LibraryItemDataGrid = () => {
   const columns: GridColDef[] = useMemo(
     () => [
       {
-        field: 'id',
-        headerName: 'ID',
+        field: "id",
+        headerName: "ID",
         width: 90,
         valueGetter: (value) => Number(value),
       },
       {
-        field: 'title',
-        headerName: 'Title',
+        field: "title",
+        headerName: "Title",
         width: 150,
         editable: false,
         flex: 1,
       },
       {
-        field: 'item_type',
-        headerName: 'Type',
+        field: "item_type",
+        headerName: "Type",
         width: 150,
         editable: false,
         renderCell: (params) => {
@@ -158,22 +158,22 @@ export const LibraryItemDataGrid = () => {
         },
       },
       {
-        field: 'description',
-        headerName: 'Description',
+        field: "description",
+        headerName: "Description",
         width: 200,
         editable: false,
         flex: 1,
       },
-      { field: 'total_copies', headerName: 'Copies', width: 90 },
+      { field: "total_copies", headerName: "Copies", width: 90 },
       {
-        field: 'publication_year',
-        headerName: 'Publication Year',
+        field: "publication_year",
+        headerName: "Publication Year",
         width: 130,
         editable: false,
       },
       {
-        field: 'actions',
-        type: 'actions',
+        field: "actions",
+        type: "actions",
         width: 150,
         getActions: (params) => [
           <GridActionsCellItem
@@ -202,7 +202,7 @@ export const LibraryItemDataGrid = () => {
 
   return (
     <>
-      <Box sx={{ overflow: 'hidden', maxHeight: 1 }}>
+      <Box sx={{ overflow: "hidden", maxHeight: 1 }}>
         <BaseDataGrid
           label="Library Items"
           sx={{ height: 1 }}
@@ -211,8 +211,6 @@ export const LibraryItemDataGrid = () => {
           loading={loading}
           pageSizeOptions={[10, 25, 50, 100]}
           onRowDoubleClick={(params) => {
-            // handle_item_selected(params.row as Library_Item);
-            console.log('double clicked row:', params.row);
             navigate(`/library-item/${params.id}`);
           }}
         />

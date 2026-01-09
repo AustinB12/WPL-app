@@ -6,7 +6,7 @@ import {
   Delete,
   Edit,
   MoreVert,
-} from '@mui/icons-material';
+} from "@mui/icons-material";
 import {
   Alert,
   Avatar,
@@ -24,24 +24,25 @@ import {
   MenuItem,
   Stack,
   Typography,
-} from '@mui/material';
-import { type GridColDef } from '@mui/x-data-grid';
-import { type ReactNode, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
-import { BaseDataGrid } from '../components/common/BaseDataGrid';
-import { PageContainer } from '../components/common/PageBuilders';
-import { DeletePatronModal } from '../components/patrons/DeletePatronModal';
-import { EditPatronModal } from '../components/patrons/EditPatronModal';
-import { TransactionStatusChip } from '../components/transactions/TransactionStatusChip';
-import { TransactionTypeChip } from '../components/transactions/TransactionTypeChip';
+} from "@mui/material";
+import { type GridColDef } from "@mui/x-data-grid";
+import { type ReactNode, useState } from "react";
+import { Link, useParams } from "react-router-dom";
+import { BaseDataGrid } from "../components/common/BaseDataGrid";
+import { PageContainer } from "../components/common/PageBuilders";
+import { DeletePatronModal } from "../components/patrons/DeletePatronModal";
+import { EditPatronModal } from "../components/patrons/EditPatronModal";
+import { TransactionTypeChip } from "../components/transactions/TransactionTypeChip";
 import {
   useDeletePatronById,
   usePatronById,
   useUpdatePatron,
-} from '../hooks/usePatrons';
-import { useSnackbar } from '../hooks/useSnackbar';
-import { useGetTransactionsByPatronId } from '../hooks/useTransactions';
-import type { Update_Patron_Data } from '../types';
+} from "../hooks/usePatrons";
+import { useSnackbar } from "../hooks/useSnackbar";
+import { useGetTransactionsByPatronId } from "../hooks/useTransactions";
+import type { Update_Patron_Data } from "../types";
+import ItemTypeChip from "../components/library_items/ItemTypeChip";
+import { ItemCopyConditionChip } from "../components/copies/ItemCopyConditionChip";
 
 interface Info_Item_Props {
   icon: ReactNode;
@@ -53,7 +54,7 @@ const InfoItem = ({ icon, value, label }: Info_Item_Props) => (
   <Stack gap={1} alignItems="center" direction="row">
     {icon}
     <Stack>
-      <Box sx={{ typography: 'body2' }}>{value}</Box>
+      <Box sx={{ typography: "body2" }}>{value}</Box>
       <Typography color="text.secondary" variant="caption">
         {label}
       </Typography>
@@ -71,7 +72,7 @@ const StatCard = ({ value, label }: StatCardProps) => (
     <Box
       sx={{
         p: 1,
-        textAlign: 'center',
+        textAlign: "center",
         borderRadius: 2,
       }}
     >
@@ -79,14 +80,14 @@ const StatCard = ({ value, label }: StatCardProps) => (
         variant="h4"
         sx={{
           fontWeight: 700,
-          fontSize: { xs: '1.5rem', sm: '2rem', md: '2.125rem' },
+          fontSize: { xs: "1.5rem", sm: "2rem", md: "2.125rem" },
         }}
       >
         {value}
       </Typography>
       <Typography
         variant="body2"
-        sx={{ fontSize: { xs: '0.75rem', md: '0.875rem' } }}
+        sx={{ fontSize: { xs: "0.75rem", md: "0.875rem" } }}
       >
         {label}
       </Typography>
@@ -97,62 +98,42 @@ const StatCard = ({ value, label }: StatCardProps) => (
 // Columns for patron's transaction history
 const cols: GridColDef[] = [
   {
-    field: 'title',
-    headerName: 'Item',
+    field: "title",
+    headerName: "Item",
     width: 250,
   },
   {
-    field: 'copy_label',
-    headerName: 'Copy',
+    field: "item_copy_id",
+    headerName: "Copy ID",
     width: 120,
   },
   {
-    field: 'transaction_type',
-    headerName: 'Type',
+    field: "transaction_type",
+    headerName: "Type",
     width: 120,
     renderCell: (params) => (
       <TransactionTypeChip transaction_type={params.value} />
     ),
   },
   {
-    field: 'checkout_date',
-    headerName: 'Checkout Date',
+    field: "date",
+    headerName: "Date",
     width: 180,
     valueFormatter: (value) => {
-      return value ? new Date(value).toLocaleDateString() : '-';
+      return value ? new Date(value).toLocaleDateString() : "-";
     },
   },
   {
-    field: 'due_date',
-    headerName: 'Due Date',
-    width: 180,
-    valueFormatter: (value) => {
-      return value ? new Date(value).toLocaleDateString() : '-';
-    },
+    field: "item_type",
+    headerName: "Item Type",
+    width: 130,
+    renderCell: (params) => <ItemTypeChip item_type={params.value} />,
   },
   {
-    field: 'return_date',
-    headerName: 'Return Date',
-    width: 180,
-    valueFormatter: (value) => {
-      return value ? new Date(value).toLocaleDateString() : '-';
-    },
-  },
-  {
-    field: 'status',
-    headerName: 'Status',
-    width: 120,
-    renderCell: (params) => <TransactionStatusChip status={params.value} />,
-  },
-  {
-    field: 'fine_amount',
-    headerName: 'Fine',
-    width: 100,
-    valueFormatter: (value) => {
-      return value
-        ? `${Number(value) < 0 && '+'}$${Number(value).toFixed(2)}`
-        : '$0.00';
-    },
+    field: "condition",
+    headerName: "Condition",
+    width: 130,
+    renderCell: (params) => <ItemCopyConditionChip condition={params.value} />,
   },
 ];
 
@@ -169,17 +150,17 @@ export const PatronPage = () => {
     onSuccess: () => {
       set_edit_modal_open(false);
       show_snackbar({
-        message: 'Patron updated successfully',
-        severity: 'success',
-        title: 'Success!',
+        message: "Patron updated successfully",
+        severity: "success",
+        title: "Success!",
       });
     },
     onError: (error) => {
-      console.error('Failed to update patron:', error);
+      console.error("Failed to update patron:", error);
       show_snackbar({
         message: `Failed to update patron: ${error.message}`,
-        severity: 'error',
-        title: 'Error!',
+        severity: "error",
+        title: "Error!",
       });
     },
   });
@@ -188,21 +169,21 @@ export const PatronPage = () => {
     onSuccess: () => {
       set_delete_dialog_open(false);
       show_snackbar({
-        message: 'Patron deleted successfully',
-        severity: 'success',
-        title: 'Success!',
+        message: "Patron deleted successfully",
+        severity: "success",
+        title: "Success!",
       });
       // Redirect to patrons list after showing success message
       setTimeout(() => {
-        window.location.href = '/patrons';
+        window.location.href = "/patrons";
       }, 500);
     },
     onError: (error) => {
-      console.error('Failed to delete patron:', error);
+      console.error("Failed to delete patron:", error);
       show_snackbar({
         message: `Failed to delete patron: ${error.message}`,
-        severity: 'error',
-        title: 'Error!',
+        severity: "error",
+        title: "Error!",
       });
     },
   });
@@ -242,10 +223,10 @@ export const PatronPage = () => {
     data: patron,
     isLoading: patron_loading,
     error: patron_error,
-  } = usePatronById(parseInt(patron_id || '0'));
+  } = usePatronById(parseInt(patron_id || "0"));
 
   const { data: pt, isLoading: transactions_loading } =
-    useGetTransactionsByPatronId(parseInt(patron_id || '0'));
+    useGetTransactionsByPatronId(parseInt(patron_id || "0"));
 
   if (!patron_id) {
     return (
@@ -257,7 +238,7 @@ export const PatronPage = () => {
 
   if (patron_loading) {
     return (
-      <Container sx={{ p: 3, display: 'flex', justifyContent: 'center' }}>
+      <Container sx={{ p: 3, display: "flex", justifyContent: "center" }}>
         <CircularProgress />
       </Container>
     );
@@ -267,9 +248,9 @@ export const PatronPage = () => {
     return (
       <Container sx={{ p: 3 }}>
         <Alert severity="error">
-          {patron_error ? 'Error loading patron data' : 'Patron not found'}
+          {patron_error ? "Error loading patron data" : "Patron not found"}
         </Alert>
-        <Link to="/patrons" style={{ textDecoration: 'none' }}>
+        <Link to="/patrons" style={{ textDecoration: "none" }}>
           <Button startIcon={<ArrowBack />} sx={{ mt: 2 }}>
             Back to Patrons
           </Button>
@@ -284,19 +265,13 @@ export const PatronPage = () => {
 
   const total_checkouts = pt?.reduce(
     (count, t) =>
-      t.transaction_type.toUpperCase() === 'CHECKOUT' &&
-      t.status.toUpperCase() === 'ACTIVE'
-        ? count + 1
-        : count,
+      t.transaction_type.toUpperCase() === "CHECKOUT" ? count + 1 : count,
     0
   );
 
   const total_returned = pt?.reduce(
     (count, t) =>
-      t.transaction_type.toUpperCase() === 'CHECKIN' &&
-      t.status.toUpperCase() === 'COMPLETED'
-        ? count + 1
-        : count,
+      t.transaction_type.toUpperCase() === "CHECKIN" ? count + 1 : count,
     0
   );
 
@@ -304,7 +279,7 @@ export const PatronPage = () => {
     <PageContainer>
       <Grid container spacing={{ xs: 2, md: 3 }}>
         <Grid size={{ xs: 12, md: 6 }}>
-          <Card sx={{ borderRadius: 3, height: '-webkit-fill-available' }}>
+          <Card sx={{ borderRadius: 3, height: "-webkit-fill-available" }}>
             <CardHeader
               action={
                 <>
@@ -316,12 +291,12 @@ export const PatronPage = () => {
                     open={open}
                     onClose={handle_menu_close}
                     anchorOrigin={{
-                      vertical: 'bottom',
-                      horizontal: 'center',
+                      vertical: "bottom",
+                      horizontal: "center",
                     }}
                     transformOrigin={{
-                      vertical: 'top',
-                      horizontal: 'center',
+                      vertical: "top",
+                      horizontal: "center",
                     }}
                   >
                     <MenuItem sx={{ gap: 2 }} onClick={handle_edit_click}>
@@ -338,14 +313,14 @@ export const PatronPage = () => {
                   sx={{
                     ml: { xs: 0, md: 1 },
                     flexGrow: 1,
-                    justifyContent: 'flex-start',
+                    justifyContent: "flex-start",
                   }}
                 >
                   <Typography
                     variant="h5"
                     sx={{
                       fontWeight: 600,
-                      fontSize: { xs: '1.125rem', sm: '1.25rem', md: '1.5rem' },
+                      fontSize: { xs: "1.125rem", sm: "1.25rem", md: "1.5rem" },
                     }}
                   >
                     {patron.first_name} {patron.last_name}
@@ -353,7 +328,7 @@ export const PatronPage = () => {
                   <Typography
                     variant="body2"
                     color="text.secondary"
-                    sx={{ fontSize: { xs: '0.75rem', md: '0.875rem' } }}
+                    sx={{ fontSize: { xs: "0.75rem", md: "0.875rem" } }}
                   >
                     Patron ID: {patron.id}
                   </Typography>
@@ -364,8 +339,8 @@ export const PatronPage = () => {
                   sx={{
                     width: { xs: 60, sm: 80, md: 100 },
                     height: { xs: 60, sm: 80, md: 100 },
-                    bgcolor: 'primary.main',
-                    fontSize: { xs: '1.5rem', sm: '2rem', md: '2.5rem' },
+                    bgcolor: "primary.main",
+                    fontSize: { xs: "1.5rem", sm: "2rem", md: "2.5rem" },
                     mb: { xs: 1, md: 2 },
                   }}
                   src={patron.image_url}
@@ -378,11 +353,11 @@ export const PatronPage = () => {
               subheader={
                 <Stack
                   gap={{ xs: 1, sm: 2, md: 3 }}
-                  direction={{ xs: 'column', sm: 'row' }}
+                  direction={{ xs: "column", sm: "row" }}
                   flexWrap="wrap"
                 >
                   <InfoItem
-                    icon={<CreditCard sx={{ color: 'text.secondary' }} />}
+                    icon={<CreditCard sx={{ color: "text.secondary" }} />}
                     value={
                       <>
                         {new Date(
@@ -404,17 +379,17 @@ export const PatronPage = () => {
                   />
 
                   <InfoItem
-                    icon={<AccountBalance sx={{ color: 'text.secondary' }} />}
+                    icon={<AccountBalance sx={{ color: "text.secondary" }} />}
                     value={
                       <Typography
                         variant="body2"
                         sx={{
                           color:
-                            patron.balance > 0 ? 'error.main' : 'success.main',
+                            patron.balance > 0 ? "error.main" : "success.main",
                           fontWeight: 600,
                         }}
                       >
-                        {patron.balance < 0 ? '+' : ''}$
+                        {patron.balance < 0 ? "+" : ""}$
                         {Math.abs(patron.balance).toFixed(2)}
                       </Typography>
                     }
@@ -423,7 +398,7 @@ export const PatronPage = () => {
 
                   {patron?.birthday && (
                     <InfoItem
-                      icon={<Cake sx={{ color: 'text.secondary' }} />}
+                      icon={<Cake sx={{ color: "text.secondary" }} />}
                       value={patron.birthday}
                       label="Birthday"
                     />
@@ -437,7 +412,7 @@ export const PatronPage = () => {
           <Card
             sx={{
               borderRadius: 3,
-              height: '-webkit-fill-available',
+              height: "-webkit-fill-available",
             }}
           >
             <CardContent sx={{ p: 1.25 }}>
@@ -446,7 +421,7 @@ export const PatronPage = () => {
                 sx={{
                   fontWeight: 600,
                   mb: 1,
-                  fontSize: { xs: '1rem', md: '1.25rem' },
+                  fontSize: { xs: "1rem", md: "1.25rem" },
                 }}
               >
                 Statistics
@@ -469,7 +444,7 @@ export const PatronPage = () => {
           <Card
             sx={{
               height: { xs: 400, sm: 450, md: 500 },
-              width: '100%',
+              width: "100%",
               borderRadius: 3,
             }}
           >
@@ -481,13 +456,13 @@ export const PatronPage = () => {
               disableRowSelectionOnClick
               sx={{
                 borderRadius: 3,
-                border: 'none',
-                '& .MuiDataGrid-columnHeaders': {
+                border: "none",
+                "& .MuiDataGrid-columnHeaders": {
                   fontWeight: 600,
-                  fontSize: { xs: '0.75rem', md: '0.875rem' },
+                  fontSize: { xs: "0.75rem", md: "0.875rem" },
                 },
-                '& .MuiDataGrid-cell': {
-                  fontSize: { xs: '0.75rem', md: '0.875rem' },
+                "& .MuiDataGrid-cell": {
+                  fontSize: { xs: "0.75rem", md: "0.875rem" },
                 },
               }}
             />

@@ -1,17 +1,17 @@
 import { Book as BookIcon, Delete, Edit, MoreVert } from "@mui/icons-material";
 import {
-	Card,
-	CardHeader,
-	Grid,
-	IconButton,
-	ListItemIcon,
-	ListItemText,
-	Menu,
-	MenuItem,
-	MenuList,
-	Stack,
-	type SxProps,
-	Typography
+  Card,
+  CardHeader,
+  Grid,
+  IconButton,
+  ListItemIcon,
+  ListItemText,
+  Menu,
+  MenuItem,
+  MenuList,
+  Stack,
+  type SxProps,
+  Typography,
 } from "@mui/material";
 import Paper from "@mui/material/Paper";
 import { type GridColDef } from "@mui/x-data-grid";
@@ -29,201 +29,205 @@ import React from "react";
 // import { useSnackbar } from '../hooks/useSnackbar';
 
 const copy_columns: GridColDef[] = [
-	{
-		field: "copy_label",
-		headerName: "Copy",
-		width: 120
-	},
-	{
-		field: "status",
-		headerName: "Status",
-		width: 150,
-		renderCell: (params) => (
-			<ItemCopyStatusChip size="small" status={params.value} />
-		)
-	},
-	{
-		field: "condition",
-		headerName: "Condition",
-		width: 120,
-		renderCell: (params) => (
-			<ItemCopyConditionChip size="small" condition={params.value} />
-		)
-	},
-	{
-		field: "current_branch_name",
-		headerName: "Current Location",
-		flex: 1,
-		minWidth: 150
-	},
-	{
-		field: "patron_first_name",
-		headerName: "Checked Out By",
-		width: 150,
-		valueGetter: (_value, row) => {
-			if (row.patron_first_name && row.patron_last_name) {
-				return `${row.patron_first_name} ${row.patron_last_name}`;
-			}
-			return "-";
-		}
-	}
+  {
+    field: "copy_label",
+    headerName: "Copy",
+    width: 120,
+  },
+  {
+    field: "status",
+    headerName: "Status",
+    width: 150,
+    renderCell: (params) => (
+      <ItemCopyStatusChip size="small" status={params.value} />
+    ),
+  },
+  {
+    field: "condition",
+    headerName: "Condition",
+    width: 120,
+    renderCell: (params) => (
+      <ItemCopyConditionChip size="small" condition={params.value} />
+    ),
+  },
+  {
+    field: "current_branch_name",
+    headerName: "Current Location",
+    flex: 1,
+    minWidth: 150,
+  },
+  {
+    field: "patron_first_name",
+    headerName: "Checked Out By",
+    width: 150,
+    valueGetter: (_value, row) => {
+      if (row.patron_first_name && row.patron_last_name) {
+        return `${row.patron_first_name} ${row.patron_last_name}`;
+      }
+      return "-";
+    },
+  },
 ];
 
 export const Library_Item_Page = () => {
-	const { library_item_id } = useParams();
-	const { data, isLoading: item_loading } = useLibraryItemById(
-		parseInt(library_item_id!)
-	);
+  const { library_item_id } = useParams();
+  const { data, isLoading: item_loading } = useLibraryItemById(
+    parseInt(library_item_id!)
+  );
 
-	const { data: copies, isLoading: copies_loading } = useCopiesOfLibraryItem(
-		parseInt(library_item_id!)
-	);
+  const { data: copies, isLoading: copies_loading } = useCopiesOfLibraryItem(
+    parseInt(library_item_id!)
+  );
 
-	const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
-	const open = Boolean(anchorEl);
-	const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
-		setAnchorEl(event.currentTarget);
-	};
-	const handleClose = () => {
-		setAnchorEl(null);
-	};
+  const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
+  const open = Boolean(anchorEl);
+  const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+    setAnchorEl(event.currentTarget);
+  };
+  const handleClose = () => {
+    setAnchorEl(null);
+  };
 
-	const page_loading = !library_item_id || item_loading;
-	return (
-		<PageContainer width="xl" sx={{ overflowY: "auto" }}>
-			<Stack spacing={2} onClick={() => console.log(data)}>
-				<Card sx={{ borderRadius: 3 }}>
-					<CardHeader
-						action={
-							<>
-								<IconButton onClick={handleClick}>
-									<MoreVert />
-								</IconButton>
-								<Menu
-									id="basic-menu"
-									anchorEl={anchorEl}
-									open={open}
-									onClose={handleClose}
-									slotProps={{
-										list: {
-											"aria-labelledby": "basic-button"
-										}
-									}}
-								>
-									<MenuList>
-										<MenuItem onClick={handleClose}>
-											<ListItemIcon>
-												<Edit />
-											</ListItemIcon>
-											<ListItemText>Edit</ListItemText>
-										</MenuItem>
-										<MenuItem onClick={handleClose}>
-											<ListItemIcon>
-												<Delete />
-											</ListItemIcon>
-											<ListItemText>Delete</ListItemText>
-										</MenuItem>
-									</MenuList>
-								</Menu>
-							</>
-						}
-						title={
-							<PageTitle
-								loading={page_loading}
-								title={page_loading ? "Library Item" : `${data?.title}`}
-								Icon_Component={BookIcon}
-							></PageTitle>
-						}
-					/>
+  const page_loading = !library_item_id || item_loading;
+  return (
+    <PageContainer width="xl" sx={{ overflowY: "auto" }}>
+      <Stack spacing={2} onClick={() => console.log(data)}>
+        <Card sx={{ borderRadius: 3 }}>
+          <CardHeader
+            action={
+              <>
+                <IconButton onClick={handleClick}>
+                  <MoreVert />
+                </IconButton>
+                <Menu
+                  id="basic-menu"
+                  anchorEl={anchorEl}
+                  open={open}
+                  onClose={handleClose}
+                  slotProps={{
+                    list: {
+                      "aria-labelledby": "basic-button",
+                    },
+                  }}
+                >
+                  <MenuList>
+                    <MenuItem onClick={handleClose}>
+                      <ListItemIcon>
+                        <Edit />
+                      </ListItemIcon>
+                      <ListItemText>Edit</ListItemText>
+                    </MenuItem>
+                    <MenuItem onClick={handleClose}>
+                      <ListItemIcon>
+                        <Delete />
+                      </ListItemIcon>
+                      <ListItemText>Delete</ListItemText>
+                    </MenuItem>
+                  </MenuList>
+                </Menu>
+              </>
+            }
+            title={
+              <PageTitle
+                loading={page_loading}
+                title={page_loading ? "Library Item" : `${data?.title}`}
+                Icon_Component={BookIcon}
+              ></PageTitle>
+            }
+          />
 
-					<Typography sx={{ px: 2 }} variant="subtitle1" color="text.secondary">
-						{data?.description}
-					</Typography>
-					<Activity mode={data?.genres ? "visible" : "hidden"}>
-						<Stack sx={{ px: 2, py: 1 }} direction={"row"} gap={1}>
-							{data?.genres.map((b) => (
-								<GenreChip genre={b} />
-							))}
-						</Stack>
-					</Activity>
-				</Card>
+          <Typography sx={{ px: 2 }} variant="subtitle1" color="text.secondary">
+            {data?.description}
+          </Typography>
+          <Activity mode={data?.genres ? "visible" : "hidden"}>
+            <Stack sx={{ px: 2, py: 1 }} direction={"row"} gap={1}>
+              {data?.genres.map((b) => (
+                <GenreChip genre={b} />
+              ))}
+            </Stack>
+          </Activity>
+        </Card>
 
-				<Grid container spacing={2}>
-					<Suspense fallback={<div>Loading content...</div>}>
-						<Grid size={8}>
-							<LIP_Section>
-								<Stack spacing={2}>
-									<Stack direction={"row"} justifyContent={"space-between"}>
-										<LIP_Field label="Title" value={data?.title || ""} />
-										<LIP_Field label="Author" value={data?.author || ""} />
-									</Stack>
-									<Stack direction={"row"} justifyContent={"space-between"}>
-										<LIP_Field
-											label="Publisher"
-											value={
-												data?.publisher ||
-												data?.audiobook_publisher ||
-												"Unknown"
-											}
-										/>
-									</Stack>
-									<Stack direction={"row"} justifyContent={"space-between"}>
-										{/* <LIP_Field
+        <Grid container spacing={2}>
+          <Suspense fallback={<div>Loading content...</div>}>
+            <Grid size={8}>
+              <LIP_Section>
+                <Stack spacing={2}>
+                  <Stack direction={"row"} justifyContent={"space-between"}>
+                    <LIP_Field label="Title" value={data?.title || ""} />
+                    <LIP_Field label="Author" value={data?.author || ""} />
+                  </Stack>
+                  <Stack direction={"row"} justifyContent={"space-between"}>
+                    <LIP_Field
+                      label="Publisher"
+                      value={
+                        data?.publisher ||
+                        data?.audiobook_publisher ||
+                        "Unknown"
+                      }
+                    />
+                  </Stack>
+                  <Stack direction={"row"} justifyContent={"space-between"}>
+                    {/* <LIP_Field
 											label="Genre"
 											value={data?.book_genre || 'N/A'}
 										/> */}
-										<LIP_Field
-											label="Number of Pages"
-											value={data?.number_of_pages?.toString() || "N/A"}
-										/>
-										<LIP_Field
-											label="Publication Year"
-											value={data?.publication_year?.toString() || "N/A"}
-										/>
-									</Stack>
-									<LIP_Field
-										label="Description"
-										value={data?.description || "No description available"}
-									/>
-									<Stack direction={"row"} justifyContent={"space-between"}>
-										<LIP_Field
-											label="Total Copies"
-											value={data?.total_copies || "N/A"}
-										/>
-										<LIP_Field
-											label="Available Copies"
-											value={data?.available_copies || "N/A"}
-										/>
-										<LIP_Field
-											label="Checked Out Copies"
-											value={data?.checked_out_copies?.toString() || "N/A"}
-										/>
-									</Stack>
-								</Stack>
-							</LIP_Section>
-							<LIP_Section sx={{ mt: 2 }}>
-								<Typography variant="h6" gutterBottom>
-									Available Copies ({copies?.length || 0})
-								</Typography>
-								<SimpleGrid
-									rows={copies || []}
-									cols={copy_columns}
-									loading={copies_loading}
-								/>
-							</LIP_Section>
-						</Grid>
-						<Grid size={4}>
-							<img
-								style={{ width: "97%", borderRadius: "8px" }}
-								src={data?.cover_image_url || data?.audiobook_cover_image || ""}
-								alt={`Cover image of ${data?.title || ""}`}
-							/>
-						</Grid>
-					</Suspense>
-				</Grid>
-			</Stack>
-		</PageContainer>
-	);
+                    <LIP_Field
+                      label="Number of Pages"
+                      value={data?.number_of_pages?.toString() || "N/A"}
+                    />
+                    <LIP_Field
+                      label="Publication Year"
+                      value={data?.publication_year?.toString() || "N/A"}
+                    />
+                  </Stack>
+                  <LIP_Field
+                    label="Description"
+                    value={data?.description || "No description available"}
+                  />
+                  <Stack direction={"row"} justifyContent={"space-between"}>
+                    <LIP_Field
+                      label="Total Copies"
+                      value={data?.total_copies || "N/A"}
+                    />
+                    <LIP_Field
+                      label="Available Copies"
+                      value={data?.available_copies || "N/A"}
+                    />
+                    <LIP_Field
+                      label="Checked Out Copies"
+                      value={data?.checked_out_copies?.toString() || "N/A"}
+                    />
+                  </Stack>
+                </Stack>
+              </LIP_Section>
+              <LIP_Section sx={{ mt: 2 }}>
+                <Typography variant="h6" gutterBottom>
+                  Available Copies ({copies?.length || 0})
+                </Typography>
+                <SimpleGrid
+                  rows={copies || []}
+                  cols={copy_columns}
+                  loading={copies_loading}
+                />
+              </LIP_Section>
+            </Grid>
+            <Grid size={4}>
+              <img
+                style={{ width: "97%", borderRadius: "8px" }}
+                src={
+                  data?.cover_image_url ||
+                  data?.audiobook_cover_image ||
+                  undefined
+                }
+                alt={`Cover image of ${data?.title || ""}`}
+              />
+            </Grid>
+          </Suspense>
+        </Grid>
+      </Stack>
+    </PageContainer>
+  );
 };
 
 // function get_content(item: Library_Item) {
@@ -251,7 +255,7 @@ export const Library_Item_Page = () => {
 //   return (
 //     <LIP_Section>
 {
-	/* <Stack spacing={2}>
+  /* <Stack spacing={2}>
 		  <Stack direction={'row'} justifyContent={'space-between'}>
 			<LIP_Field label="Title" value={audiodata.title} />
 			<LIP_Field label="Narrator" value={audiodata.narrator} />
@@ -456,11 +460,11 @@ export const Library_Item_Page = () => {
 // }
 
 function LIP_Section({ children, sx }: PropsWithChildren<{ sx?: SxProps }>) {
-	return (
-		<Paper sx={{ p: 2, borderRadius: 3, boxShadow: 3, ...sx }}>
-			{children}
-		</Paper>
-	);
+  return (
+    <Paper sx={{ p: 2, borderRadius: 3, boxShadow: 3, ...sx }}>
+      {children}
+    </Paper>
+  );
 }
 
 // function LIP_Subsection({ children }: PropsWithChildren) {
@@ -470,12 +474,12 @@ function LIP_Section({ children, sx }: PropsWithChildren<{ sx?: SxProps }>) {
 // }
 
 function LIP_Field({ label, value }: { label: string; value: string }) {
-	return (
-		<Stack spacing={1} sx={{ minWidth: 150, flex: 1 }}>
-			<Typography variant="subtitle2" color="text.secondary">
-				{label}:
-			</Typography>
-			<Typography variant="body1">{value}</Typography>
-		</Stack>
-	);
+  return (
+    <Stack spacing={1} sx={{ minWidth: 150, flex: 1 }}>
+      <Typography variant="subtitle2" color="text.secondary">
+        {label}:
+      </Typography>
+      <Typography variant="body1">{value}</Typography>
+    </Stack>
+  );
 }

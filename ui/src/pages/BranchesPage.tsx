@@ -1,4 +1,4 @@
-import { LocationCity } from '@mui/icons-material';
+import { LocationCity } from "@mui/icons-material";
 import {
   Card,
   CardActionArea,
@@ -6,10 +6,10 @@ import {
   CardMedia,
   Grid,
   Typography,
-} from '@mui/material';
-import { PageContainer, PageTitle } from '../components/common/PageBuilders';
-import { useBranches } from '../hooks/useBranches';
-import type { Branch } from '../types';
+} from "@mui/material";
+import { PageContainer, PageTitle } from "../components/common/PageBuilders";
+import { useBranches } from "../hooks/useBranches";
+import type { Branch } from "../types";
 
 export function BranchesPage() {
   const { data: branches, isLoading: loading } = useBranches();
@@ -20,7 +20,16 @@ export function BranchesPage() {
         {branches &&
           !loading &&
           branches.map((branch) => (
-            <Grid key={branch.id} size={{ xs: 12, sm: 6, md: 4 }}>
+            <Grid
+              sx={{
+                borderRadius: 16,
+                cornerShape: "squircle",
+                boxShadow: 4,
+                overflow: "clip",
+              }}
+              key={branch.id}
+              size={{ xs: 12, sm: 6, md: 4 }}
+            >
               <BranchCard branch={branch} />
             </Grid>
           ))}
@@ -31,7 +40,11 @@ export function BranchesPage() {
 
 function BranchCard({ branch }: { branch: Branch }) {
   return (
-    <Card sx={{ maxWidth: 555, borderRadius: 3 }}>
+    <Card
+      sx={{
+        maxWidth: 555,
+      }}
+    >
       <CardActionArea href={`/branch/${branch.id}`}>
         <CardMedia
           component="img"
@@ -44,11 +57,10 @@ function BranchCard({ branch }: { branch: Branch }) {
           <Typography gutterBottom variant="h5" component="div">
             {branch.branch_name}
           </Typography>
-          <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+          <Typography variant="body2" sx={{ color: "text.secondary" }}>
             {branch.address}
             <br />
             Phone: {branch.phone}
-            <br />
           </Typography>
         </CardContent>
       </CardActionArea>
