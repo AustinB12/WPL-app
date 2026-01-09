@@ -76,7 +76,11 @@ const create_columns = (
         </Avatar>
         <Link
           to={`/patron/${params.row.id}`}
-          style={{ textDecoration: 'none', height: '100%', display: 'block' }}
+          style={{
+            textDecoration: 'none',
+            height: '100%',
+            display: 'block',
+          }}
         >
           <Typography
             sx={(theme) => ({

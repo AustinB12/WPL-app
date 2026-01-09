@@ -1,69 +1,69 @@
-import { GlobalStyles, useTheme } from "@mui/material";
-import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
-import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { lazy, Suspense } from "react";
-import { Route, Routes } from "react-router-dom";
-import { GlobalSnackbar } from "./components/common/GlobalSnackbar";
-import { Layout } from "./components/common/Layout";
-import { SnackbarProvider } from "./contexts/SnackbarContext";
-import { BranchPage } from "./pages/BranchPage";
-import { CheckInNew } from "./pages/CheckInItem";
-import { CheckOutItem } from "./pages/CheckOutItem";
-import { Library_Item_Page } from "./pages/LibraryItemPage";
-import { LibraryItemsPage } from "./pages/LibraryItemsPage";
-import { PatronPage } from "./pages/PatronPage";
-import { Patrons } from "./pages/Patrons";
-import { RenewItem } from "./pages/RenewItem";
-import { SearchPage } from "./pages/SearchPage";
-import { Library_Item_Copy_Page } from "./pages/LibraryItemCopyPage";
-import { Full_Page_Loading } from "./components/common/Full_Page_Loading";
-import { HomePage } from "./pages/HomePage";
-import { ReserveItemPage } from "./pages/ReserveItemPage";
+import { GlobalStyles, useTheme } from '@mui/material';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { lazy, Suspense } from 'react';
+import { Route, Routes } from 'react-router-dom';
+import { Full_Page_Loading } from './components/common/Full_Page_Loading';
+import { GlobalSnackbar } from './components/common/GlobalSnackbar';
+import { Layout } from './components/common/Layout';
+import { SnackbarProvider } from './contexts/SnackbarContext';
+import { BranchPage } from './pages/BranchPage';
+import { CheckInNew } from './pages/CheckInItem';
+import { CheckOutItem } from './pages/CheckOutItem';
+import { HomePage } from './pages/HomePage';
+import { Library_Item_Copy_Page } from './pages/LibraryItemCopyPage';
+import { Library_Item_Page } from './pages/LibraryItemPage';
+import { LibraryItemsPage } from './pages/LibraryItemsPage';
+import { PatronPage } from './pages/PatronPage';
+import { Patrons } from './pages/Patrons';
+import { RenewItem } from './pages/RenewItem';
+import { ReserveItemPage } from './pages/ReserveItemPage';
+import { SearchPage } from './pages/SearchPage';
 
 const BranchesPage = lazy(() =>
-  import("./pages/BranchesPage").then((module) => ({
+  import('./pages/BranchesPage').then((module) => ({
     default: module.BranchesPage,
   }))
 );
 
 const SettingsPage = lazy(() =>
-  import("./pages/SettingsPage").then((module) => ({
+  import('./pages/SettingsPage').then((module) => ({
     default: module.SettingsPage,
   }))
 );
 const RenewalsPage = lazy(() =>
-  import("./pages/RenewalsPage").then((module) => ({
+  import('./pages/RenewalsPage').then((module) => ({
     default: module.RenewalsPage,
   }))
 );
 const MarkAvailablePage = lazy(() =>
-  import("./pages/MarkAvailablePage").then((module) => ({
+  import('./pages/MarkAvailablePage').then((module) => ({
     default: module.MarkAvailablePage,
   }))
 );
 const ReservationsPage = lazy(() =>
-  import("./pages/ReservationsPage").then((module) => ({
+  import('./pages/ReservationsPage').then((module) => ({
     default: module.ReservationsPage,
   }))
 );
 const ReshelveItemsPageNew = lazy(() =>
-  import("./pages/ReshelveItemsPageNew").then((module) => ({
+  import('./pages/ReshelveItemsPageNew').then((module) => ({
     default: module.ReshelveItemsPageNew,
   }))
 );
 const LibraryItemCopiesPage = lazy(() =>
-  import("./pages/LibraryItemCopiesPage").then((module) => ({
+  import('./pages/LibraryItemCopiesPage').then((module) => ({
     default: module.LibraryItemCopiesPage,
   }))
 );
 const TransactionsPage = lazy(() =>
-  import("./pages/TransactionsPage").then((module) => ({
+  import('./pages/TransactionsPage').then((module) => ({
     default: module.TransactionsPage,
   }))
 );
 const DashboardPage = lazy(() =>
-  import("./pages/DashboardPage").then((module) => ({
+  import('./pages/DashboardPage').then((module) => ({
     default: module.DashboardPage,
   }))
 );
@@ -79,21 +79,21 @@ function App() {
           <LocalizationProvider dateAdapter={AdapterDayjs}>
             <GlobalStyles
               styles={{
-                "*::-webkit-scrollbar": {
-                  width: "8px",
+                '*::-webkit-scrollbar': {
+                  width: '8px',
                 },
-                "*::-webkit-scrollbar-track": {
+                '*::-webkit-scrollbar-track': {
                   background:
-                    t.palette.mode === "dark"
-                      ? "#202020ff !important"
-                      : "#f0f0f0",
+                    t.palette.mode === 'dark'
+                      ? '#202020ff !important'
+                      : '#f0f0f0',
                 },
-                "*::-webkit-scrollbar-thumb": {
+                '*::-webkit-scrollbar-thumb': {
                   background:
-                    t.palette.mode === "dark"
+                    t.palette.mode === 'dark'
                       ? t.palette.grey[600]
                       : t.palette.grey[400],
-                  borderRadius: "600px",
+                  borderRadius: '600px',
                 },
               }}
             />

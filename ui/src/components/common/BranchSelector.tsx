@@ -41,7 +41,11 @@ export const BranchSelector = ({
       <Skeleton
         variant="rectangular"
         sx={{
-          width: width || { xs: 150, sm: 175, md: 'calc(5rem + 100px)' },
+          width: width || {
+            xs: 150,
+            sm: 175,
+            md: 'calc(5rem + 100px)',
+          },
           height: size === 'small' ? 40 : 56,
         }}
       />

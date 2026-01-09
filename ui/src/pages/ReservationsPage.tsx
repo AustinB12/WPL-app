@@ -1,10 +1,10 @@
-import { EventNote } from "@mui/icons-material";
-import { BaseDataGrid } from "../components/common/BaseDataGrid";
-import { PageContainer, PageTitle } from "../components/common/PageBuilders";
-import ItemTypeChip from "../components/library_items/ItemTypeChip";
-import { ReservationStatusChip } from "../components/reservations/ReservationStatusChip";
-import { useReservations } from "../hooks/useReservations";
-import type { ReservationStatus } from "../types";
+import { EventNote } from '@mui/icons-material';
+import { BaseDataGrid } from '../components/common/BaseDataGrid';
+import { PageContainer, PageTitle } from '../components/common/PageBuilders';
+import ItemTypeChip from '../components/library_items/ItemTypeChip';
+import { ReservationStatusChip } from '../components/reservations/ReservationStatusChip';
+import { useReservations } from '../hooks/useReservations';
+import type { ReservationStatus } from '../types';
 
 export const ReservationsPage = () => {
   const { data: reservations = [], isLoading: loading } = useReservations();
@@ -18,24 +18,24 @@ export const ReservationsPage = () => {
         getRowId={(row) => row.id}
         columns={[
           {
-            field: "id",
-            headerName: "ID",
+            field: 'id',
+            headerName: 'ID',
             width: 90,
             valueGetter: (value) => Number(value),
           },
           {
-            field: "first_name",
-            headerName: "Patron",
+            field: 'first_name',
+            headerName: 'Patron',
             width: 200,
             valueGetter: (value, row) => {
-              if (!value) return "";
+              if (!value) return '';
               return `${value} ${row.last_name}`;
             },
           },
-          { field: "title", headerName: "Item", width: 275 },
+          { field: 'title', headerName: 'Item', width: 275 },
           {
-            field: "reservation_date",
-            headerName: "Reservation Date",
+            field: 'reservation_date',
+            headerName: 'Reservation Date',
             width: 150,
             valueFormatter: (value) => {
               const date = new Date(value);
@@ -43,8 +43,8 @@ export const ReservationsPage = () => {
             },
           },
           {
-            field: "expiry_date",
-            headerName: "Expiry Date",
+            field: 'expiry_date',
+            headerName: 'Expiry Date',
             width: 150,
             valueFormatter: (value) => {
               const date = new Date(value);
@@ -52,8 +52,8 @@ export const ReservationsPage = () => {
             },
           },
           {
-            field: "status",
-            headerName: "Status",
+            field: 'status',
+            headerName: 'Status',
             width: 125,
             renderCell: (params) => (
               <ReservationStatusChip
@@ -61,10 +61,14 @@ export const ReservationsPage = () => {
               />
             ),
           },
-          { field: "queue_position", headerName: "Queue Spot", width: 100 },
           {
-            field: "item_type",
-            headerName: "Type",
+            field: 'queue_position',
+            headerName: 'Queue Spot',
+            width: 100,
+          },
+          {
+            field: 'item_type',
+            headerName: 'Type',
             width: 100,
             renderCell: (params) => {
               return <ItemTypeChip item_type={params.value} />;

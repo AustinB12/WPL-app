@@ -1,140 +1,145 @@
 import {
-	CheckCircle,
-	ExpandLess,
-	ExpandMore,
-	Info
-	// Warning,
-} from "@mui/icons-material";
+  CheckCircle,
+  ExpandLess,
+  ExpandMore,
+  Info,
+  // Warning,
+} from '@mui/icons-material';
 import {
-	Alert,
-	AlertTitle,
-	Box,
-	Button,
-	Card,
-	CardContent,
-	Collapse,
-	Divider,
-	FormControl,
-	InputLabel,
-	MenuItem,
-	Select,
-	Stack,
-	TextField,
-	Typography
-} from "@mui/material";
+  Alert,
+  AlertTitle,
+  Box,
+  Button,
+  Card,
+  CardContent,
+  Collapse,
+  Divider,
+  FormControl,
+  InputLabel,
+  MenuItem,
+  Select,
+  Stack,
+  TextField,
+  Typography,
+} from '@mui/material';
 // import dayjs from 'dayjs';
-import { Activity, type FC, useState } from "react";
-import type { Item_Condition, Item_Copy_Result } from "../../types";
-import { ItemCopyConditionChip } from "../copies/ItemCopyConditionChip";
-import ItemTypeChip from "../library_items/ItemTypeChip";
+import { Activity, type FC, useState } from 'react';
+import type { Item_Condition, Item_Copy_Result } from '../../types';
+import { ItemCopyConditionChip } from '../copies/ItemCopyConditionChip';
+import ItemTypeChip from '../library_items/ItemTypeChip';
 
 interface QuickCheckInCardProps {
-	item_info: Item_Copy_Result;
-	on_confirm: (new_condition?: Item_Condition, notes?: string) => void;
-	on_cancel: () => void;
-	is_processing: boolean;
+  item_info: Item_Copy_Result;
+  on_confirm: (new_condition?: Item_Condition, notes?: string) => void;
+  on_cancel: () => void;
+  is_processing: boolean;
 }
 
 const conditions: Item_Condition[] = [
-	"New",
-	"Excellent",
-	"Good",
-	"Fair",
-	"Poor"
+  'New',
+  'Excellent',
+  'Good',
+  'Fair',
+  'Poor',
 ];
 
 export const QuickCheckInCard: FC<QuickCheckInCardProps> = ({
-	item_info,
-	on_confirm,
-	on_cancel,
-	is_processing
+  item_info,
+  on_confirm,
+  on_cancel,
+  is_processing,
 }) => {
-	const [expanded, set_expanded] = useState(false);
-	const [hide_alert, set_hide_alert] = useState(false);
-	const [new_condition, set_new_condition] = useState<
-		Item_Condition | undefined
-	>(item_info.condition);
-	const [notes, set_notes] = useState("");
+  const [expanded, set_expanded] = useState(false);
+  const [hide_alert, set_hide_alert] = useState(false);
+  const [new_condition, set_new_condition] = useState<
+    Item_Condition | undefined
+  >(item_info.condition);
+  const [notes, set_notes] = useState('');
 
-	const has_reservation = item_info.status.toUpperCase() === "RESERVED";
-	const is_checked_out = item_info.status.toUpperCase() === "CHECKED OUT";
+  const has_reservation = item_info.status.toUpperCase() === 'RESERVED';
+  const is_checked_out = item_info.status.toUpperCase() === 'CHECKED OUT';
 
-	const handle_confirm = () => {
-		on_confirm(new_condition, notes || undefined);
-	};
+  const handle_confirm = () => {
+    on_confirm(new_condition, notes || undefined);
+  };
 
-	return (
-		<Card
-			sx={{
-				borderRadius: 16,
-				cornerShape: "squircle",
-				boxShadow: 3
-			}}
-		>
-			<CardContent>
-				<Stack spacing={2} sx={{ position: "relative" }}>
-					<Activity
-						name="success-alert"
-						mode={hide_alert ? "hidden" : "visible"}
-					>
-						<Alert
-							severity="success"
-							icon={<CheckCircle />}
-							sx={{ borderRadius: 2, position: "absolute", top: 0, right: 0 }}
-							onClose={() => set_hide_alert(true)}
-						>
-							<AlertTitle>Ready to Check In</AlertTitle>
-							Item found and ready to be checked in.
-						</Alert>
-					</Activity>
+  return (
+    <Card
+      sx={{
+        borderRadius: 16,
+        cornerShape: 'squircle',
+        boxShadow: 3,
+      }}
+    >
+      <CardContent>
+        <Stack spacing={2} sx={{ position: 'relative' }}>
+          <Activity
+            name="success-alert"
+            mode={hide_alert ? 'hidden' : 'visible'}
+          >
+            <Alert
+              severity="success"
+              icon={<CheckCircle />}
+              sx={{
+                borderRadius: 2,
+                position: 'absolute',
+                top: 0,
+                right: 0,
+              }}
+              onClose={() => set_hide_alert(true)}
+            >
+              <AlertTitle>Ready to Check In</AlertTitle>
+              Item found and ready to be checked in.
+            </Alert>
+          </Activity>
 
-					{/* Item Information */}
-					<Box>
-						<Typography variant="h5" fontWeight="bold" gutterBottom>
-							{item_info.title}
-						</Typography>
-						<Stack
-							direction="row"
-							spacing={1}
-							alignItems="center"
-							flexWrap="wrap"
-						>
-							<Typography variant="body2" color="text.secondary">
-								Copy #{item_info.id}
-							</Typography>
-							<Typography variant="body2" color="text.secondary">
-								•
-							</Typography>
-							<Typography variant="body2" color="text.secondary">
-								{item_info.copy_label}
-							</Typography>
-							<ItemTypeChip item_type={item_info.item_type} size="small" />
-						</Stack>
-					</Box>
+          {/* Item Information */}
+          <Box>
+            <Typography variant="h5" fontWeight="bold" gutterBottom>
+              {item_info.title}
+            </Typography>
+            <Stack
+              direction="row"
+              spacing={1}
+              alignItems="center"
+              flexWrap="wrap"
+            >
+              <Typography variant="body2" color="text.secondary">
+                Copy #{item_info.id}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                •
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                {item_info.copy_label}
+              </Typography>
+              <ItemTypeChip item_type={item_info.item_type} size="small" />
+            </Stack>
+          </Box>
 
-					<Divider />
+          <Divider />
 
-					{/* Patron Information */}
-					<Activity
-						name="patron-info"
-						mode={is_checked_out ? "visible" : "hidden"}
-					>
-						<Box>
-							<Typography
-								variant="subtitle2"
-								color="text.secondary"
-								gutterBottom
-							>
-								Checked Out By:
-							</Typography>
-							<Typography variant="body1">
-								{`${item_info.patron_first_name} ${item_info.patron_last_name} ID: ${item_info.checked_out_by}`}
-							</Typography>
-						</Box>
-					</Activity>
+          {/* Patron Information */}
+          <Activity
+            name="patron-info"
+            mode={is_checked_out ? 'visible' : 'hidden'}
+          >
+            <Box>
+              <Typography
+                variant="subtitle2"
+                color="text.secondary"
+                gutterBottom
+              >
+                Checked Out By:
+              </Typography>
+              <Typography variant="body1">
+                {`${item_info.patron_first_name} ${item_info.patron_last_name} ID: ${item_info.checked_out_by}`}
+              </Typography>
+            </Box>
+          </Activity>
 
-					{/* Due Date & Overdue Status */}
-					{/* <Box>
+          {/* Due Date & Overdue Status */}
+          {/* <Box>
             <Typography variant="subtitle2" color="text.secondary" gutterBottom>
               Due Date
             </Typography>
@@ -159,8 +164,8 @@ export const QuickCheckInCard: FC<QuickCheckInCardProps> = ({
             </Stack>
           </Box> */}
 
-					{/* Fine Alert */}
-					{/* {checkout_details.fine_amount > 0 && (
+          {/* Fine Alert */}
+          {/* {checkout_details.fine_amount > 0 && (
             <Alert
               severity="warning"
               icon={<Warning />}
@@ -172,104 +177,107 @@ export const QuickCheckInCard: FC<QuickCheckInCardProps> = ({
             </Alert>
           )} */}
 
-					{/* Reservation Alert */}
-					{has_reservation && (
-						<Alert severity="info" icon={<Info />} sx={{ borderRadius: 2 }}>
-							<AlertTitle sx={{ fontWeight: 600 }}>
-								Reservation Pending
-							</AlertTitle>
-							This item has a reservation. It will be marked as "Ready for
-							Pickup" for{" "}
-							{item_info.reservation?.patron_name || "the next patron in queue"}
-							.
-						</Alert>
-					)}
+          {/* Reservation Alert */}
+          {has_reservation && (
+            <Alert severity="info" icon={<Info />} sx={{ borderRadius: 2 }}>
+              <AlertTitle sx={{ fontWeight: 600 }}>
+                Reservation Pending
+              </AlertTitle>
+              This item has a reservation. It will be marked as "Ready for
+              Pickup" for{' '}
+              {item_info.reservation?.patron_name || 'the next patron in queue'}
+              .
+            </Alert>
+          )}
 
-					<Divider />
+          <Divider />
 
-					{/* Current Condition */}
-					<Box>
-						<Typography variant="subtitle2" color="text.secondary" gutterBottom>
-							Current Condition
-						</Typography>
-						<ItemCopyConditionChip condition={item_info?.condition || "Good"} />
-					</Box>
+          {/* Current Condition */}
+          <Box>
+            <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+              Current Condition
+            </Typography>
+            <ItemCopyConditionChip condition={item_info?.condition || 'Good'} />
+          </Box>
 
-					{/* Expandable Condition & Notes Section */}
-					<Box>
-						<Button
-							onClick={() => set_expanded(!expanded)}
-							endIcon={expanded ? <ExpandLess /> : <ExpandMore />}
-							sx={{ justifyContent: "space-between", width: "100%" }}
-						>
-							Update Condition & Notes (Optional)
-						</Button>
-						<Collapse in={expanded}>
-							<Stack
-								spacing={2}
-								sx={{
-									mt: 2,
-									p: 2,
-									bgcolor: "background.default",
-									borderRadius: 2
-								}}
-							>
-								<FormControl fullWidth>
-									<InputLabel>New Condition</InputLabel>
-									<Select
-										value={new_condition || ""}
-										onChange={(e) =>
-											set_new_condition(e.target.value as Item_Condition)
-										}
-										label="New Condition"
-									>
-										{conditions.map((condition) => (
-											<MenuItem key={condition} value={condition}>
-												<ItemCopyConditionChip
-													condition={condition}
-													size="small"
-												/>
-											</MenuItem>
-										))}
-									</Select>
-								</FormControl>
+          {/* Expandable Condition & Notes Section */}
+          <Box>
+            <Button
+              onClick={() => set_expanded(!expanded)}
+              endIcon={expanded ? <ExpandLess /> : <ExpandMore />}
+              sx={{
+                justifyContent: 'space-between',
+                width: '100%',
+              }}
+            >
+              Update Condition & Notes (Optional)
+            </Button>
+            <Collapse in={expanded}>
+              <Stack
+                spacing={2}
+                sx={{
+                  mt: 2,
+                  p: 2,
+                  bgcolor: 'background.default',
+                  borderRadius: 2,
+                }}
+              >
+                <FormControl fullWidth>
+                  <InputLabel>New Condition</InputLabel>
+                  <Select
+                    value={new_condition || ''}
+                    onChange={(e) =>
+                      set_new_condition(e.target.value as Item_Condition)
+                    }
+                    label="New Condition"
+                  >
+                    {conditions.map((condition) => (
+                      <MenuItem key={condition} value={condition}>
+                        <ItemCopyConditionChip
+                          condition={condition}
+                          size="small"
+                        />
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
 
-								<TextField
-									label="Notes (Optional)"
-									value={notes}
-									onChange={(e) => set_notes(e.target.value)}
-									multiline
-									rows={3}
-									placeholder="Add any notes about the item's condition or check-in..."
-									fullWidth
-								/>
-							</Stack>
-						</Collapse>
-					</Box>
+                <TextField
+                  label="Notes (Optional)"
+                  value={notes}
+                  onChange={(e) => set_notes(e.target.value)}
+                  multiline
+                  rows={3}
+                  placeholder="Add any notes about the item's condition or check-in..."
+                  fullWidth
+                />
+              </Stack>
+            </Collapse>
+          </Box>
 
-					{/* Action Buttons */}
-					<Stack direction="row" spacing={2} sx={{ pt: 1 }}>
-						<Button
-							variant="outlined"
-							onClick={on_cancel}
-							disabled={is_processing}
-							fullWidth
-						>
-							Cancel
-						</Button>
-						<Button
-							variant="contained"
-							onClick={handle_confirm}
-							disabled={is_processing || has_reservation || !is_checked_out}
-							size="large"
-							fullWidth
-							sx={{ fontWeight: 600 }}
-						>
-							{is_processing ? "Processing..." : "Confirm Check-In"}
-						</Button>
-					</Stack>
-				</Stack>
-			</CardContent>
-		</Card>
-	);
+          {/* Action Buttons */}
+          <Stack direction="row" spacing={2} sx={{ pt: 1 }}>
+            <Button
+              variant="outlined"
+              onClick={on_cancel}
+              disabled={is_processing}
+              fullWidth
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="contained"
+              onClick={handle_confirm}
+              disabled={is_processing || has_reservation || !is_checked_out}
+              size="large"
+              fullWidth
+              sx={{ fontWeight: 600 }}
+            >
+              {is_processing ? 'Processing...' : 'Confirm Check-In'}
+            </Button>
+          </Stack>
+        </Stack>
+      </CardContent>
+    </Card>
+  );
 };

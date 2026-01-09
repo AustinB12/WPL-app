@@ -130,7 +130,13 @@ export const CreateCopyDialog = ({
       <DialogTitle>Create New Item Copy</DialogTitle>
       <form onSubmit={handle_submit}>
         <DialogContent>
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
+          <Box
+            sx={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 2.5,
+            }}
+          >
             {/* Library Item Selector */}
             <Autocomplete
               value={selected_item}

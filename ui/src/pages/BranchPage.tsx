@@ -353,13 +353,23 @@ export const BranchPage: FC = () => {
 
             <Stack spacing={1.5} sx={{ mt: 2 }}>
               <Stack direction="row" alignItems="center" spacing={1}>
-                <LocationOn sx={{ color: 'text.secondary', fontSize: 20 }} />
+                <LocationOn
+                  sx={{
+                    color: 'text.secondary',
+                    fontSize: 20,
+                  }}
+                />
                 <Typography variant="body2" color="text.secondary">
                   {branch.address}
                 </Typography>
               </Stack>
               <Stack direction="row" alignItems="center" spacing={1}>
-                <Phone sx={{ color: 'text.secondary', fontSize: 20 }} />
+                <Phone
+                  sx={{
+                    color: 'text.secondary',
+                    fontSize: 20,
+                  }}
+                />
                 <Typography variant="body2" color="text.secondary">
                   {branch.phone}
                 </Typography>

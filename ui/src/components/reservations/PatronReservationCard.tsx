@@ -1,16 +1,16 @@
-import { Warning } from "@mui/icons-material";
+import { Warning } from '@mui/icons-material';
 import {
+  Avatar,
+  Box,
   Card,
   CardContent,
-  Typography,
-  Box,
-  Chip,
-  Avatar,
-  Skeleton,
   CardHeader,
+  Chip,
+  Skeleton,
   Stack,
-} from "@mui/material";
-import type { Patron } from "../../types";
+  Typography,
+} from '@mui/material';
+import type { Patron } from '../../types';
 
 interface Patron_Reservation_Card_Props {
   patron?: Patron | null;
@@ -24,17 +24,17 @@ export const Patron_Reservation_Card = ({
   const has_issues = has_balance || is_inactive;
 
   const get_initials = () => {
-    if (!patron) return "AZ";
+    if (!patron) return 'AZ';
     return `${patron.first_name[0]}${patron.last_name[0]}`.toUpperCase();
   };
 
   return (
     <Card
       sx={{
-        height: "100%",
+        height: '100%',
         borderRadius: 28,
-        cornerShape: "squircle",
-        width: { xs: "100%", sm: "auto" },
+        cornerShape: 'squircle',
+        width: { xs: '100%', sm: 'auto' },
         p: 2,
         minWidth: { xs: 250, sm: 350 },
         boxShadow: 6,
@@ -64,15 +64,15 @@ export const Patron_Reservation_Card = ({
           )
         }
       ></CardHeader>
-      <CardContent sx={{ position: "relative" }}>
+      <CardContent sx={{ position: 'relative' }}>
         <Stack spacing={1.5}>
           {patron && (
             <Avatar
               src={patron.image_url}
               alt={`${patron.first_name} ${patron.last_name}`}
               sx={{
-                bgcolor: "primary.main",
-                position: "absolute",
+                bgcolor: 'primary.main',
+                position: 'absolute',
                 fontSize: 60,
                 width: 120,
                 height: 120,
@@ -85,7 +85,7 @@ export const Patron_Reservation_Card = ({
           )}
           {!patron && (
             <Skeleton
-              sx={{ position: "absolute", top: -40, right: 6 }}
+              sx={{ position: 'absolute', top: -40, right: 6 }}
               variant="circular"
               width={120}
               height={120}
@@ -94,7 +94,7 @@ export const Patron_Reservation_Card = ({
           )}
 
           {patron && patron.phone && (
-            <Box sx={{ mt: "0 !important" }}>
+            <Box sx={{ mt: '0 !important' }}>
               <Typography variant="caption" color="text.secondary">
                 Phone
               </Typography>
@@ -112,7 +112,7 @@ export const Patron_Reservation_Card = ({
 
           {!patron && (
             <>
-              <Box sx={{ mt: "0 !important" }}>
+              <Box sx={{ mt: '0 !important' }}>
                 <Typography variant="caption" color="text.secondary">
                   Phone
                 </Typography>
@@ -120,7 +120,7 @@ export const Patron_Reservation_Card = ({
                   <Skeleton animation={false} width={120} />
                 </Typography>
               </Box>
-              <Box sx={{ mt: "0 !important" }}>
+              <Box sx={{ mt: '0 !important' }}>
                 <Typography variant="caption" color="text.secondary">
                   Email
                 </Typography>
@@ -131,7 +131,7 @@ export const Patron_Reservation_Card = ({
             </>
           )}
 
-          <Stack direction={"row"} justifyContent={"space-between"}>
+          <Stack direction={'row'} justifyContent={'space-between'}>
             <Box>
               <Typography variant="caption" color="text.secondary">
                 Card Expiration
@@ -179,9 +179,9 @@ export const Patron_Reservation_Card = ({
           )}
 
           <Stack
-            direction={"row"}
-            justifyContent={"center"}
-            sx={{ gap: 1, mt: 1, flexWrap: "wrap" }}
+            direction={'row'}
+            justifyContent={'center'}
+            sx={{ gap: 1, mt: 1, flexWrap: 'wrap' }}
           >
             {patron && is_inactive && (
               <Chip

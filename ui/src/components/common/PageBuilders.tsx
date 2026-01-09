@@ -71,7 +71,11 @@ export function PageTitle({
           <Skeleton
             variant="text"
             sx={{
-              fontSize: { xs: '2.5rem', sm: '3rem', md: '3.25rem' },
+              fontSize: {
+                xs: '2.5rem',
+                sm: '3rem',
+                md: '3.25rem',
+              },
               width: `min(70vw, ${Math.round(title.length * 1.2) + 'ch'})`,
             }}
           ></Skeleton>

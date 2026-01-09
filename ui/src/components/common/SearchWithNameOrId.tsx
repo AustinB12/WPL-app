@@ -1,5 +1,5 @@
-import { Search } from "@mui/icons-material";
-import { InputAdornment, type SxProps, TextField } from "@mui/material";
+import { Search } from '@mui/icons-material';
+import { InputAdornment, type SxProps, TextField } from '@mui/material';
 
 interface Search_Props {
   search_term: string;
@@ -16,7 +16,7 @@ export const SearchWithNameOrId = ({
 }: Search_Props) => {
   return (
     <TextField
-      sx={{ bgcolor: "background.paper", borderRadius: 3, ...sx }}
+      sx={{ bgcolor: 'background.paper', borderRadius: 3, ...sx }}
       fullWidth={full_width}
       placeholder="Search by name, ID, or title..."
       value={search_term}
@@ -28,7 +28,7 @@ export const SearchWithNameOrId = ({
         input: {
           sx: { borderRadius: 2 },
           startAdornment: (
-            <InputAdornment sx={{ mt: "0px !important" }} position="start">
+            <InputAdornment sx={{ mt: '0px !important' }} position="start">
               <Search />
             </InputAdornment>
           ),

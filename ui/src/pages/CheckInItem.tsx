@@ -10,7 +10,7 @@ import {
   Newspaper,
   QuestionMark,
   YouTube,
-} from "@mui/icons-material";
+} from '@mui/icons-material';
 import {
   Alert,
   Button,
@@ -22,22 +22,22 @@ import {
   Stack,
   TextField,
   Typography,
-} from "@mui/material";
-import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
-import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
-import { Activity, type FC, useEffect, useRef, useState } from "react";
-import { QuickCheckInCard } from "../components/checkin/QuickCheckInCard";
-import { RecentCheckInsList } from "../components/checkin/RecentCheckInsList";
-import { PageContainer, PageTitle } from "../components/common/PageBuilders";
-import { useSelectedBranch } from "../hooks/useBranchHooks";
-import { useCheckedOutCopiesSimple, useCopyById } from "../hooks/useCopies";
-import { useSnackbar } from "../hooks/useSnackbar";
-import { useReturnBook } from "../hooks/useTransactions";
+} from '@mui/material';
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { Activity, type FC, useEffect, useRef, useState } from 'react';
+import { QuickCheckInCard } from '../components/checkin/QuickCheckInCard';
+import { RecentCheckInsList } from '../components/checkin/RecentCheckInsList';
+import { PageContainer, PageTitle } from '../components/common/PageBuilders';
+import { useSelectedBranch } from '../hooks/useBranchHooks';
+import { useCheckedOutCopiesSimple, useCopyById } from '../hooks/useCopies';
+import { useSnackbar } from '../hooks/useSnackbar';
+import { useReturnBook } from '../hooks/useTransactions';
 import type {
   Checkin_Receipt,
   Item_Condition,
   Library_Item_Type,
-} from "../types";
+} from '../types';
 
 interface RecentCheckIn {
   copy_id: number;
@@ -48,7 +48,7 @@ interface RecentCheckIn {
 }
 
 export const CheckInNew: FC = () => {
-  const [barcode_input, set_barcode_input] = useState("");
+  const [barcode_input, set_barcode_input] = useState('');
   const [copy_id_to_fetch, set_copy_id_to_fetch] = useState<number | null>(
     null
   );
@@ -82,7 +82,7 @@ export const CheckInNew: FC = () => {
   useEffect(() => {
     if (item_error) {
       set_error_message(
-        "Copy not found. Please check the barcode and try again."
+        'Copy not found. Please check the barcode and try again.'
       );
     }
   }, [item_error]);
@@ -90,7 +90,7 @@ export const CheckInNew: FC = () => {
   const handle_barcode_submit = () => {
     const copy_id = parseInt(barcode_input);
     if (isNaN(copy_id) || copy_id <= 0) {
-      set_error_message("Please enter a valid Copy ID (Barcode)");
+      set_error_message('Please enter a valid Copy ID (Barcode)');
       return;
     }
     set_error_message(null);
@@ -135,14 +135,14 @@ export const CheckInNew: FC = () => {
           const fine_message =
             data.fine_amount && data.fine_amount > 0
               ? ` Fine of $${data.fine_amount.toFixed(2)} applied.`
-              : "";
+              : '';
           show_snackbar({
             message: `Successfully checked in "${data.title}"${fine_message}`,
-            severity: "success",
+            severity: 'success',
           });
 
           // Clear form and refocus
-          set_barcode_input("");
+          set_barcode_input('');
           set_copy_id_to_fetch(null);
           set_error_message(null);
           barcode_input_ref.current?.focus();
@@ -150,7 +150,7 @@ export const CheckInNew: FC = () => {
         onError: (error: Error) => {
           show_snackbar({
             message: `Failed to check in: ${error.message}`,
-            severity: "error",
+            severity: 'error',
           });
           set_error_message(`Failed to check in: ${error.message}`);
         },
@@ -159,7 +159,7 @@ export const CheckInNew: FC = () => {
   };
 
   const handle_cancel = () => {
-    set_barcode_input("");
+    set_barcode_input('');
     set_copy_id_to_fetch(null);
     set_error_message(null);
     barcode_input_ref.current?.focus();
@@ -167,11 +167,11 @@ export const CheckInNew: FC = () => {
 
   const has_valid_item =
     item_info &&
-    ["CHECKED OUT", "RESERVED"].includes(item_info.status.toUpperCase()) &&
+    ['CHECKED OUT', 'RESERVED'].includes(item_info.status.toUpperCase()) &&
     !error_message;
 
   const found_available_item =
-    item_info && item_info.status.toUpperCase() === "AVAILABLE";
+    item_info && item_info.status.toUpperCase() === 'AVAILABLE';
 
   return (
     <LocalizationProvider dateAdapter={AdapterDateFns}>
@@ -180,7 +180,12 @@ export const CheckInNew: FC = () => {
         <Stack gap={2}>
           {/* Barcode Input Section */}
           <Paper
-            sx={{ px: 4, py: 3, borderRadius: 16, cornerShape: "squircle" }}
+            sx={{
+              px: 4,
+              py: 3,
+              borderRadius: 16,
+              cornerShape: 'squircle',
+            }}
           >
             <Typography variant="h6" gutterBottom fontWeight="bold">
               Scan or Enter Copy ID
@@ -197,9 +202,9 @@ export const CheckInNew: FC = () => {
                 value={barcode_input}
                 onChange={(e) => set_barcode_input(e.target.value)}
                 onKeyDown={(e) => {
-                  if (e.key === "Enter") {
+                  if (e.key === 'Enter') {
                     handle_barcode_submit();
-                  } else if (e.key === "Escape") {
+                  } else if (e.key === 'Escape') {
                     handle_cancel();
                   }
                 }}
@@ -217,13 +222,13 @@ export const CheckInNew: FC = () => {
                 sx={{ minWidth: 120 }}
                 startIcon={loading_item ? <CircularProgress size={20} /> : null}
               >
-                {loading_item ? "Searching..." : "Lookup"}
+                {loading_item ? 'Searching...' : 'Lookup'}
               </Button>
             </Stack>
 
             <Activity
               name="error-alert"
-              mode={error_message ? "visible" : "hidden"}
+              mode={error_message ? 'visible' : 'hidden'}
             >
               <Alert
                 severity="error"
@@ -236,10 +241,15 @@ export const CheckInNew: FC = () => {
             </Activity>
           </Paper>
           <Paper
-            sx={{ px: 4, py: 3, borderRadius: 16, cornerShape: "squircle" }}
+            sx={{
+              px: 4,
+              py: 3,
+              borderRadius: 16,
+              cornerShape: 'squircle',
+            }}
           >
             <Stack
-              sx={{ alignSelf: "flex-start" }}
+              sx={{ alignSelf: 'flex-start' }}
               direction="row"
               gap={2}
               alignItems="center"
@@ -250,10 +260,10 @@ export const CheckInNew: FC = () => {
                 <ArrowUpward
                   sx={{
                     transform: show_checked_out
-                      ? "rotate(180deg)"
-                      : "rotate(0deg)",
-                    transitionProperty: "transform",
-                    transitionDuration: "0.2s",
+                      ? 'rotate(180deg)'
+                      : 'rotate(0deg)',
+                    transitionProperty: 'transform',
+                    transitionDuration: '0.2s',
                   }}
                 />
               </IconButton>
@@ -265,15 +275,18 @@ export const CheckInNew: FC = () => {
               {!loading_checked_out_copies &&
               checked_out_copies &&
               checked_out_copies.length > 0 ? (
-                <Stack direction="row" gap={2} flexWrap={"wrap"} sx={{ my: 2 }}>
+                <Stack direction="row" gap={2} flexWrap={'wrap'} sx={{ my: 2 }}>
                   {checked_out_copies.map((copy) => (
                     <Chip
                       sx={{
                         maxWidth: 200,
-                        ["&:hover"]: { cursor: "pointer", boxShadow: 3 },
+                        ['&:hover']: {
+                          cursor: 'pointer',
+                          boxShadow: 3,
+                        },
                       }}
                       key={copy.id}
-                      label={copy.id + ": " + copy.title}
+                      label={copy.id + ': ' + copy.title}
                       variant="outlined"
                       icon={get_checked_out_copy_chip_icon(
                         copy.item_type,
@@ -311,11 +324,11 @@ export const CheckInNew: FC = () => {
               sx={{ mt: 2 }}
               icon={<InfoOutline />}
               onClose={() => {
-                set_barcode_input("");
+                set_barcode_input('');
                 set_copy_id_to_fetch(null);
               }}
             >
-              {"Item is not currently checked out."}
+              {'Item is not currently checked out.'}
             </Alert>
           )}
 
@@ -333,23 +346,23 @@ function get_checked_out_copy_chip_icon(
   item_type: Library_Item_Type,
   is_overdue: boolean
 ) {
-  const color = is_overdue ? "error" : "success";
+  const color = is_overdue ? 'error' : 'success';
   switch (item_type) {
-    case "BOOK":
+    case 'BOOK':
       return <ChromeReaderMode color={color} />;
-    case "MAGAZINE":
+    case 'MAGAZINE':
       return <MenuBook color={color} />;
-    case "PERIODICAL":
+    case 'PERIODICAL':
       return <Newspaper color={color} />;
-    case "RECORDING":
+    case 'RECORDING':
       return <Mic color={color} />;
-    case "AUDIOBOOK":
+    case 'AUDIOBOOK':
       return <ChromeReaderMode color={color} />;
-    case "VIDEO":
+    case 'VIDEO':
       return <YouTube color={color} />;
-    case "CD":
+    case 'CD':
       return <Album color={color} />;
-    case "VINYL":
+    case 'VINYL':
       return <Album color={color} />;
     default:
       return <QuestionMark color={color} />;

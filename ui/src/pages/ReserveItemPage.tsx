@@ -1,37 +1,37 @@
-import { EventNote } from "@mui/icons-material";
-import { PageContainer, PageTitle } from "../components/common/PageBuilders";
-import { Activity, useState, useCallback } from "react";
+import { EventNote } from '@mui/icons-material';
 import {
   Autocomplete,
   Fab,
-  Stack,
-  TextField,
   LinearProgress,
+  Stack,
   type SxProps,
+  TextField,
   type Theme,
-} from "@mui/material";
-import { useAllPatrons } from "../hooks/usePatrons";
-import { useCheckedOutCopies } from "../hooks/useCopies";
-import type { Item_Copy_Result, Patron } from "../types";
-import { useCreateReservation } from "../hooks/useReservations";
-import { Patron_Reservation_Card } from "../components/reservations/PatronReservationCard";
-import { ItemReservationCard } from "../components/reservations/ItemReservationCard";
-import { useSnackbar } from "../hooks/useSnackbar";
+} from '@mui/material';
+import { Activity, type SyntheticEvent, useCallback, useState } from 'react';
+import { PageContainer, PageTitle } from '../components/common/PageBuilders';
+import { ItemReservationCard } from '../components/reservations/ItemReservationCard';
+import { Patron_Reservation_Card } from '../components/reservations/PatronReservationCard';
+import { useCheckedOutCopies } from '../hooks/useCopies';
+import { useAllPatrons } from '../hooks/usePatrons';
+import { useCreateReservation } from '../hooks/useReservations';
+import { useSnackbar } from '../hooks/useSnackbar';
+import type { Item_Copy_Result, Patron } from '../types';
 
 const AUTOCOMPLETE_SX: SxProps<Theme> = {
   flex: 1,
   minWidth: { xs: 200, sm: 300 },
-  width: { xs: "100%", sm: "auto" },
+  width: { xs: '100%', sm: 'auto' },
 };
 
 const COLUMN_STACK_SX: SxProps<Theme> = {
   flex: 1,
-  width: { xs: "100%", sm: "auto" },
+  width: { xs: '100%', sm: 'auto' },
 };
 
 const FAB_SX: SxProps<Theme> = {
-  textAlign: "right",
-  position: "absolute",
+  textAlign: 'right',
+  position: 'absolute',
   bottom: 16,
   right: 16,
 };
@@ -40,7 +40,7 @@ export const ReserveItemPage = () => {
   return (
     <PageContainer
       width="xl"
-      sx={{ maxHeight: "calc(100dvh - 64px)" }}
+      sx={{ maxHeight: 'calc(100dvh - 64px)' }}
       scroll={true}
     >
       <PageTitle title="Reserve Item" Icon_Component={EventNote} />
@@ -50,42 +50,35 @@ export const ReserveItemPage = () => {
 };
 
 const Reserve_Item_Content = () => {
-  // Data fetching hooks
   const { data: patrons, isLoading: patrons_loading } = useAllPatrons();
   const { data: checked_out_copies, isLoading: copies_loading } =
     useCheckedOutCopies();
   const { show_snackbar } = useSnackbar();
 
-  // Local state - Patron selection
   const [selected_patron, set_selected_patron] = useState<Patron | null>(null);
-  const [patron_input_value, set_patron_input_value] = useState("");
+  const [patron_input_value, set_patron_input_value] = useState('');
 
-  // Local state - Item selection
   const [selected_item, set_selected_item] = useState<Item_Copy_Result | null>(
     null
   );
-  const [item_input_value, set_item_input_value] = useState("");
+  const [item_input_value, set_item_input_value] = useState('');
 
-  // Mutation success handler
-  const handle_success = useCallback(
-    (data: any) => {
-      const message = data.message || "Reservation created successfully";
-      show_snackbar({ message, severity: "success" });
+  const handle_success = useCallback(() => {
+    const message = 'Reservation created successfully';
+    show_snackbar({ message, severity: 'success' });
 
-      // Reset form
-      set_selected_patron(null);
-      set_selected_item(null);
-      set_patron_input_value("");
-      set_item_input_value("");
-    },
-    [show_snackbar]
-  );
+    // Reset form
+    set_selected_patron(null);
+    set_selected_item(null);
+    set_patron_input_value('');
+    set_item_input_value('');
+  }, [show_snackbar]);
 
   // Mutation error handler
   const handle_error = useCallback(
     (error: Error) => {
-      const error_message = error.message || "Failed to create reservation";
-      show_snackbar({ message: error_message, severity: "error" });
+      const error_message = error.message || 'Failed to create reservation';
+      show_snackbar({ message: error_message, severity: 'error' });
     },
     [show_snackbar]
   );
@@ -99,14 +92,14 @@ const Reserve_Item_Content = () => {
 
   // Patron autocomplete handlers
   const handle_patron_change = useCallback(
-    (_event: any, new_value: Patron | null) => {
+    (_event: SyntheticEvent, new_value: Patron | null) => {
       set_selected_patron(new_value);
     },
     []
   );
 
   const handle_patron_input_change = useCallback(
-    (_event: any, new_input_value: string) => {
+    (_event: SyntheticEvent, new_input_value: string) => {
       set_patron_input_value(new_input_value);
     },
     []
@@ -114,14 +107,14 @@ const Reserve_Item_Content = () => {
 
   // Item autocomplete handlers
   const handle_item_change = useCallback(
-    (_event: any, new_value: Item_Copy_Result | null) => {
+    (_event: SyntheticEvent, new_value: Item_Copy_Result | null) => {
       set_selected_item(new_value);
     },
     []
   );
 
   const handle_item_input_change = useCallback(
-    (_event: any, new_input_value: string) => {
+    (_event: SyntheticEvent, new_input_value: string) => {
       set_item_input_value(new_input_value);
     },
     []
@@ -152,7 +145,7 @@ const Reserve_Item_Content = () => {
   const get_option_id = useCallback(
     (option: Patron | Item_Copy_Result) =>
       `${option.id}-${
-        Object.hasOwn(option, "copy_number")
+        Object.hasOwn(option, 'copy_number')
           ? (option as Item_Copy_Result).copy_number
           : (option as Patron).active_checkouts
       }`,
@@ -167,7 +160,7 @@ const Reserve_Item_Content = () => {
       {/* Selection Section */}
       <Stack
         gap={2}
-        direction={{ xs: "column", sm: "row" }}
+        direction={{ xs: 'column', sm: 'row' }}
         alignItems="flex-start"
         sx={{ p: 1 }}
       >
@@ -208,8 +201,8 @@ const Reserve_Item_Content = () => {
         </Stack>
       </Stack>
 
-      <Activity mode={creating_reservation ? "visible" : "hidden"}>
-        <LinearProgress sx={{ width: "80%", alignSelf: "center" }} />
+      <Activity mode={creating_reservation ? 'visible' : 'hidden'}>
+        <LinearProgress sx={{ width: '80%', alignSelf: 'center' }} />
       </Activity>
 
       <Fab

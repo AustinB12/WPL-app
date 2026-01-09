@@ -1,6 +1,4 @@
-import { ExpandMore, ReceiptLong } from "@mui/icons-material";
-import { PageContainer, PageTitle } from "../components/common/PageBuilders";
-import { TransactionsDataGrid } from "../components/transactions/TransactionsDataGrid";
+import { ExpandMore, ReceiptLong } from '@mui/icons-material';
 import {
   AppBar,
   IconButton,
@@ -13,12 +11,14 @@ import {
   Typography,
   useMediaQuery,
   useTheme,
-} from "@mui/material";
-import { Activity, useState, type JSX } from "react";
+} from '@mui/material';
+import { Activity, type JSX, useState } from 'react';
+import { PageContainer, PageTitle } from '../components/common/PageBuilders';
+import { TransactionsDataGrid } from '../components/transactions/TransactionsDataGrid';
 
 export const TransactionsPage = () => {
   const theme = useTheme();
-  const is_mobile_query = theme.breakpoints.down("md");
+  const is_mobile_query = theme.breakpoints.down('md');
   const is_mobile = useMediaQuery(is_mobile_query);
 
   return (
@@ -27,10 +27,10 @@ export const TransactionsPage = () => {
         title="Library Item Transactions"
         Icon_Component={ReceiptLong}
       />
-      <Activity mode={is_mobile ? "hidden" : "visible"}>
-        <TransactionsDataGrid hidden_columns={["notes"]} />
+      <Activity mode={is_mobile ? 'hidden' : 'visible'}>
+        <TransactionsDataGrid hidden_columns={['notes']} />
       </Activity>
-      <Activity mode={is_mobile ? "visible" : "hidden"}>
+      <Activity mode={is_mobile ? 'visible' : 'hidden'}>
         <List>
           <Transactions_List />
         </List>
@@ -39,14 +39,14 @@ export const TransactionsPage = () => {
   );
 };
 
-import { useAllCopyTransactions } from "../hooks/useCopies";
-import { TransactionTypeChip } from "../components/transactions/TransactionTypeChip";
+import { TransactionTypeChip } from '../components/transactions/TransactionTypeChip';
+import { useAllCopyTransactions } from '../hooks/useCopies';
 
 function Transactions_List() {
   const { data, isLoading: loading } = useAllCopyTransactions();
 
   const theme = useTheme();
-  const is_dark = theme.palette.mode === "dark";
+  const is_dark = theme.palette.mode === 'dark';
 
   const [desc_sort, set_desc_sort] = useState(false);
 
@@ -64,15 +64,15 @@ function Transactions_List() {
     return <div>No transactions found.</div>;
   }
 
-  let list_items: JSX.Element[] = data.map((t, index) => {
+  const list_items: JSX.Element[] = data.map((t, index) => {
     const styles =
-      index % 2 !== 0 ? { bgcolor: is_dark ? "#ffffff10" : "#00000010" } : {};
+      index % 2 !== 0 ? { bgcolor: is_dark ? '#ffffff10' : '#00000010' } : {};
     return (
       <ListItem
         key={t.id}
         sx={{
-          flexDirection: "column",
-          alignItems: "flex-start",
+          flexDirection: 'column',
+          alignItems: 'flex-start',
           mb: 2,
           borderRadius: 3,
           py: 1,
@@ -84,24 +84,24 @@ function Transactions_List() {
         <Stack
           direction="row"
           spacing={2}
-          justifyContent={"space-between"}
-          sx={{ mt: 1, width: "100%" }}
+          justifyContent={'space-between'}
+          sx={{ mt: 1, width: '100%' }}
         >
           <ListItemText>
             {<TransactionTypeChip transaction_type={t.transaction_type} />}
           </ListItemText>
-          <ListItemText sx={{ textAlign: "right" }}>
+          <ListItemText sx={{ textAlign: 'right' }}>
             {new Date(t.date).toLocaleString()}
           </ListItemText>
         </Stack>
         <Stack
           direction="row"
           spacing={2}
-          justifyContent={"space-between"}
-          sx={{ mt: 1, width: "100%" }}
+          justifyContent={'space-between'}
+          sx={{ mt: 1, width: '100%' }}
         >
           <ListItemText secondary="Patron ID">{t.patron_id}</ListItemText>
-          <ListItemText sx={{ textAlign: "right" }} secondary="Item ID">
+          <ListItemText sx={{ textAlign: 'right' }} secondary="Item ID">
             {t.item_copy_id}
           </ListItemText>
         </Stack>
@@ -114,12 +114,12 @@ function Transactions_List() {
 
   return (
     <>
-      <AppBar position="relative" sx={{ borderRadius: "8px 8px 0 0 " }}>
+      <AppBar position="relative" sx={{ borderRadius: '8px 8px 0 0 ' }}>
         <Toolbar>
           <Typography
             variant="body1"
             component="div"
-            fontWeight={"bold"}
+            fontWeight={'bold'}
             sx={{ flexGrow: 1 }}
           >
             Total: {data.length}
@@ -127,14 +127,14 @@ function Transactions_List() {
           <IconButton onClick={() => set_desc_sort(!desc_sort)}>
             <ExpandMore
               sx={{
-                transform: desc_sort ? "rotate(-180deg)" : "rotate(0deg)",
-                transition: "transform 0.25s ease-out",
+                transform: desc_sort ? 'rotate(-180deg)' : 'rotate(0deg)',
+                transition: 'transform 0.25s ease-out',
               }}
             />
           </IconButton>
         </Toolbar>
       </AppBar>
-      <List sx={{ overflow: "auto", maxHeight: "100%", pt: 0 }}>
+      <List sx={{ overflow: 'auto', maxHeight: '100%', pt: 0 }}>
         {list_items}
       </List>
     </>

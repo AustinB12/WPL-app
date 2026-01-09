@@ -259,7 +259,11 @@ export const CheckoutReceipt: FC<CheckoutReceiptProps> = ({
           {receipt?.reservation?.was_reserved && (
             <Alert
               severity="warning"
-              sx={{ mb: 2, border: '1px solid', borderColor: 'warning.main' }}
+              sx={{
+                mb: 2,
+                border: '1px solid',
+                borderColor: 'warning.main',
+              }}
             >
               <AlertTitle sx={{ fontWeight: 'bold' }}>
                 ⚠️ Item No Longer Available

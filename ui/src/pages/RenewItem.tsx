@@ -427,7 +427,12 @@ export const RenewItem: FC = () => {
                           {item.author || item.director}
                         </Typography>
                       </Box>
-                      <Box sx={{ textAlign: 'right', ml: 2 }}>
+                      <Box
+                        sx={{
+                          textAlign: 'right',
+                          ml: 2,
+                        }}
+                      >
                         <Typography
                           variant="body2"
                           color="text.secondary"

@@ -66,14 +66,14 @@ export type Reservation_DB_Type = {
 };
 
 export type Transaction_Type =
-  | "CHECKOUT"
-  | "CHECKIN"
-  | "RESHELVE"
-  | "RESERVATION"
-  | "BALANCE"
-  | "RENEWAL"
-  | "DAMAGED"
-  | "LOST";
+  | 'CHECKOUT'
+  | 'CHECKIN'
+  | 'RESHELVE'
+  | 'RESERVATION'
+  | 'BALANCE'
+  | 'RENEWAL'
+  | 'DAMAGED'
+  | 'LOST';
 
 export interface Transaction {
   id: number;
@@ -94,12 +94,12 @@ export interface Transaction {
 }
 
 export type ReservationStatus =
-  | "pending"
-  | "fulfilled"
-  | "cancelled"
-  | "ready"
-  | "expired"
-  | "waiting";
+  | 'pending'
+  | 'fulfilled'
+  | 'cancelled'
+  | 'ready'
+  | 'expired'
+  | 'waiting';
 
 export interface Reservation {
   id: number;
@@ -154,39 +154,39 @@ export interface BookFilters {
   search?: string;
   genre?: Genre;
   author?: string;
-  availability?: "all" | "available" | "unavailable";
+  availability?: 'all' | 'available' | 'unavailable';
 }
 
 export enum Genre {
-  Academic = "Academic",
-  Adventure = "Adventure",
-  Art = "Art",
-  Biography = "Biography",
-  Business = "Business",
-  Children = "Children",
-  Coming_Of_Age = "Coming-of-Age",
-  Cooking = "Cooking",
-  Drama = "Drama",
-  Dystopian = "Dystopian",
-  Fantasy = "Fantasy",
-  Fiction = "Fiction",
-  Health = "Health",
-  History = "History",
-  Horror = "Horror",
-  Memoir = "Memoir",
-  Mystery = "Mystery",
-  NonFiction = "Non-Fiction",
-  Poetry = "Poetry",
-  Political = "Political",
-  PsychThriller = "Psychological Thriller",
-  Reference = "Reference",
-  Romance = "Romance",
-  ScienceFiction = "Science Fiction",
-  SelfHelp = "Self-Help",
-  Technology = "Technology",
-  Thriller = "Thriller",
-  Travel = "Travel",
-  YoungAdult = "Young Adult",
+  Academic = 'Academic',
+  Adventure = 'Adventure',
+  Art = 'Art',
+  Biography = 'Biography',
+  Business = 'Business',
+  Children = 'Children',
+  Coming_Of_Age = 'Coming-of-Age',
+  Cooking = 'Cooking',
+  Drama = 'Drama',
+  Dystopian = 'Dystopian',
+  Fantasy = 'Fantasy',
+  Fiction = 'Fiction',
+  Health = 'Health',
+  History = 'History',
+  Horror = 'Horror',
+  Memoir = 'Memoir',
+  Mystery = 'Mystery',
+  NonFiction = 'Non-Fiction',
+  Poetry = 'Poetry',
+  Political = 'Political',
+  PsychThriller = 'Psychological Thriller',
+  Reference = 'Reference',
+  Romance = 'Romance',
+  ScienceFiction = 'Science Fiction',
+  SelfHelp = 'Self-Help',
+  Technology = 'Technology',
+  Thriller = 'Thriller',
+  Travel = 'Travel',
+  YoungAdult = 'Young Adult',
 }
 
 export interface Book_Form_Data {
@@ -217,9 +217,9 @@ export interface Patron {
   active_checkout_count?: number; // Number of books currently checked out
 }
 
-export type Update_Patron_Data = Partial<Omit<Patron, "id">>;
+export type Update_Patron_Data = Partial<Omit<Patron, 'id'>>;
 
-export type Create_Patron_Data = Omit<Patron, "id">;
+export type Create_Patron_Data = Omit<Patron, 'id'>;
 
 export interface Branch {
   id: number;
@@ -265,14 +265,14 @@ export type Checked_Out_Copy = {
 };
 
 export enum Library_Item_Type {
-  Audiobook = "AUDIOBOOK",
-  Book = "BOOK",
-  CD = "CD",
-  Magazine = "MAGAZINE",
-  Periodical = "PERIODICAL",
-  Recording = "RECORDING",
-  Video = "VIDEO",
-  Vinyl = "VINYL",
+  Audiobook = 'AUDIOBOOK',
+  Book = 'BOOK',
+  CD = 'CD',
+  Magazine = 'MAGAZINE',
+  Periodical = 'PERIODICAL',
+  Recording = 'RECORDING',
+  Video = 'VIDEO',
+  Vinyl = 'VINYL',
 }
 
 export interface Create_Library_Item_Form_Data {
@@ -327,154 +327,154 @@ export interface Library_Item {
 
 export type Audiobook = Omit<
   Library_Item,
-  | "cd_artist"
-  | "record_label"
-  | "cd_tracks"
-  | "video_format"
-  | "duration_minutes"
-  | "video_rating"
-  | "director"
-  | "studio"
-  | "number_of_pages"
-  | "book_genre"
-  | "artist"
-  | "vinyl_color"
-  | "vinyl_tracks"
+  | 'cd_artist'
+  | 'record_label'
+  | 'cd_tracks'
+  | 'video_format'
+  | 'duration_minutes'
+  | 'video_rating'
+  | 'director'
+  | 'studio'
+  | 'number_of_pages'
+  | 'book_genre'
+  | 'artist'
+  | 'vinyl_color'
+  | 'vinyl_tracks'
 >;
 
 export type Book = Omit<
   Library_Item,
-  | "narrator"
-  | "audiobook_duration"
-  | "cd_artist"
-  | "record_label"
-  | "cd_tracks"
-  | "video_format"
-  | "duration_minutes"
-  | "video_rating"
-  | "director"
-  | "studio"
-  | "vinyl_color"
-  | "vinyl_tracks"
+  | 'narrator'
+  | 'audiobook_duration'
+  | 'cd_artist'
+  | 'record_label'
+  | 'cd_tracks'
+  | 'video_format'
+  | 'duration_minutes'
+  | 'video_rating'
+  | 'director'
+  | 'studio'
+  | 'vinyl_color'
+  | 'vinyl_tracks'
 >;
 
 export type Video = Omit<
   Library_Item,
-  | "narrator"
-  | "audiobook_duration"
-  | "cd_artist"
-  | "record_label"
-  | "cd_tracks"
-  | "number_of_pages"
-  | "book_genre"
-  | "artist"
-  | "vinyl_color"
-  | "vinyl_tracks"
+  | 'narrator'
+  | 'audiobook_duration'
+  | 'cd_artist'
+  | 'record_label'
+  | 'cd_tracks'
+  | 'number_of_pages'
+  | 'book_genre'
+  | 'artist'
+  | 'vinyl_color'
+  | 'vinyl_tracks'
 >;
 
 export type Periodical = Omit<
   Library_Item,
-  | "narrator"
-  | "audiobook_duration"
-  | "cd_artist"
-  | "record_label"
-  | "cd_tracks"
-  | "video_format"
-  | "duration_minutes"
-  | "video_rating"
-  | "director"
-  | "studio"
-  | "number_of_pages"
+  | 'narrator'
+  | 'audiobook_duration'
+  | 'cd_artist'
+  | 'record_label'
+  | 'cd_tracks'
+  | 'video_format'
+  | 'duration_minutes'
+  | 'video_rating'
+  | 'director'
+  | 'studio'
+  | 'number_of_pages'
 >;
 
 export type CD = Omit<
   Library_Item,
-  | "narrator"
-  | "audiobook_duration"
-  | "video_format"
-  | "duration_minutes"
-  | "video_rating"
-  | "director"
-  | "studio"
-  | "number_of_pages"
-  | "book_genre"
-  | "artist"
-  | "vinyl_color"
-  | "vinyl_tracks"
+  | 'narrator'
+  | 'audiobook_duration'
+  | 'video_format'
+  | 'duration_minutes'
+  | 'video_rating'
+  | 'director'
+  | 'studio'
+  | 'number_of_pages'
+  | 'book_genre'
+  | 'artist'
+  | 'vinyl_color'
+  | 'vinyl_tracks'
 >;
 
 export type Vinyl = Omit<
   Library_Item,
-  | "narrator"
-  | "audiobook_duration"
-  | "cd_artist"
-  | "record_label"
-  | "cd_tracks"
-  | "video_format"
-  | "duration_minutes"
-  | "video_rating"
-  | "director"
-  | "studio"
-  | "number_of_pages"
-  | "book_genre"
+  | 'narrator'
+  | 'audiobook_duration'
+  | 'cd_artist'
+  | 'record_label'
+  | 'cd_tracks'
+  | 'video_format'
+  | 'duration_minutes'
+  | 'video_rating'
+  | 'director'
+  | 'studio'
+  | 'number_of_pages'
+  | 'book_genre'
 >;
 
 export type Recording = Omit<
   Library_Item,
-  | "narrator"
-  | "audiobook_duration"
-  | "video_format"
-  | "duration_minutes"
-  | "video_rating"
-  | "director"
-  | "studio"
-  | "number_of_pages"
-  | "book_genre"
-  | "artist"
-  | "vinyl_color"
-  | "vinyl_tracks"
+  | 'narrator'
+  | 'audiobook_duration'
+  | 'video_format'
+  | 'duration_minutes'
+  | 'video_rating'
+  | 'director'
+  | 'studio'
+  | 'number_of_pages'
+  | 'book_genre'
+  | 'artist'
+  | 'vinyl_color'
+  | 'vinyl_tracks'
 >;
 
 export type Magazine = Omit<
   Library_Item,
-  | "narrator"
-  | "audiobook_duration"
-  | "cd_artist"
-  | "record_label"
-  | "cd_tracks"
-  | "video_format"
-  | "duration_minutes"
-  | "video_rating"
-  | "director"
-  | "studio"
-  | "number_of_pages"
-  | "book_genre"
-  | "artist"
-  | "vinyl_color"
-  | "vinyl_tracks"
+  | 'narrator'
+  | 'audiobook_duration'
+  | 'cd_artist'
+  | 'record_label'
+  | 'cd_tracks'
+  | 'video_format'
+  | 'duration_minutes'
+  | 'video_rating'
+  | 'director'
+  | 'studio'
+  | 'number_of_pages'
+  | 'book_genre'
+  | 'artist'
+  | 'vinyl_color'
+  | 'vinyl_tracks'
 >;
 
-export type Create_Library_Item_Data = Omit<Library_Item, "id">;
+export type Create_Library_Item_Data = Omit<Library_Item, 'id'>;
 
 export type Item_Condition =
-  | "New"
-  | "Excellent"
-  | "Good"
-  | "Fair"
-  | "Poor"
-  | "Digital";
+  | 'New'
+  | 'Excellent'
+  | 'Good'
+  | 'Fair'
+  | 'Poor'
+  | 'Digital';
 export type Library_Copy_Status =
-  | "Available"
-  | "Checked Out"
-  | "Renewed Once"
-  | "Renewed Twice"
-  | "Reserved"
-  | "Processing"
-  | "Unshelved"
-  | "Ready For Pickup"
-  | "Damaged"
-  | "Lost"
-  | "Unshelved";
+  | 'Available'
+  | 'Checked Out'
+  | 'Renewed Once'
+  | 'Renewed Twice'
+  | 'Reserved'
+  | 'Processing'
+  | 'Unshelved'
+  | 'Ready For Pickup'
+  | 'Damaged'
+  | 'Lost'
+  | 'Unshelved';
 
 export interface Item_Copy {
   id: number;
@@ -590,14 +590,14 @@ export interface ReshelveResponse {
 
 export interface ReshelveResponseData {
   copy_id: number;
-  status: "Available" | "Reserved";
+  status: 'Available' | 'Reserved';
   branch_id: number;
   reservation_promoted: boolean;
 }
 
 export interface ReshelveResult {
   copy_id: number;
-  status: "Available" | "Reserved";
+  status: 'Available' | 'Reserved';
   branch_id: number;
   reservation_promoted: boolean;
 }
@@ -634,8 +634,8 @@ export type Checkin_Lookup_Result = {
 
 export interface Snackbar_Options {
   message: string;
-  severity?: "success" | "error" | "warning" | "info";
-  variant?: "filled" | "outlined" | "standard";
+  severity?: 'success' | 'error' | 'warning' | 'info';
+  variant?: 'filled' | 'outlined' | 'standard';
   title?: string;
   duration?: number;
 }
@@ -646,6 +646,6 @@ export interface Snackbar_State extends Snackbar_Options {
 
 export interface Loan_Duration {
   id: number;
-  name: Library_Item_Type | "NEW_VIDEO";
+  name: Library_Item_Type | 'NEW_VIDEO';
   duration: number;
 }

@@ -76,7 +76,9 @@ export const CopiesTable = ({ copies, branches }: CopiesTableProps) => {
             <TableRow
               key={copy.id}
               sx={{
-                '&:last-child td, &:last-child th': { border: 0 },
+                '&:last-child td, &:last-child th': {
+                  border: 0,
+                },
                 fontSize: { xs: '0.5rem', sm: '0.875rem' },
               }}
             >
@@ -114,7 +116,10 @@ export const CopiesTable = ({ copies, branches }: CopiesTableProps) => {
                   color={get_status_color(copy.status)}
                   size="small"
                   sx={{
-                    fontSize: { xs: '0.65rem', sm: '0.75rem' },
+                    fontSize: {
+                      xs: '0.65rem',
+                      sm: '0.75rem',
+                    },
                     height: { xs: 20, sm: 24 },
                   }}
                 />
@@ -127,7 +132,10 @@ export const CopiesTable = ({ copies, branches }: CopiesTableProps) => {
                     variant="outlined"
                     size="small"
                     sx={{
-                      fontSize: { xs: '0.65rem', sm: '0.75rem' },
+                      fontSize: {
+                        xs: '0.65rem',
+                        sm: '0.75rem',
+                      },
                       height: { xs: 20, sm: 24 },
                     }}
                   />

@@ -1,4 +1,4 @@
-import { Book as BookIcon, Delete, Edit, MoreVert } from "@mui/icons-material";
+import { Book as BookIcon, Delete, Edit, MoreVert } from '@mui/icons-material';
 import {
   Card,
   CardHeader,
@@ -12,59 +12,58 @@ import {
   Stack,
   type SxProps,
   Typography,
-} from "@mui/material";
-import Paper from "@mui/material/Paper";
-import { type GridColDef } from "@mui/x-data-grid";
-import { Activity, type PropsWithChildren, Suspense } from "react";
-import { useParams } from "react-router-dom";
-import { PageContainer, PageTitle } from "../components/common/PageBuilders";
-import SimpleGrid from "../components/common/SimpleGrid";
-import { ItemCopyConditionChip } from "../components/copies/ItemCopyConditionChip";
-import { ItemCopyStatusChip } from "../components/copies/ItemCopyStatusChip";
-import { useCopiesOfLibraryItem } from "../hooks/useCopies";
-import { useLibraryItemById } from "../hooks/useLibraryItems";
-import { GenreChip } from "../components/common/GenreChip";
-import React from "react";
+} from '@mui/material';
+import Paper from '@mui/material/Paper';
+import { type GridColDef } from '@mui/x-data-grid';
+import React, { Activity, type PropsWithChildren, Suspense } from 'react';
+import { useParams } from 'react-router-dom';
+import { GenreChip } from '../components/common/GenreChip';
+import { PageContainer, PageTitle } from '../components/common/PageBuilders';
+import SimpleGrid from '../components/common/SimpleGrid';
+import { ItemCopyConditionChip } from '../components/copies/ItemCopyConditionChip';
+import { ItemCopyStatusChip } from '../components/copies/ItemCopyStatusChip';
+import { useCopiesOfLibraryItem } from '../hooks/useCopies';
+import { useLibraryItemById } from '../hooks/useLibraryItems';
 
 // import { useSnackbar } from '../hooks/useSnackbar';
 
 const copy_columns: GridColDef[] = [
   {
-    field: "copy_label",
-    headerName: "Copy",
+    field: 'copy_label',
+    headerName: 'Copy',
     width: 120,
   },
   {
-    field: "status",
-    headerName: "Status",
+    field: 'status',
+    headerName: 'Status',
     width: 150,
     renderCell: (params) => (
       <ItemCopyStatusChip size="small" status={params.value} />
     ),
   },
   {
-    field: "condition",
-    headerName: "Condition",
+    field: 'condition',
+    headerName: 'Condition',
     width: 120,
     renderCell: (params) => (
       <ItemCopyConditionChip size="small" condition={params.value} />
     ),
   },
   {
-    field: "current_branch_name",
-    headerName: "Current Location",
+    field: 'current_branch_name',
+    headerName: 'Current Location',
     flex: 1,
     minWidth: 150,
   },
   {
-    field: "patron_first_name",
-    headerName: "Checked Out By",
+    field: 'patron_first_name',
+    headerName: 'Checked Out By',
     width: 150,
     valueGetter: (_value, row) => {
       if (row.patron_first_name && row.patron_last_name) {
         return `${row.patron_first_name} ${row.patron_last_name}`;
       }
-      return "-";
+      return '-';
     },
   },
 ];
@@ -90,7 +89,7 @@ export const Library_Item_Page = () => {
 
   const page_loading = !library_item_id || item_loading;
   return (
-    <PageContainer width="xl" sx={{ overflowY: "auto" }}>
+    <PageContainer width="xl" sx={{ overflowY: 'auto' }}>
       <Stack spacing={2} onClick={() => console.log(data)}>
         <Card sx={{ borderRadius: 3 }}>
           <CardHeader
@@ -106,7 +105,7 @@ export const Library_Item_Page = () => {
                   onClose={handleClose}
                   slotProps={{
                     list: {
-                      "aria-labelledby": "basic-button",
+                      'aria-labelledby': 'basic-button',
                     },
                   }}
                 >
@@ -130,7 +129,7 @@ export const Library_Item_Page = () => {
             title={
               <PageTitle
                 loading={page_loading}
-                title={page_loading ? "Library Item" : `${data?.title}`}
+                title={page_loading ? 'Library Item' : `${data?.title}`}
                 Icon_Component={BookIcon}
               ></PageTitle>
             }
@@ -139,8 +138,8 @@ export const Library_Item_Page = () => {
           <Typography sx={{ px: 2 }} variant="subtitle1" color="text.secondary">
             {data?.description}
           </Typography>
-          <Activity mode={data?.genres ? "visible" : "hidden"}>
-            <Stack sx={{ px: 2, py: 1 }} direction={"row"} gap={1}>
+          <Activity mode={data?.genres ? 'visible' : 'hidden'}>
+            <Stack sx={{ px: 2, py: 1 }} direction={'row'} gap={1}>
               {data?.genres.map((b) => (
                 <GenreChip genre={b} />
               ))}
@@ -153,50 +152,50 @@ export const Library_Item_Page = () => {
             <Grid size={8}>
               <LIP_Section>
                 <Stack spacing={2}>
-                  <Stack direction={"row"} justifyContent={"space-between"}>
-                    <LIP_Field label="Title" value={data?.title || ""} />
-                    <LIP_Field label="Author" value={data?.author || ""} />
+                  <Stack direction={'row'} justifyContent={'space-between'}>
+                    <LIP_Field label="Title" value={data?.title || ''} />
+                    <LIP_Field label="Author" value={data?.author || ''} />
                   </Stack>
-                  <Stack direction={"row"} justifyContent={"space-between"}>
+                  <Stack direction={'row'} justifyContent={'space-between'}>
                     <LIP_Field
                       label="Publisher"
                       value={
                         data?.publisher ||
                         data?.audiobook_publisher ||
-                        "Unknown"
+                        'Unknown'
                       }
                     />
                   </Stack>
-                  <Stack direction={"row"} justifyContent={"space-between"}>
+                  <Stack direction={'row'} justifyContent={'space-between'}>
                     {/* <LIP_Field
 											label="Genre"
 											value={data?.book_genre || 'N/A'}
 										/> */}
                     <LIP_Field
                       label="Number of Pages"
-                      value={data?.number_of_pages?.toString() || "N/A"}
+                      value={data?.number_of_pages?.toString() || 'N/A'}
                     />
                     <LIP_Field
                       label="Publication Year"
-                      value={data?.publication_year?.toString() || "N/A"}
+                      value={data?.publication_year?.toString() || 'N/A'}
                     />
                   </Stack>
                   <LIP_Field
                     label="Description"
-                    value={data?.description || "No description available"}
+                    value={data?.description || 'No description available'}
                   />
-                  <Stack direction={"row"} justifyContent={"space-between"}>
+                  <Stack direction={'row'} justifyContent={'space-between'}>
                     <LIP_Field
                       label="Total Copies"
-                      value={data?.total_copies || "N/A"}
+                      value={data?.total_copies || 'N/A'}
                     />
                     <LIP_Field
                       label="Available Copies"
-                      value={data?.available_copies || "N/A"}
+                      value={data?.available_copies || 'N/A'}
                     />
                     <LIP_Field
                       label="Checked Out Copies"
-                      value={data?.checked_out_copies?.toString() || "N/A"}
+                      value={data?.checked_out_copies?.toString() || 'N/A'}
                     />
                   </Stack>
                 </Stack>
@@ -214,13 +213,13 @@ export const Library_Item_Page = () => {
             </Grid>
             <Grid size={4}>
               <img
-                style={{ width: "97%", borderRadius: "8px" }}
+                style={{ width: '97%', borderRadius: '8px' }}
                 src={
                   data?.cover_image_url ||
                   data?.audiobook_cover_image ||
                   undefined
                 }
-                alt={`Cover image of ${data?.title || ""}`}
+                alt={`Cover image of ${data?.title || ''}`}
               />
             </Grid>
           </Suspense>

@@ -13,7 +13,7 @@ import {
   ReceiptLong,
   Settings,
   TableRows,
-} from "@mui/icons-material";
+} from '@mui/icons-material';
 import {
   Box,
   Divider,
@@ -26,8 +26,8 @@ import {
   Toolbar,
   useMediaQuery,
   useTheme,
-} from "@mui/material";
-import { Link, useLocation } from "react-router-dom";
+} from '@mui/material';
+import { Link, useLocation } from 'react-router-dom';
 
 export const drawerWidth = 240;
 
@@ -40,50 +40,58 @@ export const Sidebar = ({
 }) => {
   const location = useLocation();
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
   const isActive = (path: string) => {
     return (
       location.pathname === path ||
-      (path !== "/" && location.pathname.startsWith(path))
+      (path !== '/' && location.pathname.startsWith(path))
     );
   };
 
   const collection_items = [
-    { text: "Home", path: "/", icon: <Home /> },
-    { text: "Library Items", path: "/library-items", icon: <Book /> },
-    { text: "All Copies", path: "/library-item-copies", icon: <TableRows /> },
-    { text: "Patrons", path: "/patrons", icon: <Groups2 /> },
-    { text: "Item Transactions", path: "/transactions", icon: <ReceiptLong /> },
-    { text: "Reservations", path: "/reservations", icon: <EventNote /> },
-    { text: "Branches", path: "/branches", icon: <LocationCity /> },
+    { text: 'Home', path: '/', icon: <Home /> },
+    { text: 'Library Items', path: '/library-items', icon: <Book /> },
+    {
+      text: 'All Copies',
+      path: '/library-item-copies',
+      icon: <TableRows />,
+    },
+    { text: 'Patrons', path: '/patrons', icon: <Groups2 /> },
+    {
+      text: 'Item Transactions',
+      path: '/transactions',
+      icon: <ReceiptLong />,
+    },
+    { text: 'Reservations', path: '/reservations', icon: <EventNote /> },
+    { text: 'Branches', path: '/branches', icon: <LocationCity /> },
   ];
 
   const action_items = [
-    { text: "Check In", path: "/check-in", icon: <Input /> },
+    { text: 'Check In', path: '/check-in', icon: <Input /> },
     {
-      text: "Check Out",
-      path: "/check-out",
-      icon: <Output sx={{ transform: "rotate(180deg)" }} />,
+      text: 'Check Out',
+      path: '/check-out',
+      icon: <Output sx={{ transform: 'rotate(180deg)' }} />,
     },
-    { text: "Reserve", path: "/reserve", icon: <BookmarkAdd /> },
-    { text: "Renew", path: "/renew", icon: <Autorenew /> },
-    { text: "Reshelve", path: "/available", icon: <CheckCircle /> },
+    { text: 'Reserve', path: '/reserve', icon: <BookmarkAdd /> },
+    { text: 'Renew', path: '/renew', icon: <Autorenew /> },
+    { text: 'Reshelve', path: '/available', icon: <CheckCircle /> },
   ];
 
   const bottom_items = [
-    { text: "Dashboard", path: "/dashboard", icon: <Dashboard /> },
-    { text: "Settings", path: "/settings", icon: <Settings /> },
+    { text: 'Dashboard', path: '/dashboard', icon: <Dashboard /> },
+    { text: 'Settings', path: '/settings', icon: <Settings /> },
   ];
 
   const drawer_content = (
-    <Box sx={{ overflow: "auto", flex: 1 }}>
+    <Box sx={{ overflow: 'auto', flex: 1 }}>
       <List
         sx={{
           height: 1,
-          display: "flex",
-          flexDirection: "column",
-          justifyContent: "space-between",
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'space-between',
         }}
       >
         <Box>
@@ -97,18 +105,18 @@ export const Sidebar = ({
                 sx={{
                   mx: 1,
                   borderRadius: 1,
-                  "&.Mui-selected": {
-                    backgroundColor: "primary.50",
-                    color: "primary.main",
-                    "&:hover": {
-                      backgroundColor: "primary.100",
+                  '&.Mui-selected': {
+                    backgroundColor: 'primary.50',
+                    color: 'primary.main',
+                    '&:hover': {
+                      backgroundColor: 'primary.100',
                     },
                   },
                 }}
               >
                 <ListItemIcon
                   sx={{
-                    color: isActive(item.path) ? "primary.main" : "inherit",
+                    color: isActive(item.path) ? 'primary.main' : 'inherit',
                     minWidth: 40,
                   }}
                 >
@@ -117,7 +125,9 @@ export const Sidebar = ({
                 <ListItemText
                   primary={item.text}
                   slotProps={{
-                    primary: { fontWeight: isActive(item.path) ? 600 : 400 },
+                    primary: {
+                      fontWeight: isActive(item.path) ? 600 : 400,
+                    },
                   }}
                 />
               </ListItemButton>
@@ -134,18 +144,18 @@ export const Sidebar = ({
                 sx={{
                   mx: 1,
                   borderRadius: 1,
-                  "&.Mui-selected": {
-                    backgroundColor: "primary.50",
-                    color: "primary.main",
-                    "&:hover": {
-                      backgroundColor: "primary.100",
+                  '&.Mui-selected': {
+                    backgroundColor: 'primary.50',
+                    color: 'primary.main',
+                    '&:hover': {
+                      backgroundColor: 'primary.100',
                     },
                   },
                 }}
               >
                 <ListItemIcon
                   sx={{
-                    color: isActive(item.path) ? "primary.main" : "inherit",
+                    color: isActive(item.path) ? 'primary.main' : 'inherit',
                     minWidth: 40,
                   }}
                 >
@@ -154,7 +164,9 @@ export const Sidebar = ({
                 <ListItemText
                   primary={item.text}
                   slotProps={{
-                    primary: { fontWeight: isActive(item.path) ? 600 : 400 },
+                    primary: {
+                      fontWeight: isActive(item.path) ? 600 : 400,
+                    },
                   }}
                 />
               </ListItemButton>
@@ -173,18 +185,18 @@ export const Sidebar = ({
                 sx={{
                   mx: 1,
                   borderRadius: 1,
-                  "&.Mui-selected": {
-                    backgroundColor: "primary.50",
-                    color: "primary.main",
-                    "&:hover": {
-                      backgroundColor: "primary.100",
+                  '&.Mui-selected': {
+                    backgroundColor: 'primary.50',
+                    color: 'primary.main',
+                    '&:hover': {
+                      backgroundColor: 'primary.100',
                     },
                   },
                 }}
               >
                 <ListItemIcon
                   sx={{
-                    color: isActive(item.path) ? "primary.main" : "inherit",
+                    color: isActive(item.path) ? 'primary.main' : 'inherit',
                     minWidth: 40,
                   }}
                 >
@@ -193,7 +205,9 @@ export const Sidebar = ({
                 <ListItemText
                   primary={item.text}
                   slotProps={{
-                    primary: { fontWeight: isActive(item.path) ? 600 : 400 },
+                    primary: {
+                      fontWeight: isActive(item.path) ? 600 : 400,
+                    },
                   }}
                 />
               </ListItemButton>
@@ -218,9 +232,9 @@ export const Sidebar = ({
           keepMounted: true, // Better open performance on mobile.
         }}
         sx={{
-          display: { xs: "block", md: "none" },
-          "& .MuiDrawer-paper": {
-            boxSizing: "border-box",
+          display: { xs: 'block', md: 'none' },
+          '& .MuiDrawer-paper': {
+            boxSizing: 'border-box',
             width: drawerWidth,
           },
         }}
@@ -232,9 +246,9 @@ export const Sidebar = ({
       <Drawer
         variant="permanent"
         sx={{
-          display: { xs: "none", md: "block" },
-          "& .MuiDrawer-paper": {
-            boxSizing: "border-box",
+          display: { xs: 'none', md: 'block' },
+          '& .MuiDrawer-paper': {
+            boxSizing: 'border-box',
             width: drawerWidth,
           },
         }}

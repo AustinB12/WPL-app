@@ -1,4 +1,4 @@
-import { LocationCity } from "@mui/icons-material";
+import { LocationCity } from '@mui/icons-material';
 import {
   Card,
   CardActionArea,
@@ -6,10 +6,10 @@ import {
   CardMedia,
   Grid,
   Typography,
-} from "@mui/material";
-import { PageContainer, PageTitle } from "../components/common/PageBuilders";
-import { useBranches } from "../hooks/useBranches";
-import type { Branch } from "../types";
+} from '@mui/material';
+import { PageContainer, PageTitle } from '../components/common/PageBuilders';
+import { useBranches } from '../hooks/useBranches';
+import type { Branch } from '../types';
 
 export function BranchesPage() {
   const { data: branches, isLoading: loading } = useBranches();
@@ -23,9 +23,9 @@ export function BranchesPage() {
             <Grid
               sx={{
                 borderRadius: 16,
-                cornerShape: "squircle",
+                cornerShape: 'squircle',
                 boxShadow: 4,
-                overflow: "clip",
+                overflow: 'clip',
               }}
               key={branch.id}
               size={{ xs: 12, sm: 6, md: 4 }}
@@ -57,7 +57,7 @@ function BranchCard({ branch }: { branch: Branch }) {
           <Typography gutterBottom variant="h5" component="div">
             {branch.branch_name}
           </Typography>
-          <Typography variant="body2" sx={{ color: "text.secondary" }}>
+          <Typography variant="body2" sx={{ color: 'text.secondary' }}>
             {branch.address}
             <br />
             Phone: {branch.phone}

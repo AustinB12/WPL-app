@@ -1,26 +1,26 @@
-import { Search, Warning, Close, Delete } from "@mui/icons-material";
+import { Close, Delete, Search, Warning } from '@mui/icons-material';
 import {
+  Avatar,
+  Box,
   Card,
   CardContent,
-  Typography,
-  Box,
-  Chip,
-  Skeleton,
   CardHeader,
-  Stack,
-  IconButton,
+  Chip,
   Drawer,
+  IconButton,
   List,
   ListItem,
   ListItemAvatar,
   ListItemText,
-  Avatar,
-} from "@mui/material";
-import { useState } from "react";
-import type { Item_Copy_Result } from "../../types";
-import ItemTypeChip from "../library_items/ItemTypeChip";
-import { ItemCopyConditionChip } from "../copies/ItemCopyConditionChip";
-import { useReservationsByItemCopy } from "../../hooks/useReservations";
+  Skeleton,
+  Stack,
+  Typography,
+} from '@mui/material';
+import { useState } from 'react';
+import { useReservationsByItemCopy } from '../../hooks/useReservations';
+import type { Item_Copy_Result } from '../../types';
+import { ItemCopyConditionChip } from '../copies/ItemCopyConditionChip';
+import ItemTypeChip from '../library_items/ItemTypeChip';
 
 interface ItemReservationCardProps {
   item?: Item_Copy_Result | null;
@@ -29,7 +29,7 @@ interface ItemReservationCardProps {
 export const ItemReservationCard = ({ item }: ItemReservationCardProps) => {
   const [drawer_open, set_drawer_open] = useState(false);
 
-  const is_checked_out = item ? item.status === "Checked Out" : false;
+  const is_checked_out = item ? item.status === 'Checked Out' : false;
   const has_reservation =
     item && item.reservation_count ? item.reservation_count > 0 : false;
   const is_overdue =
@@ -39,9 +39,9 @@ export const ItemReservationCard = ({ item }: ItemReservationCardProps) => {
     <>
       <Card
         sx={{
-          height: "100%",
+          height: '100%',
           borderRadius: 28,
-          cornerShape: "squircle",
+          cornerShape: 'squircle',
           p: 2,
           minWidth: { xs: 250, sm: 350 },
           boxShadow: 6,
@@ -91,8 +91,8 @@ export const ItemReservationCard = ({ item }: ItemReservationCardProps) => {
         <CardContent>
           <Box
             sx={{
-              display: "grid",
-              gridTemplateColumns: "120px 1fr",
+              display: 'grid',
+              gridTemplateColumns: '120px 1fr',
               gap: 2,
               rowGap: 1.5,
             }}
@@ -103,15 +103,15 @@ export const ItemReservationCard = ({ item }: ItemReservationCardProps) => {
                   component="img"
                   src={
                     item?.cover_image ||
-                    "https://unrulyguides.com/wp-content/uploads/2011/12/generic-cover.jpg"
+                    'https://unrulyguides.com/wp-content/uploads/2011/12/generic-cover.jpg'
                   }
                   alt={item.title}
                   sx={{
                     width: 120,
-                    height: ["VINYL", "CD"].includes(item.item_type)
+                    height: ['VINYL', 'CD'].includes(item.item_type)
                       ? 120
                       : 160,
-                    objectFit: "cover",
+                    objectFit: 'cover',
                     borderRadius: 2,
                     boxShadow: 2,
                   }}
@@ -130,7 +130,7 @@ export const ItemReservationCard = ({ item }: ItemReservationCardProps) => {
               )}
             </Box>
 
-            <Stack justifyContent={"space-between"}>
+            <Stack justifyContent={'space-between'}>
               <Box>
                 <Typography variant="caption" color="text.secondary">
                   Copy Label
@@ -189,25 +189,25 @@ export const ItemReservationCard = ({ item }: ItemReservationCardProps) => {
                 </Typography>
                 <Typography
                   variant="body2"
-                  color={is_overdue ? "warning.main" : "text.primary"}
+                  color={is_overdue ? 'warning.main' : 'text.primary'}
                   fontWeight={is_overdue ? 500 : 400}
                 >
                   {new Date(item.due_date).toLocaleDateString()}
-                  {is_overdue && " (Overdue)"}
+                  {is_overdue && ' (Overdue)'}
                 </Typography>
               </Box>
             )}
           </Box>
 
           <Stack
-            direction={"row"}
-            justifyContent={"center"}
-            sx={{ gap: 1, mt: 2, flexWrap: "wrap" }}
+            direction={'row'}
+            justifyContent={'center'}
+            sx={{ gap: 1, mt: 2, flexWrap: 'wrap' }}
           >
             {item && is_overdue && (
               <Chip icon={<Warning />} label="Overdue" color="warning" />
             )}
-            {item && item.status === "Available" && !has_reservation && (
+            {item && item.status === 'Available' && !has_reservation && (
               <Chip label="Available" color="success" />
             )}
             {item && item.condition && (
@@ -222,12 +222,12 @@ export const ItemReservationCard = ({ item }: ItemReservationCardProps) => {
         open={drawer_open}
         onClose={() => set_drawer_open(false)}
       >
-        <Box sx={{ width: 400, p: 2, mt: "64px" }}>
+        <Box sx={{ width: 400, p: 2, mt: '64px' }}>
           <Box
             sx={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
               mb: 2,
             }}
           >
@@ -250,7 +250,7 @@ const Reservations_List = ({ item_copy_id }: { item_copy_id: number }) => {
     <List>
       {loading &&
         [1, 2, 3].map((n) => (
-          <Skeleton animation="wave" key={n} width={"100%"} height={60} />
+          <Skeleton animation="wave" key={n} width={'100%'} height={60} />
         ))}
       {!loading && reservations && reservations.length === 0 && (
         <Typography variant="body2">No reservations found.</Typography>
@@ -277,8 +277,8 @@ const Reservations_List = ({ item_copy_id }: { item_copy_id: number }) => {
               </Avatar>
             </ListItemAvatar>
             <ListItemText
-              primary={reservation.first_name + " " + reservation.last_name}
-              secondary={"#" + reservation.queue_position.toString()}
+              primary={reservation.first_name + ' ' + reservation.last_name}
+              secondary={'#' + reservation.queue_position.toString()}
             ></ListItemText>
           </ListItem>
         ))}
