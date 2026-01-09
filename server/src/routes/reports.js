@@ -1,12 +1,12 @@
-import express from "express";
-import * as db from "../config/database.js";
+import express from 'express';
+import * as db from '../config/database.js';
 
 const router = express.Router();
 
 /**
  * GET /api/v1/reports/checkouts - Generate checkout report (LOW PRIORITY REQUIREMENT)
  */
-router.get("/checkouts", (req, res) => {
+router.get('/checkouts', (req, res) => {
   const start_date = req.query.start_date;
   const end_date = req.query.end_date;
   const branch_id = req.query.owning_branch_id;
@@ -31,44 +31,44 @@ router.get("/checkouts", (req, res) => {
   const params = [];
 
   if (start_date) {
-    query += " AND t.date >= ?";
+    query += ' AND t.date >= ?';
     params.push(start_date);
   }
 
   if (end_date) {
-    query += " AND t.date <= ?";
+    query += ' AND t.date <= ?';
     params.push(end_date);
   }
 
   if (branch_id) {
-    query += " AND lic.owning_branch_id = ?";
+    query += ' AND lic.owning_branch_id = ?';
     params.push(branch_id);
   }
 
   if (item_type) {
-    query += " AND li.item_type = ?";
+    query += ' AND li.item_type = ?';
     params.push(item_type);
   }
 
-  query += " ORDER BY t.date DESC";
+  query += ' ORDER BY t.date DESC';
 
   db.execute_query(query, params)
     .then((results) => {
       // Calculate statistics
       const total_checkouts = results.length;
       const active_checkouts = results.filter(
-        (r) => r.status === "active"
+        (r) => r.status === 'active'
       ).length;
       const returned_checkouts = results.filter(
-        (r) => r.status === "returned"
+        (r) => r.status === 'returned'
       ).length;
 
       res.json({
         success: true,
-        report_type: "checkouts",
+        report_type: 'checkouts',
         period: {
-          start_date: start_date || "all",
-          end_date: end_date || "all",
+          start_date: start_date || 'all',
+          end_date: end_date || 'all',
         },
         statistics: {
           total_checkouts: total_checkouts,
@@ -80,7 +80,7 @@ router.get("/checkouts", (req, res) => {
     })
     .catch((error) => {
       res.status(500).json({
-        error: "Failed to generate checkout report",
+        error: 'Failed to generate checkout report',
         message: error.message,
       });
     });
@@ -89,7 +89,7 @@ router.get("/checkouts", (req, res) => {
 /**
  * GET /api/v1/reports/returns - Generate returns report (LOW PRIORITY REQUIREMENT)
  */
-router.get("/returns", (req, res) => {
+router.get('/returns', (req, res) => {
   const start_date = req.query.start_date;
   const end_date = req.query.end_date;
   const branch_id = req.query.owning_branch_id;
@@ -114,21 +114,21 @@ router.get("/returns", (req, res) => {
   const params = [];
 
   if (start_date) {
-    query += " AND t.date >= ?";
+    query += ' AND t.date >= ?';
     params.push(start_date);
   }
 
   if (end_date) {
-    query += " AND t.date <= ?";
+    query += ' AND t.date <= ?';
     params.push(end_date);
   }
 
   if (branch_id) {
-    query += " AND lic.owning_branch_id = ?";
+    query += ' AND lic.owning_branch_id = ?';
     params.push(branch_id);
   }
 
-  query += " ORDER BY t.date DESC";
+  query += ' ORDER BY t.date DESC';
 
   db.execute_query(query, params)
     .then((results) => {
@@ -143,10 +143,10 @@ router.get("/returns", (req, res) => {
 
       res.json({
         success: true,
-        report_type: "returns",
+        report_type: 'returns',
         period: {
-          start_date: start_date || "all",
-          end_date: end_date || "all",
+          start_date: start_date || 'all',
+          end_date: end_date || 'all',
         },
         statistics: {
           total_returns: total_returns,
@@ -159,7 +159,7 @@ router.get("/returns", (req, res) => {
     })
     .catch((error) => {
       res.status(500).json({
-        error: "Failed to generate returns report",
+        error: 'Failed to generate returns report',
         message: error.message,
       });
     });
@@ -168,7 +168,7 @@ router.get("/returns", (req, res) => {
 /**
  * GET /api/v1/reports/fines - Generate fines report (LOW PRIORITY REQUIREMENT)
  */
-router.get("/fines", (req, res) => {
+router.get('/fines', (req, res) => {
   const start_date = req.query.start_date;
   const end_date = req.query.end_date;
   const paid_status = req.query.paid_status;
@@ -197,22 +197,22 @@ router.get("/fines", (req, res) => {
   const params = [];
 
   if (start_date) {
-    query += " AND f.created_at >= ?";
+    query += ' AND f.created_at >= ?';
     params.push(start_date);
   }
 
   if (end_date) {
-    query += " AND f.created_at <= ?";
+    query += ' AND f.created_at <= ?';
     params.push(end_date);
   }
 
-  if (paid_status === "paid") {
-    query += " AND f.is_paid = 1";
-  } else if (paid_status === "unpaid") {
-    query += " AND f.is_paid = 0";
+  if (paid_status === 'paid') {
+    query += ' AND f.is_paid = 1';
+  } else if (paid_status === 'unpaid') {
+    query += ' AND f.is_paid = 0';
   }
 
-  query += " ORDER BY f.created_at DESC";
+  query += ' ORDER BY f.created_at DESC';
 
   db.execute_query(query, params)
     .then((results) => {
@@ -228,10 +228,10 @@ router.get("/fines", (req, res) => {
 
       res.json({
         success: true,
-        report_type: "fines",
+        report_type: 'fines',
         period: {
-          start_date: start_date || "all",
-          end_date: end_date || "all",
+          start_date: start_date || 'all',
+          end_date: end_date || 'all',
         },
         statistics: {
           total_fines_count: total_fines_count,
@@ -246,7 +246,7 @@ router.get("/fines", (req, res) => {
     })
     .catch((error) => {
       res.status(500).json({
-        error: "Failed to generate fines report",
+        error: 'Failed to generate fines report',
         message: error.message,
       });
     });
@@ -255,9 +255,9 @@ router.get("/fines", (req, res) => {
 /**
  * GET /api/v1/reports/overview - Generate overall library statistics (LOW PRIORITY REQUIREMENT)
  */
-router.get("/overview", (_, res) => {
+router.get('/overview', (_, res) => {
   // Get total items
-  db.execute_query("SELECT COUNT(*) as count FROM LIBRARY_ITEM_COPIES")
+  db.execute_query('SELECT COUNT(*) as count FROM LIBRARY_ITEM_COPIES')
     .then((total_items) => {
       // Get available items
       return db
@@ -280,24 +280,24 @@ router.get("/overview", (_, res) => {
                   // Get total patrons
                   return db
                     .execute_query(
-                      "SELECT COUNT(*) as count FROM PATRONS WHERE is_active = 1"
+                      'SELECT COUNT(*) as count FROM PATRONS WHERE is_active = 1'
                     )
                     .then((total_patrons) => {
                       // Get active checkouts
                       return db
                         .execute_query(
-                          "SELECT COUNT(*) as count FROM ITEM_TRANSACTIONS"
+                          'SELECT COUNT(*) as count FROM ITEM_TRANSACTIONS'
                         )
                         .then((active_checkouts) => {
                           // Get total outstanding fines
                           return db
                             .execute_query(
-                              "SELECT SUM(balance) as total FROM PATRONS WHERE balance > 0"
+                              'SELECT SUM(balance) as total FROM PATRONS WHERE balance > 0'
                             )
                             .then((outstanding_fines) => {
                               res.json({
                                 success: true,
-                                report_type: "overview",
+                                report_type: 'overview',
                                 statistics: {
                                   total_items: total_items[0].count,
                                   available_items: available_items[0].count,
@@ -319,7 +319,7 @@ router.get("/overview", (_, res) => {
     })
     .catch((error) => {
       res.status(500).json({
-        error: "Failed to generate overview report",
+        error: 'Failed to generate overview report',
         message: error.message,
       });
     });
@@ -328,7 +328,7 @@ router.get("/overview", (_, res) => {
 /**
  * GET /api/v1/reports/stats/overview - Optimized overview statistics with single query
  */
-router.get("/stats/overview", (_, res) => {
+router.get('/stats/overview', (_, res) => {
   // Single optimized query to get all statistics at once
   var optimized_query = `
     WITH library_stats AS (
@@ -385,10 +385,10 @@ router.get("/stats/overview", (_, res) => {
 
       res.json({
         success: true,
-        report_type: "overview",
+        report_type: 'overview',
         query_performance: {
           queries_executed: 1,
-          optimization: "Single CTE query instead of 11 separate queries",
+          optimization: 'Single CTE query instead of 11 separate queries',
         },
         statistics: {
           total_items: stats.total_items || 0,
@@ -409,7 +409,7 @@ router.get("/stats/overview", (_, res) => {
     })
     .catch((error) => {
       res.status(500).json({
-        error: "Failed to fetch overview statistics",
+        error: 'Failed to fetch overview statistics',
         message: error.message,
       });
     });
@@ -419,10 +419,10 @@ router.get("/stats/overview", (_, res) => {
  * Alternative parallel implementation for comparison (if single CTE becomes too complex)
  * This version uses Promise.all to execute queries in parallel instead of sequentially
  */
-router.get("/stats/overview-parallel", (_, res) => {
+router.get('/stats/overview-parallel', (_, res) => {
   // Execute all queries in parallel for better performance
   var queries = [
-    db.execute_query("SELECT COUNT(*) as total_items FROM LIBRARY_ITEM_COPIES"),
+    db.execute_query('SELECT COUNT(*) as total_items FROM LIBRARY_ITEM_COPIES'),
     db.execute_query(`
       SELECT 
         SUM(CASE WHEN status = 'Available' THEN 1 ELSE 0 END) as available_items,
@@ -454,10 +454,10 @@ router.get("/stats/overview-parallel", (_, res) => {
 
       res.json({
         success: true,
-        report_type: "overview-parallel",
+        report_type: 'overview-parallel',
         query_performance: {
           queries_executed: 5,
-          optimization: "Parallel execution with Promise.all",
+          optimization: 'Parallel execution with Promise.all',
         },
         statistics: {
           total_items: total_items.total_items || 0,
@@ -476,7 +476,7 @@ router.get("/stats/overview-parallel", (_, res) => {
     })
     .catch((error) => {
       res.status(500).json({
-        error: "Failed to fetch overview statistics (parallel)",
+        error: 'Failed to fetch overview statistics (parallel)',
         message: error.message,
       });
     });

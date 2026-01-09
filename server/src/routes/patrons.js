@@ -1,32 +1,32 @@
-import express from "express";
-import { body, validationResult } from "express-validator";
-import * as db from "../config/database.js";
-import { format_sql_datetime } from "../utils.js";
+import express from 'express';
+import { body, validationResult } from 'express-validator';
+import * as db from '../config/database.js';
+import { format_sql_datetime } from '../utils.js';
 
 const router = express.Router();
 
 // Validation middleware
 const validate_patron = [
-  body("first_name").notEmpty().withMessage("First name is required"),
-  body("last_name").notEmpty().withMessage("Last name is required"),
-  body("email").optional().isEmail().withMessage("Invalid email format"),
-  body("phone").optional().isString().withMessage("Phone must be a string"),
-  body("balance")
+  body('first_name').notEmpty().withMessage('First name is required'),
+  body('last_name').notEmpty().withMessage('Last name is required'),
+  body('email').optional().isEmail().withMessage('Invalid email format'),
+  body('phone').optional().isString().withMessage('Phone must be a string'),
+  body('balance')
     .optional()
     .isFloat({ min: 0 })
-    .withMessage("Balance must be a non-negative number"),
-  body("local_branch_id")
+    .withMessage('Balance must be a non-negative number'),
+  body('local_branch_id')
     .optional()
     .isInt({ min: 1 })
-    .withMessage("Branch ID must be a valid positive integer"),
-  body("card_expiration_date")
+    .withMessage('Branch ID must be a valid positive integer'),
+  body('card_expiration_date')
     .optional()
     .isISO8601()
-    .withMessage("Card expiration date must be a valid date (YYYY-MM-DD)"),
-  body("birthday")
+    .withMessage('Card expiration date must be a valid date (YYYY-MM-DD)'),
+  body('birthday')
     .optional()
     .isISO8601()
-    .withMessage("Birthday must be a valid date (YYYY-MM-DD)"),
+    .withMessage('Birthday must be a valid date (YYYY-MM-DD)'),
 ];
 
 // Helper function to handle validation errors
@@ -34,7 +34,7 @@ const handle_validation_errors = (req, res, next) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     return res.status(400).json({
-      error: "Validation failed",
+      error: 'Validation failed',
       details: errors.array(),
     });
   }
@@ -42,25 +42,25 @@ const handle_validation_errors = (req, res, next) => {
 };
 
 // GET /api/v1/patrons - Get all patrons
-router.get("/", async (req, res) => {
+router.get('/', async (req, res) => {
   try {
     const { search, active_only } = req.query;
     const conditions = [];
     const params = [];
 
-    if (active_only === "true") {
-      conditions.push("p.is_active = 1");
+    if (active_only === 'true') {
+      conditions.push('p.is_active = 1');
     }
 
     if (search) {
       conditions.push(
-        "(p.first_name LIKE ? OR p.last_name LIKE ? OR p.email LIKE ?)"
+        '(p.first_name LIKE ? OR p.last_name LIKE ? OR p.email LIKE ?)'
       );
       params.push(`%${search}%`, `%${search}%`, `%${search}%`);
     }
 
     const where_clause =
-      conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
+      conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
 
     // Include active checkout count for each patron
     const patrons = await db.execute_query(
@@ -83,20 +83,20 @@ router.get("/", async (req, res) => {
     });
   } catch (error) {
     res.status(500).json({
-      error: "Failed to fetch patrons",
+      error: 'Failed to fetch patrons',
       message: error.message,
     });
   }
 });
 
 // GET /api/v1/patrons/search-for-renewal - Search patron by ID or name and get checked-out items
-router.get("/search-for-renewal", async (req, res) => {
+router.get('/search-for-renewal', async (req, res) => {
   try {
     const { query } = req.query;
 
     if (!query) {
       return res.status(400).json({
-        error: "Search query is required",
+        error: 'Search query is required',
       });
     }
 
@@ -106,7 +106,7 @@ router.get("/search-for-renewal", async (req, res) => {
     // Try to parse as ID first
     const patron_id = parseInt(query, 10);
     if (!Number.isNaN(patron_id)) {
-      patron = await db.get_by_id("PATRONS", patron_id);
+      patron = await db.get_by_id('PATRONS', patron_id);
     }
 
     // If not found by ID, search by name
@@ -127,7 +127,7 @@ router.get("/search-for-renewal", async (req, res) => {
 
     if (!patron) {
       return res.status(404).json({
-        error: "Patron not found",
+        error: 'Patron not found',
       });
     }
 
@@ -157,7 +157,7 @@ router.get("/search-for-renewal", async (req, res) => {
 
     // Get active checkout count
     const active_checkout_count = await db.execute_query(
-      "SELECT COUNT(*) as count FROM ITEM_TRANSACTIONS WHERE patron_id = ? ",
+      'SELECT COUNT(*) as count FROM ITEM_TRANSACTIONS WHERE patron_id = ? ',
       [patron.id]
     );
 
@@ -187,14 +187,14 @@ router.get("/search-for-renewal", async (req, res) => {
     });
   } catch (error) {
     res.status(500).json({
-      error: "Failed to search patron",
+      error: 'Failed to search patron',
       message: error.message,
     });
   }
 });
 
 // GET /api/v1/patrons/:id - Get single patron
-router.get("/:id", async (req, res) => {
+router.get('/:id', async (req, res) => {
   try {
     const [patron] = await db.execute_query(
       `SELECT
@@ -212,7 +212,7 @@ router.get("/:id", async (req, res) => {
 
     if (!patron) {
       return res.status(404).json({
-        error: "Patron not found",
+        error: 'Patron not found',
       });
     }
 
@@ -222,20 +222,20 @@ router.get("/:id", async (req, res) => {
     });
   } catch (error) {
     res.status(500).json({
-      error: "Failed to fetch patron",
+      error: 'Failed to fetch patron',
       message: error.message,
     });
   }
 });
 
 // GET /api/v1/patrons/:id/transactions - Get patron's transaction history
-router.get("/:id/transactions", async (req, res) => {
+router.get('/:id/transactions', async (req, res) => {
   try {
-    const patron = await db.get_by_id("PATRONS", req.params.id);
+    const patron = await db.get_by_id('PATRONS', req.params.id);
 
     if (!patron) {
       return res.status(404).json({
-        error: "Patron not found",
+        error: 'Patron not found',
       });
     }
 
@@ -277,7 +277,7 @@ router.get("/:id/transactions", async (req, res) => {
     });
   } catch (error) {
     res.status(500).json({
-      error: "Failed to fetch patron transactions",
+      error: 'Failed to fetch patron transactions',
       message: error.message,
     });
   }
@@ -285,17 +285,17 @@ router.get("/:id/transactions", async (req, res) => {
 
 // POST /api/v1/patrons - Create new patron
 router.post(
-  "/",
+  '/',
   validate_patron,
   handle_validation_errors,
   async (req, res) => {
     try {
       // Validate branch exists if provided
       if (req.body.local_branch_id) {
-        const branch = await db.get_by_id("BRANCHES", req.body.local_branch_id);
+        const branch = await db.get_by_id('BRANCHES', req.body.local_branch_id);
         if (!branch) {
           return res.status(400).json({
-            error: "Invalid branch ID",
+            error: 'Invalid branch ID',
             message: `Branch with ID ${req.body.local_branch_id} does not exist`,
           });
         }
@@ -315,24 +315,24 @@ router.post(
         created_at: format_sql_datetime(new Date()),
       };
 
-      const patron_id = await db.create_record("PATRONS", patron_data);
+      const patron_id = await db.create_record('PATRONS', patron_data);
 
       res.status(201).json({
         success: true,
-        message: "Patron created successfully",
+        message: 'Patron created successfully',
         data: { id: patron_id, ...patron_data },
       });
     } catch (error) {
       // Handle SQLite unique constraint violations
-      if (error.message?.includes("UNIQUE constraint failed")) {
+      if (error.message?.includes('UNIQUE constraint failed')) {
         return res.status(409).json({
-          error: "Duplicate entry",
-          message: "A patron with this email already exists",
+          error: 'Duplicate entry',
+          message: 'A patron with this email already exists',
         });
       }
 
       res.status(500).json({
-        error: "Failed to create patron",
+        error: 'Failed to create patron',
         message: error.message,
       });
     }
@@ -341,25 +341,25 @@ router.post(
 
 // PUT /api/v1/patrons/:id - Update patron
 router.put(
-  "/:id",
+  '/:id',
   validate_patron,
   handle_validation_errors,
   async (req, res) => {
     try {
-      const existing_patron = await db.get_by_id("PATRONS", req.params.id);
+      const existing_patron = await db.get_by_id('PATRONS', req.params.id);
 
       if (!existing_patron) {
         return res.status(404).json({
-          error: "Patron not found",
+          error: 'Patron not found',
         });
       }
 
       // Validate branch exists if provided
       if (req.body.local_branch_id) {
-        const branch = await db.get_by_id("BRANCHES", req.body.local_branch_id);
+        const branch = await db.get_by_id('BRANCHES', req.body.local_branch_id);
         if (!branch) {
           return res.status(400).json({
-            error: "Invalid branch ID",
+            error: 'Invalid branch ID',
             message: `Branch with ID ${req.body.local_branch_id} does not exist`,
           });
         }
@@ -368,37 +368,37 @@ router.put(
       // Check if email already exists for a different patron
       if (req.body.email && req.body.email !== existing_patron.email) {
         const email_check = await db.execute_query(
-          "SELECT id FROM PATRONS WHERE email = ? AND id != ?",
+          'SELECT id FROM PATRONS WHERE email = ? AND id != ?',
           [req.body.email, req.params.id]
         );
         if (email_check.length > 0) {
           return res.status(409).json({
-            error: "Email already exists",
-            message: "A patron with this email address already exists",
+            error: 'Email already exists',
+            message: 'A patron with this email address already exists',
           });
         }
       }
 
-      await db.update_record("PATRONS", req.params.id, req.body);
+      await db.update_record('PATRONS', req.params.id, req.body);
 
       // Fetch and return the updated patron data
-      const updated_patron = await db.get_by_id("PATRONS", req.params.id);
+      const updated_patron = await db.get_by_id('PATRONS', req.params.id);
       res.json({
         success: true,
         data: updated_patron,
-        message: "Patron updated successfully",
+        message: 'Patron updated successfully',
       });
     } catch (error) {
       // Handle SQLite unique constraint violations
-      if (error.message?.includes("UNIQUE constraint failed")) {
+      if (error.message?.includes('UNIQUE constraint failed')) {
         return res.status(409).json({
-          error: "Duplicate entry",
-          message: "A patron with this email already exists",
+          error: 'Duplicate entry',
+          message: 'A patron with this email already exists',
         });
       }
 
       res.status(500).json({
-        error: "Failed to update patron",
+        error: 'Failed to update patron',
         message: error.message,
       });
     }
@@ -406,27 +406,27 @@ router.put(
 );
 
 // DELETE /api/v1/patrons/:id - Delete patron
-router.delete("/:id", async (req, res) => {
+router.delete('/:id', async (req, res) => {
   try {
-    const existing_patron = await db.get_by_id("PATRONS", req.params.id);
+    const existing_patron = await db.get_by_id('PATRONS', req.params.id);
 
     if (!existing_patron) {
       return res.status(404).json({
-        error: "Patron not found",
+        error: 'Patron not found',
       });
     }
 
     // Database has ON DELETE CASCADE for FINES, ITEM_TRANSACTIONS, and RESERVATIONS
     // So we only need to delete the patron record
-    await db.delete_record("PATRONS", req.params.id);
+    await db.delete_record('PATRONS', req.params.id);
 
     res.json({
       success: true,
-      message: "Patron deleted successfully",
+      message: 'Patron deleted successfully',
     });
   } catch (error) {
     res.status(500).json({
-      error: "Failed to delete patron",
+      error: 'Failed to delete patron',
       message: error.message,
     });
   }

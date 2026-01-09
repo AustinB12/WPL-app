@@ -1,12 +1,12 @@
-import dotenv from "dotenv";
-import pico from "picocolors";
-import { open } from "sqlite";
-import sqlite3 from "sqlite3";
+import dotenv from 'dotenv';
+import pico from 'picocolors';
+import { open } from 'sqlite';
+import sqlite3 from 'sqlite3';
 
 dotenv.config();
 
 const sqliteVerbose = sqlite3.verbose();
-const db_path = "./library.db";
+const db_path = './library.db';
 
 console.log(`Using database path: ${db_path}`);
 
@@ -16,17 +16,17 @@ let db = null;
  * Initialize database connection
  */
 async function init_database() {
-	try {
-		db = await open({
-			filename: db_path,
-			driver: sqliteVerbose.Database
-		});
+  try {
+    db = await open({
+      filename: db_path,
+      driver: sqliteVerbose.Database,
+    });
 
-		// Enable foreign keys
-		await db.exec("PRAGMA foreign_keys = ON;");
+    // Enable foreign keys
+    await db.exec('PRAGMA foreign_keys = ON;');
 
-		// Performance optimization PRAGMAs
-		await db.exec(`
+    // Performance optimization PRAGMAs
+    await db.exec(`
       PRAGMA journal_mode = WAL;          -- Write-Ahead Logging for better concurrency
       PRAGMA synchronous = NORMAL;        -- Balance between safety and performance
       PRAGMA cache_size = 10000;          -- 10MB cache (10000 * 1KB pages)
@@ -35,30 +35,30 @@ async function init_database() {
       PRAGMA optimize;                    -- Analyze and optimize query planner
     `);
 
-		// Create tables if they don't exist
-		await create_tables();
+    // Create tables if they don't exist
+    await create_tables();
 
-		console.log(pico.bgGreen(pico.bold("🔌 SQLite DB Connected ")));
-		return db;
-	} catch (error) {
-		const errorMessage =
-			error instanceof Error ? error.message : "Unknown error";
-		console.error("Database connection failed:", errorMessage);
-		throw error;
-	}
+    console.log(pico.bgGreen(pico.bold('🔌 SQLite DB Connected ')));
+    return db;
+  } catch (error) {
+    const errorMessage =
+      error instanceof Error ? error.message : 'Unknown error';
+    console.error('Database connection failed:', errorMessage);
+    throw error;
+  }
 }
 
 /**
  * Create database tables
  */
 async function create_tables() {
-	if (!db) {
-		throw new Error(pico.bgRed(pico.bold("<< DB initialization failed >>")));
-	}
+  if (!db) {
+    throw new Error(pico.bgRed(pico.bold('<< DB initialization failed >>')));
+  }
 
-	try {
-		// Create all tables in a single batch execution for performance
-		await db.exec(`
+  try {
+    // Create all tables in a single batch execution for performance
+    await db.exec(`
       CREATE TABLE IF NOT EXISTS BRANCHES (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         branch_name TEXT NOT NULL DEFAULT 'Default Branch Name',
@@ -259,8 +259,8 @@ async function create_tables() {
       );
     `);
 
-		// Create optimized indexes for better performance
-		await db.exec(`
+    // Create optimized indexes for better performance
+    await db.exec(`
       -- Core entity indexes
       CREATE INDEX IF NOT EXISTS idx_library_items_type ON LIBRARY_ITEMS(item_type);
       CREATE INDEX IF NOT EXISTS idx_library_items_year ON LIBRARY_ITEMS(publication_year);
@@ -307,8 +307,8 @@ async function create_tables() {
       CREATE INDEX IF NOT EXISTS idx_vinyl_albums_library_item ON VINYL_ALBUMS(library_item_id);
     `);
 
-		// Insert default branch and create triggers in single batch
-		await db.exec(`
+    // Insert default branch and create triggers in single batch
+    await db.exec(`
       INSERT OR IGNORE INTO BRANCHES (id, branch_name, is_main) 
       VALUES (1, 'Main Library', 1);
       
@@ -331,28 +331,28 @@ async function create_tables() {
       END;
     `);
 
-		console.log(pico.bgGreen(pico.bold("🔨 DB Tables Created Successfully")));
-	} catch (error) {
-		const errorMessage =
-			error instanceof Error ? error.message : "Unknown error";
-		console.error(
-			pico.bgRed(pico.bold("Error Creating DB Tables: ")) + errorMessage
-		);
-		throw error;
-	}
+    console.log(pico.bgGreen(pico.bold('🔨 DB Tables Created Successfully')));
+  } catch (error) {
+    const errorMessage =
+      error instanceof Error ? error.message : 'Unknown error';
+    console.error(
+      pico.bgRed(pico.bold('Error Creating DB Tables: ')) + errorMessage
+    );
+    throw error;
+  }
 }
 
 /**
  * Get DB instance
  */
 async function get_database() {
-	if (!db) {
-		return await init_database();
-	}
-	if (!db) {
-		throw new Error("Failed to initialize database");
-	}
-	return db;
+  if (!db) {
+    return await init_database();
+  }
+  if (!db) {
+    throw new Error('Failed to initialize database');
+  }
+  return db;
 }
 
 // Initialize database connection
@@ -366,63 +366,63 @@ init_database();
  * @returns {Promise<Array|Object>} Query result
  */
 async function execute_query(query, params = [], options = {}) {
-	try {
-		const database = await get_database();
-		const trimmedQuery = query.trim().toLowerCase();
+  try {
+    const database = await get_database();
+    const trimmedQuery = query.trim().toLowerCase();
 
-		// Performance: Use prepared statements for repeated queries
-		if (options.prepare) {
-			const stmt = await database.prepare(query);
-			try {
-				if (trimmedQuery.startsWith("select")) {
-					return await stmt.all(params);
-				} else {
-					return await stmt.run(params);
-				}
-			} finally {
-				await stmt.finalize();
-			}
-		}
+    // Performance: Use prepared statements for repeated queries
+    if (options.prepare) {
+      const stmt = await database.prepare(query);
+      try {
+        if (trimmedQuery.startsWith('select')) {
+          return await stmt.all(params);
+        } else {
+          return await stmt.run(params);
+        }
+      } finally {
+        await stmt.finalize();
+      }
+    }
 
-		// Optimize based on query type
-		if (trimmedQuery.startsWith("select")) {
-			// For SELECT queries that might return large results
-			if (options.limit && !query.toLowerCase().includes("limit")) {
-				query += ` LIMIT ${options.limit}`;
-			}
-			return await database.all(query, params);
-		} else if (trimmedQuery.startsWith("insert") && options.batch) {
-			// Batch insert optimization
-			return await database.exec(query);
-		} else if (trimmedQuery.startsWith("with")) {
-			// CTE queries (Common Table Expressions)
-			return await database.all(query, params);
-		} else {
-			// For INSERT, UPDATE, DELETE queries
-			const result = await database.run(query, params);
+    // Optimize based on query type
+    if (trimmedQuery.startsWith('select')) {
+      // For SELECT queries that might return large results
+      if (options.limit && !query.toLowerCase().includes('limit')) {
+        query += ` LIMIT ${options.limit}`;
+      }
+      return await database.all(query, params);
+    } else if (trimmedQuery.startsWith('insert') && options.batch) {
+      // Batch insert optimization
+      return await database.exec(query);
+    } else if (trimmedQuery.startsWith('with')) {
+      // CTE queries (Common Table Expressions)
+      return await database.all(query, params);
+    } else {
+      // For INSERT, UPDATE, DELETE queries
+      const result = await database.run(query, params);
 
-			// Add performance metrics for monitoring
-			if (options.includeMetrics) {
-				return {
-					...result,
-					performance: {
-						changes: result.changes,
-						lastID: result.lastID,
-						queryType: trimmedQuery.split(" ")[0].toUpperCase()
-					}
-				};
-			}
+      // Add performance metrics for monitoring
+      if (options.includeMetrics) {
+        return {
+          ...result,
+          performance: {
+            changes: result.changes,
+            lastID: result.lastID,
+            queryType: trimmedQuery.split(' ')[0].toUpperCase(),
+          },
+        };
+      }
 
-			return result;
-		}
-	} catch (error) {
-		console.error("Database query error:", {
-			query: `${query.substring(0, 200)}...`,
-			params: params,
-			error: error.message
-		});
-		throw error;
-	}
+      return result;
+    }
+  } catch (error) {
+    console.error('Database query error:', {
+      query: `${query.substring(0, 200)}...`,
+      params: params,
+      error: error.message,
+    });
+    throw error;
+  }
 }
 
 /**
@@ -432,10 +432,10 @@ async function execute_query(query, params = [], options = {}) {
  * @param {Array} params - Parameters for the conditions
  * @returns {Promise<Array>} Array of records
  */
-async function get_all(table_name, conditions = "", params = []) {
-	const query = `SELECT * FROM ${table_name} ${conditions}`;
-	const result = await execute_query(query, params);
-	return Array.isArray(result) ? result : [];
+async function get_all(table_name, conditions = '', params = []) {
+  const query = `SELECT * FROM ${table_name} ${conditions}`;
+  const result = await execute_query(query, params);
+  return Array.isArray(result) ? result : [];
 }
 
 /**
@@ -445,12 +445,12 @@ async function get_all(table_name, conditions = "", params = []) {
  * @returns {Promise<Object|null>} The record object or null if not found
  */
 async function get_by_id(table_name, id) {
-	const query = `SELECT * FROM ${table_name} WHERE id = ?`;
-	const results = await execute_query(query, [id]);
-	if (Array.isArray(results) && results.length > 0) {
-		return results[0];
-	}
-	return null;
+  const query = `SELECT * FROM ${table_name} WHERE id = ?`;
+  const results = await execute_query(query, [id]);
+  if (Array.isArray(results) && results.length > 0) {
+    return results[0];
+  }
+  return null;
 }
 
 /**
@@ -460,14 +460,14 @@ async function get_by_id(table_name, id) {
  * @returns {Promise<Array>} Array of record objects (empty array if none found)
  */
 async function get_by_ids(table_name, ids) {
-	if (!Array.isArray(ids) || ids.length === 0) {
-		return [];
-	}
+  if (!Array.isArray(ids) || ids.length === 0) {
+    return [];
+  }
 
-	const placeholders = ids.map(() => "?").join(", ");
-	const query = `SELECT * FROM ${table_name} WHERE id IN (${placeholders})`;
-	const results = await execute_query(query, ids);
-	return Array.isArray(results) ? results : [];
+  const placeholders = ids.map(() => '?').join(', ');
+  const query = `SELECT * FROM ${table_name} WHERE id IN (${placeholders})`;
+  const results = await execute_query(query, ids);
+  return Array.isArray(results) ? results : [];
 }
 
 /**
@@ -477,15 +477,15 @@ async function get_by_ids(table_name, ids) {
  * @returns {Promise<number|undefined>} The last inserted ID or undefined
  */
 async function create_record(table_name, data) {
-	const fields = Object.keys(data).join(", ");
-	const placeholders = Object.keys(data)
-		.map(() => "?")
-		.join(", ");
-	const values = Object.values(data);
+  const fields = Object.keys(data).join(', ');
+  const placeholders = Object.keys(data)
+    .map(() => '?')
+    .join(', ');
+  const values = Object.values(data);
 
-	const query = `INSERT INTO ${table_name} (${fields}) VALUES (${placeholders})`;
-	const result = await execute_query(query, values);
-	return !Array.isArray(result) ? result.lastID : undefined;
+  const query = `INSERT INTO ${table_name} (${fields}) VALUES (${placeholders})`;
+  const result = await execute_query(query, values);
+  return !Array.isArray(result) ? result.lastID : undefined;
 }
 
 /**
@@ -496,14 +496,14 @@ async function create_record(table_name, data) {
  * @returns {Promise<boolean>} True if the record was updated, false otherwise
  */
 async function update_record(table_name, id, data) {
-	const fields = Object.keys(data)
-		.map((key) => `${key} = ?`)
-		.join(", ");
-	const values = Object.values(data).concat([id]);
+  const fields = Object.keys(data)
+    .map((key) => `${key} = ?`)
+    .join(', ');
+  const values = Object.values(data).concat([id]);
 
-	const query = `UPDATE ${table_name} SET ${fields} WHERE id = ?`;
-	const result = await execute_query(query, values);
-	return !Array.isArray(result) ? (result.changes || 0) > 0 : false;
+  const query = `UPDATE ${table_name} SET ${fields} WHERE id = ?`;
+  const result = await execute_query(query, values);
+  return !Array.isArray(result) ? (result.changes || 0) > 0 : false;
 }
 
 /**
@@ -513,9 +513,9 @@ async function update_record(table_name, id, data) {
  * @returns {Promise<boolean>} True if the record was deleted, false otherwise
  */
 async function delete_record(table_name, id) {
-	const query = `DELETE FROM ${table_name} WHERE id = ?`;
-	const result = await execute_query(query, [id]);
-	return !Array.isArray(result) ? (result.changes || 0) > 0 : false;
+  const query = `DELETE FROM ${table_name} WHERE id = ?`;
+  const result = await execute_query(query, [id]);
+  return !Array.isArray(result) ? (result.changes || 0) > 0 : false;
 }
 
 /**
@@ -524,60 +524,60 @@ async function delete_record(table_name, id) {
  * @returns {Promise<Object>} Batch operation results
  */
 async function execute_batch(operations) {
-	const database = await get_database();
+  const database = await get_database();
 
-	try {
-		await database.exec("BEGIN TRANSACTION");
+  try {
+    await database.exec('BEGIN TRANSACTION');
 
-		const results = [];
-		let totalChanges = 0;
+    const results = [];
+    let totalChanges = 0;
 
-		for (const op of operations) {
-			let result;
+    for (const op of operations) {
+      let result;
 
-			switch (op.type) {
-				case "insert":
-					result = await create_record(op.table, op.data);
-					results.push({ type: "insert", id: result, table: op.table });
-					totalChanges++;
-					break;
+      switch (op.type) {
+        case 'insert':
+          result = await create_record(op.table, op.data);
+          results.push({ type: 'insert', id: result, table: op.table });
+          totalChanges++;
+          break;
 
-				case "update":
-					result = await update_record(op.table, op.id, op.data);
-					results.push({
-						type: "update",
-						success: result,
-						table: op.table,
-						id: op.id
-					});
-					if (result) totalChanges++;
-					break;
+        case 'update':
+          result = await update_record(op.table, op.id, op.data);
+          results.push({
+            type: 'update',
+            success: result,
+            table: op.table,
+            id: op.id,
+          });
+          if (result) totalChanges++;
+          break;
 
-				case "delete":
-					result = await delete_record(op.table, op.id);
-					results.push({
-						type: "delete",
-						success: result,
-						table: op.table,
-						id: op.id
-					});
-					if (result) totalChanges++;
-					break;
-			}
-		}
+        case 'delete':
+          result = await delete_record(op.table, op.id);
+          results.push({
+            type: 'delete',
+            success: result,
+            table: op.table,
+            id: op.id,
+          });
+          if (result) totalChanges++;
+          break;
+      }
+    }
 
-		await database.exec("COMMIT");
+    await database.exec('COMMIT');
 
-		return {
-			success: true,
-			totalOperations: operations.length,
-			totalChanges,
-			results
-		};
-	} catch (error) {
-		await database.exec("ROLLBACK");
-		throw error;
-	}
+    return {
+      success: true,
+      totalOperations: operations.length,
+      totalChanges,
+      results,
+    };
+  } catch (error) {
+    await database.exec('ROLLBACK');
+    throw error;
+  }
 }
 
 /**
@@ -589,38 +589,38 @@ async function execute_batch(operations) {
  * @returns {Promise<Array>} Search results
  */
 async function search_records(
-	table_name,
-	search_term,
-	search_fields = [],
-	options = {}
+  table_name,
+  search_term,
+  search_fields = [],
+  options = {}
 ) {
-	const limit = options.limit || 50;
-	const offset = options.offset || 0;
+  const limit = options.limit || 50;
+  const offset = options.offset || 0;
 
-	if (!search_fields.length) {
-		// Fallback to basic search if no fields specified
-		return get_all(table_name, `LIMIT ${limit} OFFSET ${offset}`);
-	}
+  if (!search_fields.length) {
+    // Fallback to basic search if no fields specified
+    return get_all(table_name, `LIMIT ${limit} OFFSET ${offset}`);
+  }
 
-	// Build LIKE conditions for each field
-	const conditions = search_fields
-		.map((field) => `${field} LIKE ?`)
-		.join(" OR ");
-	const params = search_fields.map(() => `%${search_term}%`);
+  // Build LIKE conditions for each field
+  const conditions = search_fields
+    .map((field) => `${field} LIKE ?`)
+    .join(' OR ');
+  const params = search_fields.map(() => `%${search_term}%`);
 
-	const query = `
+  const query = `
     SELECT * FROM ${table_name} 
     WHERE ${conditions}
     ORDER BY 
       CASE 
-        ${search_fields.map((field) => `WHEN ${field} LIKE '${search_term}%' THEN 1`).join(" ")}
+        ${search_fields.map((field) => `WHEN ${field} LIKE '${search_term}%' THEN 1`).join(' ')}
         ELSE 2 
       END,
       id
     LIMIT ${limit} OFFSET ${offset}
   `;
 
-	return execute_query(query, params);
+  return execute_query(query, params);
 }
 
 /**
@@ -628,27 +628,27 @@ async function search_records(
  * @returns {Promise<Object>} Database statistics
  */
 async function get_database_stats() {
-	const database = await get_database();
+  const database = await get_database();
 
-	const stats = await Promise.all([
-		database.get("PRAGMA database_list"),
-		database.get("PRAGMA cache_size"),
-		database.get("PRAGMA page_count"),
-		database.get("PRAGMA page_size"),
-		database.get("PRAGMA journal_mode"),
-		database.all('SELECT name, sql FROM sqlite_master WHERE type="index"')
-	]);
+  const stats = await Promise.all([
+    database.get('PRAGMA database_list'),
+    database.get('PRAGMA cache_size'),
+    database.get('PRAGMA page_count'),
+    database.get('PRAGMA page_size'),
+    database.get('PRAGMA journal_mode'),
+    database.all('SELECT name, sql FROM sqlite_master WHERE type="index"'),
+  ]);
 
-	return {
-		database_info: stats[0],
-		cache_size: stats[1],
-		page_count: stats[2],
-		page_size: stats[3],
-		journal_mode: stats[4],
-		indexes: stats[5],
-		estimated_size_mb:
-			(stats[2].page_count * stats[3].page_size) / (1024 * 1024)
-	};
+  return {
+    database_info: stats[0],
+    cache_size: stats[1],
+    page_count: stats[2],
+    page_size: stats[3],
+    journal_mode: stats[4],
+    indexes: stats[5],
+    estimated_size_mb:
+      (stats[2].page_count * stats[3].page_size) / (1024 * 1024),
+  };
 }
 
 /**
@@ -657,29 +657,29 @@ async function get_database_stats() {
  * @returns {Promise<*>} Result from the callback
  */
 async function execute_transaction(callback) {
-	const database = await get_database();
-	try {
-		await database.exec("BEGIN TRANSACTION");
-		const result = await callback(database);
-		await database.exec("COMMIT");
-		return result;
-	} catch (error) {
-		await database.exec("ROLLBACK");
-		throw error;
-	}
+  const database = await get_database();
+  try {
+    await database.exec('BEGIN TRANSACTION');
+    const result = await callback(database);
+    await database.exec('COMMIT');
+    return result;
+  } catch (error) {
+    await database.exec('ROLLBACK');
+    throw error;
+  }
 }
 
 export {
-	get_database as db,
-	execute_query,
-	get_all,
-	get_by_id,
-	get_by_ids,
-	create_record,
-	update_record,
-	delete_record,
-	execute_batch,
-	search_records,
-	get_database_stats,
-	execute_transaction
+  get_database as db,
+  execute_query,
+  get_all,
+  get_by_id,
+  get_by_ids,
+  create_record,
+  update_record,
+  delete_record,
+  execute_batch,
+  search_records,
+  get_database_stats,
+  execute_transaction,
 };

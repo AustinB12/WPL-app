@@ -1,38 +1,38 @@
-import express from "express";
-import { body, validationResult } from "express-validator";
-import * as db from "../config/database.js";
-import { format_sql_datetime, format_sql_date } from "../utils.js";
+import express from 'express';
+import { body, validationResult } from 'express-validator';
+import * as db from '../config/database.js';
+import { format_sql_date, format_sql_datetime } from '../utils.js';
 
 const router = express.Router();
 
 // Validation middleware
 const validate_item_copy = [
-  body("library_item_id")
+  body('library_item_id')
     .isInt()
-    .withMessage("Valid library item ID is required"),
-  body("owning_branch_id").isInt().withMessage("Valid branch ID is required"),
-  body("condition")
+    .withMessage('Valid library item ID is required'),
+  body('owning_branch_id').isInt().withMessage('Valid branch ID is required'),
+  body('condition')
     .optional()
-    .isIn(["New", "Excellent", "Good", "Fair", "Poor"])
-    .withMessage("Invalid condition"),
-  body("status")
+    .isIn(['New', 'Excellent', 'Good', 'Fair', 'Poor'])
+    .withMessage('Invalid condition'),
+  body('status')
     .optional()
     .isIn([
-      "Available",
-      "Checked Out",
-      "Renewed Once",
-      "Renewed Twice",
-      "Reserved",
-      "Processing",
-      "Damaged",
-      "Unshelved",
-      "Lost",
+      'Available',
+      'Checked Out',
+      'Renewed Once',
+      'Renewed Twice',
+      'Reserved',
+      'Processing',
+      'Damaged',
+      'Unshelved',
+      'Lost',
     ])
-    .withMessage("Invalid status"),
-  body("cost")
+    .withMessage('Invalid status'),
+  body('cost')
     .optional()
     .isFloat({ min: 0 })
-    .withMessage("Cost must be a positive number"),
+    .withMessage('Cost must be a positive number'),
 ];
 
 // Helper function to handle validation errors
@@ -40,7 +40,7 @@ const handle_validation_errors = (req, res, next) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     return res.status(400).json({
-      error: "Validation failed",
+      error: 'Validation failed',
       details: errors.array(),
     });
   }
@@ -48,38 +48,38 @@ const handle_validation_errors = (req, res, next) => {
 };
 
 // GET /api/v1/item-copies - Get all item copies
-router.get("/", async (req, res) => {
+router.get('/', async (req, res) => {
   try {
     const { library_item_id, branch_id, status, condition, other_status } =
       req.query;
-    let conditions = "";
+    let conditions = '';
     const params = [];
 
     const filters = [];
     if (library_item_id) {
-      filters.push("lic.library_item_id = ?");
+      filters.push('lic.library_item_id = ?');
       params.push(library_item_id);
     }
     if (branch_id) {
       // Filter by current_branch_id (where the copy currently is) rather than owning_branch_id
-      filters.push("lic.current_branch_id = ?");
+      filters.push('lic.current_branch_id = ?');
       params.push(branch_id);
     }
     if (status) {
-      filters.push("lic.status = ?");
+      filters.push('lic.status = ?');
       params.push(status);
     }
     if (other_status) {
-      filters.push("lic.status = ?");
+      filters.push('lic.status = ?');
       params.push(other_status);
     }
     if (condition) {
-      filters.push("lic.condition = ?");
+      filters.push('lic.condition = ?');
       params.push(condition);
     }
 
     if (filters.length > 0) {
-      conditions = ` WHERE ${filters.join(" AND ")}`;
+      conditions = ` WHERE ${filters.join(' AND ')}`;
     }
 
     const query = `
@@ -155,14 +155,14 @@ router.get("/", async (req, res) => {
     });
   } catch (error) {
     res.status(500).json({
-      error: "Failed to fetch item copies",
+      error: 'Failed to fetch item copies',
       message: error.message,
     });
   }
 });
 
 // GET /api/v1/item-copies/item-transactions - Get all transactions related to item copies
-router.get("/item-transactions", async (req, res) => {
+router.get('/item-transactions', async (req, res) => {
   try {
     const { start_date, end_date } = req.query;
 
@@ -170,17 +170,17 @@ router.get("/item-transactions", async (req, res) => {
     const filters = [];
 
     if (start_date) {
-      filters.push("DATE(t.created_at) >= DATE(?)");
+      filters.push('DATE(t.created_at) >= DATE(?)');
       params.push(start_date);
     }
 
     if (end_date) {
-      filters.push("DATE(t.created_at) <= DATE(?)");
+      filters.push('DATE(t.created_at) <= DATE(?)');
       params.push(end_date);
     }
 
     const conditions =
-      start_date || end_date ? ` WHERE ${filters.join(" AND ")}` : "";
+      start_date || end_date ? ` WHERE ${filters.join(' AND ')}` : '';
 
     const query = `
 			SELECT * FROM ITEM_TRANSACTIONS
@@ -196,14 +196,14 @@ router.get("/item-transactions", async (req, res) => {
     });
   } catch (error) {
     res.status(500).json({
-      error: "Failed to fetch item copy transactions",
+      error: 'Failed to fetch item copy transactions',
       message: error.message,
     });
   }
 });
 
 // GET /api/v1/item-copies/checked-out - Get all checked out item copies, optionally filtered
-router.get("/checked-out", async (req, res) => {
+router.get('/checked-out', async (req, res) => {
   try {
     const { library_item_id, branch_id, condition } = req.query;
     const params = [];
@@ -212,20 +212,20 @@ router.get("/checked-out", async (req, res) => {
     const filters = ["lic.status = 'Checked Out'"];
 
     if (library_item_id) {
-      filters.push("lic.library_item_id = ?");
+      filters.push('lic.library_item_id = ?');
       params.push(library_item_id);
     }
     if (branch_id) {
       // Filter by current_branch_id (where the copy currently is)
-      filters.push("lic.current_branch_id = ?");
+      filters.push('lic.current_branch_id = ?');
       params.push(branch_id);
     }
     if (condition) {
-      filters.push("lic.condition = ?");
+      filters.push('lic.condition = ?');
       params.push(condition);
     }
 
-    const conditions = ` WHERE ${filters.join(" AND ")}`;
+    const conditions = ` WHERE ${filters.join(' AND ')}`;
 
     const query = `
       SELECT 
@@ -274,19 +274,19 @@ router.get("/checked-out", async (req, res) => {
       // Match the exact item_type values from the database
       const item_type = copy.item_type?.toUpperCase();
       switch (item_type) {
-        case "BOOK":
+        case 'BOOK':
           cover = copy.book_cover_image;
           break;
-        case "AUDIOBOOK":
+        case 'AUDIOBOOK':
           cover = copy.audiobook_cover_image;
           break;
-        case "VIDEO":
+        case 'VIDEO':
           cover = copy.video_cover_image;
           break;
-        case "VINYL":
+        case 'VINYL':
           cover = copy.vinyl_cover_image;
           break;
-        case "CD":
+        case 'CD':
           cover = copy.cd_cover_image;
           break;
         default:
@@ -316,14 +316,14 @@ router.get("/checked-out", async (req, res) => {
     });
   } catch (error) {
     res.status(500).json({
-      error: "Failed to fetch checked out item copies",
+      error: 'Failed to fetch checked out item copies',
       message: error.message,
     });
   }
 });
 
 // GET /api/v1/item-copies/checked-out-simple
-router.get("/checked-out-simple", async (req, res) => {
+router.get('/checked-out-simple', async (req, res) => {
   try {
     const { branch_id } = req.query;
     const params = [];
@@ -333,10 +333,10 @@ router.get("/checked-out-simple", async (req, res) => {
 
     if (branch_id) {
       // Filter by current_branch_id (where the copy currently is)
-      filters.push("lic.current_branch_id = ?");
+      filters.push('lic.current_branch_id = ?');
       params.push(branch_id);
     }
-    const conditions = ` WHERE ${filters.join(" AND ")}`;
+    const conditions = ` WHERE ${filters.join(' AND ')}`;
 
     const now = format_sql_date(new Date());
 
@@ -366,14 +366,14 @@ router.get("/checked-out-simple", async (req, res) => {
     });
   } catch (error) {
     res.status(500).json({
-      error: "Failed to fetch checked out item copies",
+      error: 'Failed to fetch checked out item copies',
       message: error.message,
     });
   }
 });
 
 // GET /api/v1/item-copies/unshelved - Get all unshelved item copies, optionally filtered by branch
-router.get("/unshelved", async (req, res) => {
+router.get('/unshelved', async (req, res) => {
   try {
     const { branch_id } = req.query;
 
@@ -423,19 +423,19 @@ router.get("/unshelved", async (req, res) => {
     });
   } catch (error) {
     res.status(500).json({
-      error: "Failed to fetch item copies",
+      error: 'Failed to fetch item copies',
       message: error.message,
     });
   }
 });
 
-router.get("/recently-reshelved", async (req, res) => {
+router.get('/recently-reshelved', async (req, res) => {
   try {
     const { branch_id } = req.query;
 
     if (!branch_id) {
       return res.status(400).json({
-        error: "Branch ID is required",
+        error: 'Branch ID is required',
       });
     }
 
@@ -472,14 +472,14 @@ router.get("/recently-reshelved", async (req, res) => {
     });
   } catch (error) {
     res.status(500).json({
-      error: "Failed to fetch recently reshelved item copies",
+      error: 'Failed to fetch recently reshelved item copies',
       message: error.message,
     });
   }
 });
 
 // GET /api/v1/item-copies/item/:library_item_id - Get all copies of a library item
-router.get("/item/:library_item_id", async (req, res) => {
+router.get('/item/:library_item_id', async (req, res) => {
   try {
     const { branch_id } = req.query;
 
@@ -542,7 +542,7 @@ router.get("/item/:library_item_id", async (req, res) => {
         LEFT JOIN PATRONS p ON ic.checked_out_by = p.id
       WHERE 
         ic.library_item_id = ?
-        ${branch_id ? "AND ic.current_branch_id = ?" : ""}
+        ${branch_id ? 'AND ic.current_branch_id = ?' : ''}
       ORDER BY ic.id, ic.status;
     `;
     const params = [req.params.library_item_id];
@@ -561,7 +561,7 @@ router.get("/item/:library_item_id", async (req, res) => {
         copy_label: `Copy ${copy.copy_number} of ${copy.total_copies}`,
       };
       // If copy is reserved and there's a reservation, include reservation details
-      if (copy.status === "Reserved" && reservation_info) {
+      if (copy.status === 'Reserved' && reservation_info) {
         result.reservation = reservation_info;
       }
       return result;
@@ -574,14 +574,14 @@ router.get("/item/:library_item_id", async (req, res) => {
     });
   } catch (error) {
     res.status(500).json({
-      error: "Failed to fetch item copies",
+      error: 'Failed to fetch item copies',
       message: error.message,
     });
   }
 });
 
 // GET /api/v1/item-copies/:id - Get single item copy
-router.get("/:id", async (req, res) => {
+router.get('/:id', async (req, res) => {
   try {
     const query = `
       SELECT 
@@ -648,13 +648,13 @@ router.get("/:id", async (req, res) => {
 
     if (!item_copy) {
       return res.status(404).json({
-        error: "Item copy not found",
+        error: 'Item copy not found',
       });
     }
 
     // Get all copies to calculate copy label
     const all_copies = await db.execute_query(
-      "SELECT id FROM LIBRARY_ITEM_COPIES WHERE library_item_id = ? ORDER BY id",
+      'SELECT id FROM LIBRARY_ITEM_COPIES WHERE library_item_id = ? ORDER BY id',
       [item_copy.library_item_id]
     );
 
@@ -674,7 +674,7 @@ router.get("/:id", async (req, res) => {
     });
   } catch (error) {
     res.status(500).json({
-      error: "Failed to fetch item copy",
+      error: 'Failed to fetch item copy',
       message: error.message,
     });
   }
@@ -682,35 +682,35 @@ router.get("/:id", async (req, res) => {
 
 // POST /api/v1/item-copies - Create new item copy
 router.post(
-  "/",
+  '/',
   validate_item_copy,
   handle_validation_errors,
   async (req, res) => {
     try {
       // Verify library item exists
       const library_item = await db.get_by_id(
-        "LIBRARY_ITEMS",
+        'LIBRARY_ITEMS',
         req.body.library_item_id
       );
       if (!library_item) {
         return res.status(400).json({
-          error: "Library item not found",
+          error: 'Library item not found',
         });
       }
 
       // Verify branch exists
-      const branch = await db.get_by_id("BRANCHES", req.body.owning_branch_id);
+      const branch = await db.get_by_id('BRANCHES', req.body.owning_branch_id);
       if (!branch) {
         return res.status(400).json({
-          error: "Branch not found",
+          error: 'Branch not found',
         });
       }
 
       const now = format_sql_datetime(new Date());
 
       const item_copy_data = {
-        condition: "Good",
-        status: "Available",
+        condition: 'Good',
+        status: 'Available',
         owning_branch_id: req.body.owning_branch_id, // Default location to branch
         current_branch_id: req.body.owning_branch_id,
         ...req.body,
@@ -718,16 +718,16 @@ router.post(
         updated_at: now,
       };
 
-      await db.create_record("LIBRARY_ITEM_COPIES", item_copy_data);
+      await db.create_record('LIBRARY_ITEM_COPIES', item_copy_data);
 
       res.status(201).json({
         success: true,
-        message: "Item copy created successfully",
+        message: 'Item copy created successfully',
         data: item_copy_data,
       });
     } catch (error) {
       res.status(500).json({
-        error: "Failed to create item copy",
+        error: 'Failed to create item copy',
         message: error.message,
       });
     }
@@ -736,57 +736,57 @@ router.post(
 
 // Validation for updates (more lenient - only validate fields that are being updated)
 const validate_item_copy_update = [
-  body("library_item_id")
+  body('library_item_id')
     .optional()
     .isInt()
-    .withMessage("Valid library item ID is required"),
-  body("owning_branch_id")
+    .withMessage('Valid library item ID is required'),
+  body('owning_branch_id')
     .optional()
     .isInt()
-    .withMessage("Valid branch ID is required"),
-  body("current_branch_id")
+    .withMessage('Valid branch ID is required'),
+  body('current_branch_id')
     .optional()
     .isInt()
-    .withMessage("Valid branch ID is required"),
-  body("condition")
+    .withMessage('Valid branch ID is required'),
+  body('condition')
     .optional()
-    .isIn(["New", "Excellent", "Good", "Fair", "Poor"])
-    .withMessage("Invalid condition"),
-  body("status")
+    .isIn(['New', 'Excellent', 'Good', 'Fair', 'Poor'])
+    .withMessage('Invalid condition'),
+  body('status')
     .optional()
     .isIn([
-      "Available",
-      "Checked Out",
-      "Renewed Once",
-      "Renewed Twice",
-      "Reserved",
-      "Processing",
-      "Damaged",
-      "Unshelved",
-      "Lost",
+      'Available',
+      'Checked Out',
+      'Renewed Once',
+      'Renewed Twice',
+      'Reserved',
+      'Processing',
+      'Damaged',
+      'Unshelved',
+      'Lost',
     ])
-    .withMessage("Invalid status"),
-  body("cost")
+    .withMessage('Invalid status'),
+  body('cost')
     .optional()
     .isFloat({ min: 0 })
-    .withMessage("Cost must be a positive number"),
+    .withMessage('Cost must be a positive number'),
 ];
 
 // PUT /api/v1/item-copies/:id - Update item copy
 router.put(
-  "/:id",
+  '/:id',
   validate_item_copy_update,
   handle_validation_errors,
   async (req, res) => {
     try {
       const existing_copy = await db.get_by_id(
-        "LIBRARY_ITEM_COPIES",
+        'LIBRARY_ITEM_COPIES',
         req.params.id
       );
 
       if (!existing_copy) {
         return res.status(404).json({
-          error: "Item copy not found",
+          error: 'Item copy not found',
         });
       }
 
@@ -796,7 +796,7 @@ router.put(
       };
 
       const updated = await db.update_record(
-        "LIBRARY_ITEM_COPIES",
+        'LIBRARY_ITEM_COPIES',
         req.params.id,
         update_data
       );
@@ -804,16 +804,16 @@ router.put(
       if (updated) {
         res.json({
           success: true,
-          message: "Item copy updated successfully",
+          message: 'Item copy updated successfully',
         });
       } else {
         res.status(500).json({
-          error: "Failed to update item copy",
+          error: 'Failed to update item copy',
         });
       }
     } catch (error) {
       res.status(500).json({
-        error: "Failed to update item copy",
+        error: 'Failed to update item copy',
         message: error.message,
       });
     }
@@ -821,44 +821,44 @@ router.put(
 );
 
 // DELETE /api/v1/item-copies/:id - Delete item copy
-router.delete("/:id", async (req, res) => {
+router.delete('/:id', async (req, res) => {
   try {
     const existing_copy = await db.get_by_id(
-      "LIBRARY_ITEM_COPIES",
+      'LIBRARY_ITEM_COPIES',
       req.params.id
     );
 
     if (!existing_copy) {
       return res.status(404).json({
-        error: "Item copy not found",
+        error: 'Item copy not found',
       });
     }
 
     // Check if copy is currently checked out
-    if (existing_copy.status === "Checked Out") {
+    if (existing_copy.status === 'Checked Out') {
       return res.status(400).json({
-        error: "Cannot delete item copy that is currently checked out",
+        error: 'Cannot delete item copy that is currently checked out',
       });
     }
 
     const deleted = await db.delete_record(
-      "LIBRARY_ITEM_COPIES",
+      'LIBRARY_ITEM_COPIES',
       req.params.id
     );
 
     if (deleted) {
       res.json({
         success: true,
-        message: "Item copy deleted successfully",
+        message: 'Item copy deleted successfully',
       });
     } else {
       res.status(500).json({
-        error: "Failed to delete item copy",
+        error: 'Failed to delete item copy',
       });
     }
   } catch (error) {
     res.status(500).json({
-      error: "Failed to delete item copy",
+      error: 'Failed to delete item copy',
       message: error.message,
     });
   }

@@ -1,19 +1,19 @@
-import express from "express";
-import { body, validationResult } from "express-validator";
-import * as db from "../config/database.js";
-import { format_sql_datetime } from "../utils.js";
+import express from 'express';
+import { body, validationResult } from 'express-validator';
+import * as db from '../config/database.js';
+import { format_sql_datetime } from '../utils.js';
 
 const router = express.Router();
 
 const validate_checkout = [
-  body("patron_id")
+  body('patron_id')
     .isInt({ min: 1 })
-    .withMessage("Valid patron ID is required"),
-  body("copy_id").isInt({ min: 1 }).withMessage("Valid copy ID is required"),
-  body("due_date")
+    .withMessage('Valid patron ID is required'),
+  body('copy_id').isInt({ min: 1 }).withMessage('Valid copy ID is required'),
+  body('due_date')
     .optional()
     .isISO8601()
-    .withMessage("Invalid due date format"),
+    .withMessage('Invalid due date format'),
 ];
 
 // Helper function to handle validation errors
@@ -21,7 +21,7 @@ const handle_validation_errors = (req, res, next) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     return res.status(400).json({
-      error: "Validation failed",
+      error: 'Validation failed',
       details: errors.array(),
     });
   }
@@ -29,79 +29,79 @@ const handle_validation_errors = (req, res, next) => {
 };
 
 // PUT /api/v1/reshelve - Mark item copies as reshelved
-router.put("/reshelve", async (req, res) => {
+router.put('/reshelve', async (req, res) => {
   const now = format_sql_datetime(new Date());
   try {
     const { copy_ids } = req.body;
     if (!copy_ids || !Array.isArray(copy_ids)) {
       return res.status(400).json({
-        error: "copy_ids must be provided as an array",
+        error: 'copy_ids must be provided as an array',
       });
     }
     await db.execute_transaction(async () => {
       for (const copy_id of copy_ids) {
-        const item_copy = await db.get_by_id("LIBRARY_ITEM_COPIES", copy_id);
+        const item_copy = await db.get_by_id('LIBRARY_ITEM_COPIES', copy_id);
         if (!item_copy) {
           throw new Error(`Item copy with ID ${copy_id} not found`);
         }
 
         // Validate item is in Unshelved status before reshelving
-        if (item_copy.status !== "Unshelved") {
+        if (item_copy.status !== 'Unshelved') {
           throw new Error(
             `Item copy with ID ${copy_id} cannot be reshelved. Current status: ${item_copy.status}`
           );
         }
 
-        await db.update_record("LIBRARY_ITEM_COPIES", item_copy.id, {
-          status: "Available",
+        await db.update_record('LIBRARY_ITEM_COPIES', item_copy.id, {
+          status: 'Available',
           updated_at: now,
         });
 
         const reshelve_transaction_data = {
           copy_id: item_copy.id,
           location_id: item_copy.current_branch_id,
-          transaction_type: "RESHELVE",
+          transaction_type: 'RESHELVE',
           created_at: now,
         };
 
-        await db.create_record("ITEM_TRANSACTIONS", reshelve_transaction_data);
+        await db.create_record('ITEM_TRANSACTIONS', reshelve_transaction_data);
       }
     });
 
     res.json({
       success: true,
-      message: "Item copies reshelved successfully",
+      message: 'Item copies reshelved successfully',
       data: {
         reshelved_count: copy_ids.length,
       },
     });
   } catch (error) {
     res.status(500).json({
-      error: "Failed to reshelve item copies",
+      error: 'Failed to reshelve item copies',
       message: error.message,
     });
   }
 });
 
 // GET /api/v1/transactions - Get all transactions
-router.get("/", async (req, res) => {
+router.get('/', async (req, res) => {
   try {
     const { patron_id, transaction_type, order_by } = req.query;
-    let conditions = "";
+    let conditions = '';
     const params = [];
 
     const filters = [];
     if (patron_id) {
-      filters.push("t.patron_id = ?");
+      filters.push('t.patron_id = ?');
       params.push(patron_id);
     }
     if (transaction_type) {
-      filters.push("t.transaction_type = ?");
+      filters.push('t.transaction_type = ?');
       params.push(transaction_type);
     }
 
     if (filters.length > 0) {
-      conditions = ` WHERE ${filters.join(" AND ")}`;
+      conditions = ` WHERE ${filters.join(' AND ')}`;
     }
 
     const query = `
@@ -124,7 +124,7 @@ router.get("/", async (req, res) => {
       LEFT JOIN BRANCHES b ON ic.current_branch_id = b.id
       LEFT JOIN BRANCHES bb ON ic.owning_branch_id = bb.id
       ${conditions}
-      ORDER BY ${order_by || "t.created_at"} DESC
+      ORDER BY ${order_by || 't.created_at'} DESC
     `;
 
     const transactions = await db.execute_query(query, params);
@@ -133,7 +133,7 @@ router.get("/", async (req, res) => {
     const transactions_with_labels = await Promise.all(
       transactions.map(async (transaction) => {
         const all_copies = await db.execute_query(
-          "SELECT id FROM LIBRARY_ITEM_COPIES WHERE library_item_id = ? ORDER BY id",
+          'SELECT id FROM LIBRARY_ITEM_COPIES WHERE library_item_id = ? ORDER BY id',
           [transaction.library_item_id]
         );
 
@@ -160,42 +160,42 @@ router.get("/", async (req, res) => {
     });
   } catch (error) {
     res.status(500).json({
-      error: "Failed to fetch transactions",
+      error: 'Failed to fetch transactions',
       message: error.message,
     });
   }
 });
 
 // GET /api/v1/transactions/checkin-lookup/:copy_id - Get checked-out copy by Copy ID (barcode)
-router.get("/checkin-lookup/:copy_id", async (req, res) => {
+router.get('/checkin-lookup/:copy_id', async (req, res) => {
   try {
     const copy_id = parseInt(req.params.copy_id, 10);
 
     if (Number.isNaN(copy_id)) {
       return res.status(400).json({
-        error: "Invalid Copy ID",
+        error: 'Invalid Copy ID',
       });
     }
 
     // Get the copy
-    const copy = await db.get_by_id("LIBRARY_ITEM_COPIES", copy_id);
+    const copy = await db.get_by_id('LIBRARY_ITEM_COPIES', copy_id);
     if (!copy) {
       return res.status(404).json({
-        error: "Copy not found",
+        error: 'Copy not found',
       });
     }
 
     // Check if copy is checked out (case-insensitive, trim whitespace)
     // Also check for "Renewed Once" and "Renewed Twice" as they are still checked out
-    const status_upper = (copy.status || "").trim().toUpperCase();
+    const status_upper = (copy.status || '').trim().toUpperCase();
     const is_checked_out =
-      status_upper === "CHECKED OUT" ||
-      status_upper === "RENEWED ONCE" ||
-      status_upper === "RENEWED TWICE";
+      status_upper === 'CHECKED OUT' ||
+      status_upper === 'RENEWED ONCE' ||
+      status_upper === 'RENEWED TWICE';
 
     if (!is_checked_out) {
       return res.status(200).json({
-        error: `This copy is not checked out. Current status: ${copy.status || "null"}`,
+        error: `This copy is not checked out. Current status: ${copy.status || 'null'}`,
       });
     }
 
@@ -209,7 +209,7 @@ router.get("/checkin-lookup/:copy_id", async (req, res) => {
 
     if (transaction.length === 0) {
       return res.status(200).json({
-        error: "No active checkout transaction found for this copy",
+        error: 'No active checkout transaction found for this copy',
       });
     }
 
@@ -217,43 +217,43 @@ router.get("/checkin-lookup/:copy_id", async (req, res) => {
 
     // Get patron info
     const patron = await db.get_by_id(
-      "PATRONS",
+      'PATRONS',
       checkout_transaction.patron_id
     );
     if (!patron) {
       return res.status(200).json({
-        error: "Patron not found",
+        error: 'Patron not found',
       });
     }
 
     // Get library item details
     const library_item = await db.get_by_id(
-      "LIBRARY_ITEMS",
+      'LIBRARY_ITEMS',
       copy.library_item_id
     );
     if (!library_item) {
       return res.status(200).json({
-        error: "Library item not found",
+        error: 'Library item not found',
       });
     }
 
     // Get item type-specific info
     let item_type_info = {};
     if (
-      library_item.item_type === "BOOK" ||
-      library_item.item_type === "book"
+      library_item.item_type === 'BOOK' ||
+      library_item.item_type === 'book'
     ) {
       const books = await db.execute_query(
-        "SELECT * FROM BOOKS WHERE library_item_id = ?",
+        'SELECT * FROM BOOKS WHERE library_item_id = ?',
         [copy.library_item_id]
       );
       item_type_info = books[0] || {};
     } else if (
-      library_item.item_type === "VIDEO" ||
-      library_item.item_type === "video"
+      library_item.item_type === 'VIDEO' ||
+      library_item.item_type === 'video'
     ) {
       const videos = await db.execute_query(
-        "SELECT * FROM VIDEOS WHERE library_item_id = ?",
+        'SELECT * FROM VIDEOS WHERE library_item_id = ?',
         [copy.library_item_id]
       );
       item_type_info = videos[0] || {};
@@ -276,7 +276,7 @@ router.get("/checkin-lookup/:copy_id", async (req, res) => {
 
     // Get total copies count for this item
     const all_copies = await db.execute_query(
-      "SELECT * FROM LIBRARY_ITEM_COPIES WHERE library_item_id = ? ORDER BY id",
+      'SELECT * FROM LIBRARY_ITEM_COPIES WHERE library_item_id = ? ORDER BY id',
       [copy.library_item_id]
     );
     const copy_index = all_copies.findIndex((c) => c.id === copy_id);
@@ -310,17 +310,17 @@ router.get("/checkin-lookup/:copy_id", async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("Error in checkin-lookup:", error);
+    console.error('Error in checkin-lookup:', error);
     res.status(500).json({
-      error: "Failed to lookup copy",
+      error: 'Failed to lookup copy',
       message: error.message,
-      stack: process.env.NODE_ENV === "development" ? error.stack : undefined,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined,
     });
   }
 });
 
 // GET /api/v1/transactions/checked-out - Get all checked-out items ready for check-in
-router.get("/checked-out", async (req, res) => {
+router.get('/checked-out', async (req, res) => {
   try {
     const { branch_id } = req.query;
 
@@ -358,7 +358,7 @@ router.get("/checked-out", async (req, res) => {
         AND (UPPER(ic.status) = 'CHECKED OUT' 
              OR UPPER(ic.status) = 'RENEWED ONCE' 
              OR UPPER(ic.status) = 'RENEWED TWICE')
-        ${branch_id ? "AND (ic.current_branch_id = ? OR ic.owning_branch_id = ?)" : ""}
+        ${branch_id ? 'AND (ic.current_branch_id = ? OR ic.owning_branch_id = ?)' : ''}
       ORDER BY t.due_date ASC, li.title ASC
     `;
 
@@ -386,7 +386,7 @@ router.get("/checked-out", async (req, res) => {
         ROW_NUMBER() OVER (PARTITION BY library_item_id ORDER BY id) as copy_position,
         COUNT(*) OVER (PARTITION BY library_item_id) as total_copies
       FROM LIBRARY_ITEM_COPIES
-      WHERE library_item_id IN (${library_item_ids.map(() => "?").join(", ")})
+      WHERE library_item_id IN (${library_item_ids.map(() => '?').join(', ')})
       ORDER BY library_item_id, id
     `;
 
@@ -426,16 +426,16 @@ router.get("/checked-out", async (req, res) => {
       data: results_with_labels,
     });
   } catch (error) {
-    console.error("Error fetching checked-out items:", error);
+    console.error('Error fetching checked-out items:', error);
     res.status(500).json({
-      error: "Failed to fetch checked-out items",
+      error: 'Failed to fetch checked-out items',
       message: error.message,
     });
   }
 });
 
 // GET /api/v1/transactions/patron/:patron_id - Get all transactions for a patron
-router.get("/patron/:patron_id", async (req, res) => {
+router.get('/patron/:patron_id', async (req, res) => {
   try {
     const query = `
       SELECT 
@@ -462,14 +462,14 @@ router.get("/patron/:patron_id", async (req, res) => {
     });
   } catch (error) {
     res.status(500).json({
-      error: "Failed to fetch transactions",
+      error: 'Failed to fetch transactions',
       message: error.message,
     });
   }
 });
 
 // GET /api/v1/transactions/:id - Get single transaction
-router.get("/:id", async (req, res) => {
+router.get('/:id', async (req, res) => {
   try {
     const query = `
       SELECT 
@@ -493,7 +493,7 @@ router.get("/:id", async (req, res) => {
 
     if (!transaction) {
       return res.status(404).json({
-        error: "Transaction not found",
+        error: 'Transaction not found',
       });
     }
 
@@ -503,7 +503,7 @@ router.get("/:id", async (req, res) => {
     });
   } catch (error) {
     res.status(500).json({
-      error: "Failed to fetch transaction",
+      error: 'Failed to fetch transaction',
       message: error.message,
     });
   }
@@ -511,7 +511,7 @@ router.get("/:id", async (req, res) => {
 
 // POST /api/v1/transactions/checkout - Checkout item
 router.post(
-  "/checkout",
+  '/checkout',
   validate_checkout,
   handle_validation_errors,
   async (req, res) => {
@@ -528,8 +528,8 @@ router.post(
       );
 
       for (const reservation of expired_reservations) {
-        await db.update_record("RESERVATIONS", reservation.id, {
-          status: "expired",
+        await db.update_record('RESERVATIONS', reservation.id, {
+          status: 'expired',
           updated_at: now,
         });
 
@@ -539,8 +539,8 @@ router.post(
         );
 
         if (copies.length > 0) {
-          await db.update_record("LIBRARY_ITEM_COPIES", copies[0].id, {
-            status: "returned",
+          await db.update_record('LIBRARY_ITEM_COPIES', copies[0].id, {
+            status: 'returned',
             updated_at: now,
           });
 
@@ -553,14 +553,14 @@ router.post(
             const new_expiry = new Date();
             new_expiry.setDate(new_expiry.getDate() + 5);
 
-            await db.update_record("RESERVATIONS", next_in_queue[0].id, {
-              status: "ready",
+            await db.update_record('RESERVATIONS', next_in_queue[0].id, {
+              status: 'ready',
               expiry_date: format_sql_datetime(new_expiry),
               updated_at: now,
             });
 
-            await db.update_record("LIBRARY_ITEM_COPIES", copies[0].id, {
-              status: "Reserved",
+            await db.update_record('LIBRARY_ITEM_COPIES', copies[0].id, {
+              status: 'Reserved',
               updated_at: now,
             });
           }
@@ -568,17 +568,17 @@ router.post(
       }
 
       // Verify item copy exists and is available
-      const item_copy = await db.get_by_id("LIBRARY_ITEM_COPIES", copy_id);
+      const item_copy = await db.get_by_id('LIBRARY_ITEM_COPIES', copy_id);
       if (!item_copy) {
         return res.status(400).json({
-          error: "Item copy not found",
+          error: 'Item copy not found',
         });
       }
 
       // Check if item is available or reserved
-      if (item_copy.status !== "Available" && item_copy.status !== "Reserved") {
+      if (item_copy.status !== 'Available' && item_copy.status !== 'Reserved') {
         return res.status(400).json({
-          error: "Item is not available for checkout",
+          error: 'Item is not available for checkout',
           current_status: item_copy.status,
         });
       }
@@ -629,8 +629,8 @@ router.post(
         );
 
         return res.status(400).json({
-          error: "Item is reserved for another patron",
-          message: "This item has reservations that must be fulfilled first",
+          error: 'Item is reserved for another patron',
+          message: 'This item has reservations that must be fulfilled first',
           queue: all_reservations.map((r) => ({
             patron_id: r.patron_id,
             patron_name: `${r.first_name} ${r.last_name}`,
@@ -643,7 +643,7 @@ router.post(
       // If item copy status is "Reserved", verify the patron has a reservation for it
       // (This is a secondary check - the primary check above already handles reservations)
       let reservation_to_fulfill = null;
-      if (item_copy.status === "Reserved" || item_copy.status === "reserved") {
+      if (item_copy.status === 'Reserved' || item_copy.status === 'reserved') {
         const reservations = await db.execute_query(
           'SELECT * FROM RESERVATIONS WHERE item_copy_id = ? AND patron_id = ? AND status IN ("waiting", "ready") ORDER BY queue_position LIMIT 1',
           [item_copy.library_item_id, patron_id]
@@ -665,9 +665,9 @@ router.post(
           );
 
           return res.status(400).json({
-            error: "Item is reserved for another patron",
+            error: 'Item is reserved for another patron',
             message:
-              "This item is reserved and you do not have an active reservation for it",
+              'This item is reserved and you do not have an active reservation for it',
             queue: all_reservations.map((r) => ({
               patron_id: r.patron_id,
               patron_name: `${r.first_name} ${r.last_name}`,
@@ -684,10 +684,10 @@ router.post(
       }
 
       // Verify patron exists and is active
-      const patron = await db.get_by_id("PATRONS", patron_id);
+      const patron = await db.get_by_id('PATRONS', patron_id);
       if (!patron || !patron.is_active) {
         return res.status(400).json({
-          error: "Patron not found or inactive",
+          error: 'Patron not found or inactive',
         });
       }
 
@@ -701,7 +701,7 @@ router.post(
       ) {
         return res.status(400).json({
           error: "Patron's card is expired",
-          message: "Card expiration must be extended before checkout",
+          message: 'Card expiration must be extended before checkout',
         });
       }
 
@@ -711,15 +711,15 @@ router.post(
         if (clear_fines) {
           // Clear the patron's balance (assumes fine was paid externally)
           await db.execute_query(
-            "UPDATE PATRONS SET balance = 0 WHERE id = ?",
+            'UPDATE PATRONS SET balance = 0 WHERE id = ?',
             [patron_id]
           );
           // Refresh patron data
-          const updated_patron = await db.get_by_id("PATRONS", patron_id);
+          const updated_patron = await db.get_by_id('PATRONS', patron_id);
           patron.balance = updated_patron.balance;
         } else {
           return res.status(400).json({
-            error: "Patron has outstanding fines",
+            error: 'Patron has outstanding fines',
             message: `Patron owes $${patron.balance.toFixed(2)}. Fines must be resolved before checkout`,
           });
         }
@@ -737,13 +737,13 @@ router.post(
       // Block if patron already has 20 or more books checked out (hard limit - cannot override)
       if (current_count >= 20) {
         return res.status(400).json({
-          error: "Patron has too many books checked out",
+          error: 'Patron has too many books checked out',
           message: `Patron has ${current_count} books checked out. Maximum is 20. Cannot checkout additional items.`,
         });
       }
 
       const library_item = await db.get_by_id(
-        "LIBRARY_ITEMS",
+        'LIBRARY_ITEMS',
         item_copy.library_item_id
       );
 
@@ -754,7 +754,7 @@ router.post(
       // Movies: 1 week (7 days) for old, 3 days for new
       const checkout_date = new Date();
       const calculated_due_date =
-        library_item.item_type === "VIDEO" || library_item.item_type === "video"
+        library_item.item_type === 'VIDEO' || library_item.item_type === 'video'
           ? library_item.publication_year >= this_year - 1
             ? new Date(checkout_date.getTime() + 3 * 24 * 60 * 60 * 1000) // New Movies: 3 days
             : new Date(checkout_date.getTime() + 7 * 24 * 60 * 60 * 1000) // Movies: 1 week (7 days)
@@ -765,16 +765,16 @@ router.post(
         item_copy_id: copy_id,
         patron_id,
         location_id: item_copy.current_branch_id,
-        transaction_type: "CHECKOUT",
+        transaction_type: 'CHECKOUT',
         date: now,
         created_at: now,
       };
 
-      await db.create_record("ITEM_TRANSACTIONS", transaction_data);
+      await db.create_record('ITEM_TRANSACTIONS', transaction_data);
 
       // Update item copy status and checkout info
-      await db.update_record("LIBRARY_ITEM_COPIES", copy_id, {
-        status: "Checked Out",
+      await db.update_record('LIBRARY_ITEM_COPIES', copy_id, {
+        status: 'Checked Out',
         checked_out_by: patron_id,
         due_date: format_sql_datetime(calculated_due_date),
         updated_at: now,
@@ -783,8 +783,8 @@ router.post(
       // If this checkout fulfills a reservation, update the reservation status
       let reservation_info = null;
       if (reservation_to_fulfill) {
-        await db.update_record("RESERVATIONS", reservation_to_fulfill.id, {
-          status: "fulfilled",
+        await db.update_record('RESERVATIONS', reservation_to_fulfill.id, {
+          status: 'fulfilled',
           fulfillment_date: now,
           updated_at: now,
         });
@@ -796,11 +796,11 @@ router.post(
         );
 
         // Log fulfillment transaction
-        await db.create_record("ITEM_TRANSACTIONS", {
+        await db.create_record('ITEM_TRANSACTIONS', {
           copy_id,
           patron_id,
           location_id: 1,
-          transaction_type: "Reservation Fulfilled",
+          transaction_type: 'Reservation Fulfilled',
           notes: `Reservation #${reservation_to_fulfill.id} fulfilled via checkout`,
           created_at: now,
         });
@@ -809,7 +809,7 @@ router.post(
         reservation_info = {
           reservation_id: reservation_to_fulfill.id,
           queue_position: reservation_to_fulfill.queue_position,
-          status: "fulfilled",
+          status: 'fulfilled',
           was_reserved: true,
         };
       }
@@ -845,8 +845,8 @@ router.post(
       res.status(201).json({
         success: true,
         message: reservation_info
-          ? "Item checked out successfully - Reservation fulfilled"
-          : "Item checked out successfully",
+          ? 'Item checked out successfully - Reservation fulfilled'
+          : 'Item checked out successfully',
         data: {
           ...enriched_transaction,
           ...patron,
@@ -858,7 +858,7 @@ router.post(
       });
     } catch (error) {
       res.status(500).json({
-        error: "Failed to checkout item",
+        error: 'Failed to checkout item',
         message: error.message,
       });
     }
@@ -867,20 +867,20 @@ router.post(
 
 // POST /api/v1/transactions/checkin - Checkin item
 router.post(
-  "/checkin",
+  '/checkin',
   [
-    body("new_condition")
+    body('new_condition')
       .optional()
-      .isIn(["New", "Excellent", "Good", "Fair", "Poor"])
-      .withMessage("Invalid condition"),
-    body("copy_id")
+      .isIn(['New', 'Excellent', 'Good', 'Fair', 'Poor'])
+      .withMessage('Invalid condition'),
+    body('copy_id')
       .notEmpty()
-      .withMessage("Valid copy ID is required")
+      .withMessage('Valid copy ID is required')
       .custom((value) => {
         // Handle both string and number inputs
-        const num = typeof value === "number" ? value : parseInt(value, 10);
+        const num = typeof value === 'number' ? value : parseInt(value, 10);
         if (Number.isNaN(num) || num <= 0) {
-          throw new Error("Copy ID must be a positive number");
+          throw new Error('Copy ID must be a positive number');
         }
         return true;
       })
@@ -893,41 +893,41 @@ router.post(
 
       // Validate new_location_id if provided
       if (new_location_id) {
-        const branch = await db.get_by_id("BRANCHES", new_location_id);
+        const branch = await db.get_by_id('BRANCHES', new_location_id);
         if (!branch) {
           return res.status(400).json({
-            error: "Invalid new_location_id: Branch not found",
+            error: 'Invalid new_location_id: Branch not found',
           });
         }
       }
 
       // Find item copy (check status more flexibly)
       const item_copy_found = await db.execute_query(
-        "SELECT * FROM LIBRARY_ITEM_COPIES WHERE id = ? LIMIT 1",
+        'SELECT * FROM LIBRARY_ITEM_COPIES WHERE id = ? LIMIT 1',
         [copy_id]
       );
 
       if (item_copy_found.length === 0) {
         return res.status(404).json({
-          error: "Copy not found",
+          error: 'Copy not found',
         });
       }
 
       const item_copy_to_checkin = item_copy_found[0];
-      const status_upper = (item_copy_to_checkin.status || "")
+      const status_upper = (item_copy_to_checkin.status || '')
         .trim()
         .toUpperCase();
 
       // Check if copy is checked out (case-insensitive, trim whitespace)
       // Also check for "Renewed Once" and "Renewed Twice" as they are still checked out
       const is_checked_out =
-        status_upper === "CHECKED OUT" ||
-        status_upper === "RENEWED ONCE" ||
-        status_upper === "RENEWED TWICE";
+        status_upper === 'CHECKED OUT' ||
+        status_upper === 'RENEWED ONCE' ||
+        status_upper === 'RENEWED TWICE';
 
       if (!is_checked_out) {
         return res.status(400).json({
-          error: `This copy is not checked out. Current status: ${item_copy_to_checkin.status || "null"}`,
+          error: `This copy is not checked out. Current status: ${item_copy_to_checkin.status || 'null'}`,
         });
       }
 
@@ -939,7 +939,7 @@ router.post(
 
       if (check_out_transaction.length === 0) {
         return res.status(400).json({
-          error: "No active checkout transaction found for this copy",
+          error: 'No active checkout transaction found for this copy',
         });
       }
 
@@ -970,20 +970,20 @@ router.post(
           item_copy_id: copy_id,
           patron_id: transaction.patron_id,
           location_id: new_location_id || item_copy.current_branch_id,
-          transaction_type: "CHECKIN",
+          transaction_type: 'CHECKIN',
           date: now,
           notes: notes || null,
           created_at: now,
         };
 
         const trans_id = await db.create_record(
-          "ITEM_TRANSACTIONS",
+          'ITEM_TRANSACTIONS',
           checkin_transaction_data
         );
 
         // Update item copy - initially set to "Unshelved" (will be updated later if there's a reservation)
-        await db.update_record("LIBRARY_ITEM_COPIES", copy_id, {
-          status: "Unshelved",
+        await db.update_record('LIBRARY_ITEM_COPIES', copy_id, {
+          status: 'Unshelved',
           checked_out_by: null,
           due_date: null,
           current_branch_id: new_location_id || item_copy.current_branch_id,
@@ -994,7 +994,7 @@ router.post(
         // Update patron balance if there's a fine
         if (fine_amount > 0) {
           await db.execute_query(
-            "UPDATE PATRONS SET balance = balance + ? WHERE id = ?",
+            'UPDATE PATRONS SET balance = balance + ? WHERE id = ?',
             [fine_amount, transaction.patron_id]
           );
         }
@@ -1006,7 +1006,7 @@ router.post(
         );
 
         let reservation_fulfilled = null;
-        let final_status = "Unshelved";
+        let final_status = 'Unshelved';
 
         // If there's a waiting reservation, fulfill it automatically
         if (waiting_reservations.length > 0) {
@@ -1016,8 +1016,8 @@ router.post(
           const expiry_date = new Date();
           expiry_date.setDate(expiry_date.getDate() + 5); // 5 days from now
 
-          await db.update_record("RESERVATIONS", next_reservation.id, {
-            status: "ready",
+          await db.update_record('RESERVATIONS', next_reservation.id, {
+            status: 'ready',
             expiry_date: format_sql_datetime(expiry_date),
             updated_at: now,
           });
@@ -1029,7 +1029,7 @@ router.post(
           );
 
           // Mark the copy as "Reserved" (ready for the reserved patron to pick up)
-          final_status = "Reserved";
+          final_status = 'Reserved';
           reservation_fulfilled = {
             reservation_id: next_reservation.id,
             patron_id: next_reservation.patron_id,
@@ -1039,7 +1039,7 @@ router.post(
 
         // Update item copy - set status based on whether there's a reservation
         // (other fields already updated in transaction block above)
-        await db.update_record("LIBRARY_ITEM_COPIES", copy_id, {
+        await db.update_record('LIBRARY_ITEM_COPIES', copy_id, {
           status: final_status,
           updated_at: now,
         });
@@ -1074,7 +1074,7 @@ router.post(
         let reserved_patron_info = null;
         if (reservation_fulfilled) {
           const reserved_patron = await db.get_by_id(
-            "PATRONS",
+            'PATRONS',
             reservation_fulfilled.patron_id
           );
           if (reserved_patron) {
@@ -1088,15 +1088,15 @@ router.post(
 
         // Get updated item copy for response
         const updated_item_copy = await db.get_by_id(
-          "LIBRARY_ITEM_COPIES",
+          'LIBRARY_ITEM_COPIES',
           copy_id
         );
 
         res.json({
           success: true,
           message: reservation_fulfilled
-            ? "Item checked in successfully and reserved for patron"
-            : "Item checked in successfully",
+            ? 'Item checked in successfully and reserved for patron'
+            : 'Item checked in successfully',
           data: {
             ...enriched_transaction,
             id: trans_id,
@@ -1115,7 +1115,7 @@ router.post(
       });
     } catch (error) {
       res.status(500).json({
-        error: "Failed to checkin item",
+        error: 'Failed to checkin item',
         message: error.message,
       });
     }
@@ -1123,39 +1123,39 @@ router.post(
 );
 
 // PUT /api/v1/transactions/:id/renew - Renew transaction
-router.put("/:id/renew", async (req, res) => {
+router.put('/:id/renew', async (req, res) => {
   try {
-    const transaction = await db.get_by_id("ITEM_TRANSACTIONS", req.params.id);
+    const transaction = await db.get_by_id('ITEM_TRANSACTIONS', req.params.id);
 
     if (!transaction) {
       return res.status(404).json({
-        error: "Transaction not found",
+        error: 'Transaction not found',
       });
     }
 
     // Check renewal status - prevent if already renewed twice
-    if (transaction.renewal_status === "Renewed Twice") {
+    if (transaction.renewal_status === 'Renewed Twice') {
       return res.status(400).json({
-        error: "Item has already been renewed twice",
+        error: 'Item has already been renewed twice',
       });
     }
 
     // Get item copy
     const item_copy = await db.get_by_id(
-      "LIBRARY_ITEM_COPIES",
+      'LIBRARY_ITEM_COPIES',
       transaction.copy_id
     );
     if (!item_copy) {
       return res.status(400).json({
-        error: "Item copy not found",
+        error: 'Item copy not found',
       });
     }
 
     // Check if item is reserved - prevent renewal if copy is reserved or has active reservations
-    if (item_copy.status === "Reserved") {
+    if (item_copy.status === 'Reserved') {
       return res.status(400).json({
-        error: "Item is reserved and cannot be renewed",
-        message: "This item is currently reserved for another patron",
+        error: 'Item is reserved and cannot be renewed',
+        message: 'This item is currently reserved for another patron',
       });
     }
 
@@ -1167,16 +1167,16 @@ router.put("/:id/renew", async (req, res) => {
 
     if (reservations[0].count > 0) {
       return res.status(400).json({
-        error: "Item is reserved",
-        message: "This item has active reservations and cannot be renewed",
+        error: 'Item is reserved',
+        message: 'This item has active reservations and cannot be renewed',
       });
     }
 
     // Get patron information
-    const patron = await db.get_by_id("PATRONS", transaction.patron_id);
+    const patron = await db.get_by_id('PATRONS', transaction.patron_id);
     if (!patron) {
       return res.status(400).json({
-        error: "Patron not found",
+        error: 'Patron not found',
       });
     }
 
@@ -1191,7 +1191,7 @@ router.put("/:id/renew", async (req, res) => {
     // Check if patron has fines
     if (patron.balance > 0) {
       return res.status(400).json({
-        error: "Patron has fines",
+        error: 'Patron has fines',
       });
     }
 
@@ -1203,13 +1203,13 @@ router.put("/:id/renew", async (req, res) => {
 
     if (active_checkout_count[0].count >= 20) {
       return res.status(400).json({
-        error: "Patron has too many books checked out",
+        error: 'Patron has too many books checked out',
       });
     }
 
     // Get item details for calculating due date
     const library_item = await db.execute_query(
-      "SELECT li.*, v.is_new_release FROM LIBRARY_ITEMS li LEFT JOIN VIDEOS v ON li.id = v.library_item_id WHERE li.id = ?",
+      'SELECT li.*, v.is_new_release FROM LIBRARY_ITEMS li LEFT JOIN VIDEOS v ON li.id = v.library_item_id WHERE li.id = ?',
       [item_copy.library_item_id]
     );
 
@@ -1219,8 +1219,8 @@ router.put("/:id/renew", async (req, res) => {
 
     if (library_item[0]) {
       if (
-        library_item[0].item_type === "VIDEO" ||
-        library_item[0].item_type === "video"
+        library_item[0].item_type === 'VIDEO' ||
+        library_item[0].item_type === 'video'
       ) {
         if (library_item[0].is_new_release === 1) {
           days_to_add = 3; // New release videos: 3 days
@@ -1228,8 +1228,8 @@ router.put("/:id/renew", async (req, res) => {
           days_to_add = 7; // Regular videos: 7 days
         }
       } else if (
-        library_item[0].item_type === "BOOK" ||
-        library_item[0].item_type === "book"
+        library_item[0].item_type === 'BOOK' ||
+        library_item[0].item_type === 'book'
       ) {
         days_to_add = 28; // Books: 4 weeks
       }
@@ -1240,9 +1240,9 @@ router.put("/:id/renew", async (req, res) => {
     );
 
     // Update renewal status
-    let new_renewal_status = "Renewed Once";
-    if (transaction.renewal_status === "Renewed Once") {
-      new_renewal_status = "Renewed Twice";
+    let new_renewal_status = 'Renewed Once';
+    if (transaction.renewal_status === 'Renewed Once') {
+      new_renewal_status = 'Renewed Twice';
     }
 
     // Create a new transaction record for the renewal
@@ -1250,21 +1250,21 @@ router.put("/:id/renew", async (req, res) => {
       copy_id: transaction.copy_id,
       patron_id: transaction.patron_id,
       location_id: transaction.location_id,
-      transaction_type: "RENEW",
+      transaction_type: 'RENEW',
       date: now,
       created_at: now,
     };
-    await db.create_record("ITEM_TRANSACTIONS", renewal_transaction);
+    await db.create_record('ITEM_TRANSACTIONS', renewal_transaction);
 
     // Update item copy due date (status remains "Checked Out" - renewal is patron-specific)
-    await db.update_record("LIBRARY_ITEM_COPIES", transaction.copy_id, {
+    await db.update_record('LIBRARY_ITEM_COPIES', transaction.copy_id, {
       due_date: new_due_date,
       updated_at: now,
     });
 
     res.json({
       success: true,
-      message: "Transaction renewed successfully",
+      message: 'Transaction renewed successfully',
       data: {
         transaction_id: req.params.id,
         new_due_date,
@@ -1273,14 +1273,14 @@ router.put("/:id/renew", async (req, res) => {
     });
   } catch (error) {
     res.status(500).json({
-      error: "Failed to renew transaction",
+      error: 'Failed to renew transaction',
       message: error.message,
     });
   }
 });
 
 // GET /api/v1/transactions/by-copy/:copy_id - Get transaction info by copy ID
-router.get("/by-copy/:copy_id", async (req, res) => {
+router.get('/by-copy/:copy_id', async (req, res) => {
   try {
     const copy_id = req.params.copy_id;
 
@@ -1292,58 +1292,58 @@ router.get("/by-copy/:copy_id", async (req, res) => {
 
     if (transactions.length === 0) {
       return res.status(404).json({
-        error: "No active transaction found for this item",
+        error: 'No active transaction found for this item',
       });
     }
 
     const transaction = transactions[0];
 
     // Get item copy information
-    const item_copy = await db.get_by_id("LIBRARY_ITEM_COPIES", copy_id);
+    const item_copy = await db.get_by_id('LIBRARY_ITEM_COPIES', copy_id);
     if (!item_copy) {
       return res.status(404).json({
-        error: "Item copy not found",
+        error: 'Item copy not found',
       });
     }
 
     // Get library item information
     const library_item = await db.get_by_id(
-      "LIBRARY_ITEMS",
+      'LIBRARY_ITEMS',
       item_copy.library_item_id
     );
     if (!library_item) {
       return res.status(404).json({
-        error: "Library item not found",
+        error: 'Library item not found',
       });
     }
 
     // Get item type-specific information
     let item_details = {};
     if (
-      library_item.item_type === "BOOK" ||
-      library_item.item_type === "book"
+      library_item.item_type === 'BOOK' ||
+      library_item.item_type === 'book'
     ) {
       const books = await db.execute_query(
-        "SELECT * FROM BOOKS WHERE library_item_id = ?",
+        'SELECT * FROM BOOKS WHERE library_item_id = ?',
         [library_item.id]
       );
       item_details = books[0] || {};
     } else if (
-      library_item.item_type === "VIDEO" ||
-      library_item.item_type === "video"
+      library_item.item_type === 'VIDEO' ||
+      library_item.item_type === 'video'
     ) {
       const videos = await db.execute_query(
-        "SELECT * FROM VIDEOS WHERE library_item_id = ?",
+        'SELECT * FROM VIDEOS WHERE library_item_id = ?',
         [library_item.id]
       );
       item_details = videos[0] || {};
     }
 
     // Get patron information
-    const patron = await db.get_by_id("PATRONS", transaction.patron_id);
+    const patron = await db.get_by_id('PATRONS', transaction.patron_id);
     if (!patron) {
       return res.status(404).json({
-        error: "Patron not found",
+        error: 'Patron not found',
       });
     }
 
@@ -1379,7 +1379,7 @@ router.get("/by-copy/:copy_id", async (req, res) => {
     });
   } catch (error) {
     res.status(500).json({
-      error: "Failed to fetch transaction information",
+      error: 'Failed to fetch transaction information',
       message: error.message,
     });
   }
@@ -1387,8 +1387,8 @@ router.get("/by-copy/:copy_id", async (req, res) => {
 
 // POST /api/v1/transactions/reshelve - Mark item as available (reshelve process)
 router.post(
-  "/reshelve",
-  [body("copy_id").isNumeric().withMessage("Valid copy ID is required")],
+  '/reshelve',
+  [body('copy_id').isNumeric().withMessage('Valid copy ID is required')],
   handle_validation_errors,
   async (req, res) => {
     try {
@@ -1397,19 +1397,19 @@ router.post(
       const now = format_sql_datetime(new Date());
 
       // Get item copy
-      const item_copy = await db.get_by_id("LIBRARY_ITEM_COPIES", copy_id);
+      const item_copy = await db.get_by_id('LIBRARY_ITEM_COPIES', copy_id);
       if (!item_copy) {
         return res.status(400).json({
-          error: "Item copy not found",
+          error: 'Item copy not found',
         });
       }
 
       // Verify the item is in the correct status for reshelving
-      const status_upper = (item_copy.status || "").trim().toUpperCase();
-      if (status_upper !== "UNSHELVED") {
+      const status_upper = (item_copy.status || '').trim().toUpperCase();
+      if (status_upper !== 'UNSHELVED') {
         return res.status(400).json({
-          error: "Item cannot be reshelved",
-          message: `Item status must be "Unshelved" to reshelve. Current status: ${item_copy.status || "null"}`,
+          error: 'Item cannot be reshelved',
+          message: `Item status must be "Unshelved" to reshelve. Current status: ${item_copy.status || 'null'}`,
         });
       }
 
@@ -1419,8 +1419,8 @@ router.post(
         [item_copy.library_item_id]
       );
 
-      let final_status = "Available";
-      let promotion_message = "";
+      let final_status = 'Available';
+      let promotion_message = '';
 
       if (waiting_reservations.length > 0) {
         // Promote first waiting reservation to "ready"
@@ -1428,29 +1428,29 @@ router.post(
         const new_expiry = new Date();
         new_expiry.setDate(new_expiry.getDate() + 5);
 
-        await db.update_record("RESERVATIONS", next_reservation.id, {
-          status: "ready",
+        await db.update_record('RESERVATIONS', next_reservation.id, {
+          status: 'ready',
           expiry_date: format_sql_datetime(new_expiry),
           updated_at: now,
         });
 
         // Set copy to Reserved for the patron
-        final_status = "Reserved";
-        promotion_message = " and reservation promoted to ready for pickup";
+        final_status = 'Reserved';
+        promotion_message = ' and reservation promoted to ready for pickup';
       }
 
-      const was_reshelved = final_status === "Available";
+      const was_reshelved = final_status === 'Available';
 
-      await db.create_record("ITEM_TRANSACTIONS", {
+      await db.create_record('ITEM_TRANSACTIONS', {
         item_copy_id: copy_id,
         patron_id: was_reshelved ? null : waiting_reservations[0].patron_id,
-        transaction_type: was_reshelved ? "RESHELVE" : "RESERVATION PROMOTION",
+        transaction_type: was_reshelved ? 'RESHELVE' : 'RESERVATION PROMOTION',
         created_at: now,
         date: now,
       });
 
       // Update item copy status
-      await db.update_record("LIBRARY_ITEM_COPIES", copy_id, {
+      await db.update_record('LIBRARY_ITEM_COPIES', copy_id, {
         status: final_status,
         current_branch_id: branch_id || item_copy.owning_branch_id,
         checked_out_by: null,
@@ -1470,7 +1470,7 @@ router.post(
       });
     } catch (error) {
       res.status(500).json({
-        error: "Failed to reshelve item copy",
+        error: 'Failed to reshelve item copy',
         message: error.message,
       });
     }
@@ -1479,14 +1479,14 @@ router.post(
 
 // POST /api/v1/transactions/reshelve-all - Mark multiple items as available (bulk reshelve process)
 router.post(
-  "/reshelve-all",
+  '/reshelve-all',
   [
-    body("copy_ids")
+    body('copy_ids')
       .isArray({ min: 1 })
-      .withMessage("copy_ids must be a non-empty array"),
-    body("copy_ids.*")
+      .withMessage('copy_ids must be a non-empty array'),
+    body('copy_ids.*')
       .isNumeric()
-      .withMessage("Each copy_id must be a valid number"),
+      .withMessage('Each copy_id must be a valid number'),
   ],
   handle_validation_errors,
   async (req, res) => {
@@ -1500,7 +1500,7 @@ router.post(
       let reservations_promoted = 0;
 
       // Get all item copies at once for efficiency
-      const item_copies = await db.get_by_ids("LIBRARY_ITEM_COPIES", copy_ids);
+      const item_copies = await db.get_by_ids('LIBRARY_ITEM_COPIES', copy_ids);
       const item_copies_map = new Map(item_copies.map((ic) => [ic.id, ic]));
 
       await db.execute_transaction(async () => {
@@ -1511,18 +1511,18 @@ router.post(
             if (!item_copy) {
               errors.push({
                 copy_id,
-                error: "Item copy not found",
+                error: 'Item copy not found',
               });
               continue;
             }
 
             // Verify the item is in the correct status for reshelving
-            const status_upper = (item_copy.status || "").trim().toUpperCase();
-            if (status_upper !== "UNSHELVED") {
+            const status_upper = (item_copy.status || '').trim().toUpperCase();
+            if (status_upper !== 'UNSHELVED') {
               errors.push({
                 copy_id,
-                error: "Item cannot be reshelved",
-                message: `Item status must be "Unshelved" to reshelve. Current status: ${item_copy.status || "null"}`,
+                error: 'Item cannot be reshelved',
+                message: `Item status must be "Unshelved" to reshelve. Current status: ${item_copy.status || 'null'}`,
               });
               continue;
             }
@@ -1533,7 +1533,7 @@ router.post(
               [item_copy.library_item_id]
             );
 
-            let final_status = "Available";
+            let final_status = 'Available';
             let reservation_promoted = false;
 
             if (waiting_reservations.length > 0) {
@@ -1542,20 +1542,20 @@ router.post(
               const new_expiry = new Date();
               new_expiry.setDate(new_expiry.getDate() + 5);
 
-              await db.update_record("RESERVATIONS", next_reservation.id, {
-                status: "ready",
+              await db.update_record('RESERVATIONS', next_reservation.id, {
+                status: 'ready',
                 expiry_date: format_sql_datetime(new_expiry),
                 updated_at: now,
               });
 
               // Set copy to Reserved for the patron
-              final_status = "Reserved";
+              final_status = 'Reserved';
               reservation_promoted = true;
               reservations_promoted++;
             }
 
             // Update item copy status
-            await db.update_record("LIBRARY_ITEM_COPIES", copy_id, {
+            await db.update_record('LIBRARY_ITEM_COPIES', copy_id, {
               status: final_status,
               current_branch_id: branch_id || item_copy.owning_branch_id,
               checked_out_by: null,
@@ -1563,16 +1563,16 @@ router.post(
               updated_at: now,
             });
 
-            const was_reshelved = final_status === "Available";
+            const was_reshelved = final_status === 'Available';
 
-            await db.create_record("ITEM_TRANSACTIONS", {
+            await db.create_record('ITEM_TRANSACTIONS', {
               item_copy_id: copy_id,
               patron_id: was_reshelved
                 ? null
                 : waiting_reservations[0].patron_id,
               transaction_type: was_reshelved
-                ? "RESHELVE"
-                : "RESERVATION PROMOTION",
+                ? 'RESHELVE'
+                : 'RESERVATION PROMOTION',
               created_at: now,
             });
 
@@ -1585,7 +1585,7 @@ router.post(
           } catch (error) {
             errors.push({
               copy_id,
-              error: "Failed to reshelve item",
+              error: 'Failed to reshelve item',
               message: error.message,
             });
           }
@@ -1600,8 +1600,8 @@ router.post(
         success: error_count === 0,
         message:
           error_count === 0
-            ? `Successfully reshelved ${success_count} item${success_count !== 1 ? "s" : ""}${reservations_promoted > 0 ? ` (${reservations_promoted} reservation${reservations_promoted !== 1 ? "s" : ""} promoted)` : ""}`
-            : `Reshelved ${success_count} of ${total_count} items with ${error_count} error${error_count !== 1 ? "s" : ""}`,
+            ? `Successfully reshelved ${success_count} item${success_count !== 1 ? 's' : ''}${reservations_promoted > 0 ? ` (${reservations_promoted} reservation${reservations_promoted !== 1 ? 's' : ''} promoted)` : ''}`
+            : `Reshelved ${success_count} of ${total_count} items with ${error_count} error${error_count !== 1 ? 's' : ''}`,
         data: {
           total: total_count,
           success: success_count,
@@ -1613,7 +1613,7 @@ router.post(
       });
     } catch (error) {
       res.status(500).json({
-        error: "Failed to reshelve item copies",
+        error: 'Failed to reshelve item copies',
         message: error.message,
       });
     }
@@ -1622,27 +1622,27 @@ router.post(
 
 // POST /api/v1/transactions/reshelve/undo - Undo reshelve (change status back to "Unshelved")
 router.post(
-  "/reshelve/undo",
-  [body("copy_id").isNumeric().withMessage("Valid copy ID is required")],
+  '/reshelve/undo',
+  [body('copy_id').isNumeric().withMessage('Valid copy ID is required')],
   handle_validation_errors,
   async (req, res) => {
     try {
       const { copy_id } = req.body;
 
       // Get item copy
-      const item_copy = await db.get_by_id("LIBRARY_ITEM_COPIES", copy_id);
+      const item_copy = await db.get_by_id('LIBRARY_ITEM_COPIES', copy_id);
       if (!item_copy) {
         return res.status(400).json({
-          error: "Item copy not found",
+          error: 'Item copy not found',
         });
       }
 
       // Verify the item is in "Available" status (can only undo if it was reshelved)
-      const status_upper = (item_copy.status || "").trim().toUpperCase();
-      if (status_upper !== "AVAILABLE") {
+      const status_upper = (item_copy.status || '').trim().toUpperCase();
+      if (status_upper !== 'AVAILABLE') {
         return res.status(400).json({
-          error: "Item cannot be undone",
-          message: `Item status must be "Available" to undo reshelve. Current status: ${item_copy.status || "null"}`,
+          error: 'Item cannot be undone',
+          message: `Item status must be "Available" to undo reshelve. Current status: ${item_copy.status || 'null'}`,
         });
       }
 
@@ -1654,9 +1654,9 @@ router.post(
 
       if (active_reservation.length > 0) {
         return res.status(400).json({
-          error: "Cannot undo reshelve",
+          error: 'Cannot undo reshelve',
           message:
-            "Item has an active reservation and cannot be returned to unshelved status",
+            'Item has an active reservation and cannot be returned to unshelved status',
         });
       }
 
@@ -1670,7 +1670,7 @@ router.post(
 
       if (transaction_results.length === 0) {
         return res.status(404).json({
-          error: "No reshelve transaction found to undo",
+          error: 'No reshelve transaction found to undo',
         });
       }
 
@@ -1679,26 +1679,26 @@ router.post(
       // Wrap both operations in a transaction for atomicity
       await db.execute_transaction(async () => {
         // Update status back to "Unshelved"
-        await db.update_record("LIBRARY_ITEM_COPIES", copy_id, {
-          status: "Unshelved",
+        await db.update_record('LIBRARY_ITEM_COPIES', copy_id, {
+          status: 'Unshelved',
           updated_at: format_sql_datetime(new Date()),
         });
 
         // Delete the reshelve transaction
-        await db.delete_record("ITEM_TRANSACTIONS", transaction_id);
+        await db.delete_record('ITEM_TRANSACTIONS', transaction_id);
       });
 
       res.json({
         success: true,
-        message: "Reshelve undone successfully",
+        message: 'Reshelve undone successfully',
         data: {
           copy_id,
-          status: "Unshelved",
+          status: 'Unshelved',
         },
       });
     } catch (error) {
       res.status(500).json({
-        error: "Failed to undo reshelve",
+        error: 'Failed to undo reshelve',
         message: error.message,
       });
     }

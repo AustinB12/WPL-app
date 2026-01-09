@@ -1,8 +1,8 @@
-import express from "express";
-import { body, validationResult } from "express-validator";
-import pico from "picocolors";
-import * as db from "../config/database.js";
-import { format_sql_datetime } from "../utils.js";
+import express from 'express';
+import { body, validationResult } from 'express-validator';
+import pico from 'picocolors';
+import * as db from '../config/database.js';
+import { format_sql_datetime } from '../utils.js';
 
 const router = express.Router();
 
@@ -22,9 +22,9 @@ const process_expired_reservations = async () => {
 
       // Use parameterized queries with placeholders for safety
       const reservation_placeholders = reservation_ids
-        .map(() => "?")
-        .join(", ");
-      const copy_placeholders = copy_ids.map(() => "?").join(", ");
+        .map(() => '?')
+        .join(', ');
+      const copy_placeholders = copy_ids.map(() => '?').join(', ');
 
       await db.execute_query(
         `UPDATE RESERVATIONS SET status = 'expired', updated_at = ? WHERE id IN (${reservation_placeholders})`,
@@ -44,18 +44,18 @@ const process_expired_reservations = async () => {
       )
     );
   } catch (error) {
-    console.error("Error processing expired reservations:", error);
+    console.error('Error processing expired reservations:', error);
   }
 };
 
 // Validation middleware
 const validate_reservation = [
-  body("item_copy_id")
+  body('item_copy_id')
     .isInt({ min: 1 })
-    .withMessage("Valid item copy ID is required"),
-  body("patron_id")
+    .withMessage('Valid item copy ID is required'),
+  body('patron_id')
     .isInt({ min: 1 })
-    .withMessage("Valid patron ID is required"),
+    .withMessage('Valid patron ID is required'),
 ];
 
 // Helper function to handle validation errors
@@ -63,7 +63,7 @@ const handle_validation_errors = (req, res, next) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     return res.status(400).json({
-      error: "Validation failed",
+      error: 'Validation failed',
       details: errors.array(),
     });
   }
@@ -71,30 +71,30 @@ const handle_validation_errors = (req, res, next) => {
 };
 
 // GET /api/v1/reservations - Get all reservations
-router.get("/", async (req, res) => {
+router.get('/', async (req, res) => {
   try {
     // Process expired reservations before fetching
     await process_expired_reservations();
 
     const { patron_id, status, item_copy_id } = req.query;
-    let conditions = "";
+    let conditions = '';
     const params = [];
 
     const filters = [];
     if (patron_id) {
-      filters.push("r.patron_id = ?");
+      filters.push('r.patron_id = ?');
       params.push(patron_id);
     }
     if (status) {
-      filters.push("r.status = ?");
+      filters.push('r.status = ?');
       params.push(status);
     }
     if (item_copy_id) {
-      filters.push("r.item_copy_id = ?");
+      filters.push('r.item_copy_id = ?');
       params.push(item_copy_id);
     }
     if (filters.length > 0) {
-      conditions = ` WHERE ${filters.join(" AND ")}`;
+      conditions = ` WHERE ${filters.join(' AND ')}`;
     }
 
     const query = `
@@ -126,14 +126,14 @@ router.get("/", async (req, res) => {
     });
   } catch (error) {
     res.status(500).json({
-      error: "Failed to fetch reservations",
+      error: 'Failed to fetch reservations',
       message: error.message,
     });
   }
 });
 
 // GET /api/v1/reservations/:id - Get single reservation
-router.get("/:id", async (req, res) => {
+router.get('/:id', async (req, res) => {
   try {
     const query = `
       SELECT 
@@ -160,7 +160,7 @@ router.get("/:id", async (req, res) => {
 
     if (!reservation) {
       return res.status(404).json({
-        error: "Reservation not found",
+        error: 'Reservation not found',
       });
     }
 
@@ -170,14 +170,14 @@ router.get("/:id", async (req, res) => {
     });
   } catch (error) {
     res.status(500).json({
-      error: "Failed to fetch reservation",
+      error: 'Failed to fetch reservation',
       message: error.message,
     });
   }
 });
 
 // GET /api/v1/reservations/item-copy/:item_copy_id - Get all reservations for a specific item copy
-router.get("/item-copy/:item_copy_id", async (req, res) => {
+router.get('/item-copy/:item_copy_id', async (req, res) => {
   try {
     const { item_copy_id } = req.params;
 
@@ -211,7 +211,7 @@ router.get("/item-copy/:item_copy_id", async (req, res) => {
     });
   } catch (error) {
     res.status(500).json({
-      error: "Failed to fetch reservations for item copy",
+      error: 'Failed to fetch reservations for item copy',
       message: error.message,
     });
   }
@@ -219,7 +219,7 @@ router.get("/item-copy/:item_copy_id", async (req, res) => {
 
 // POST /api/v1/reservations - Create new reservation
 router.post(
-  "/",
+  '/',
   validate_reservation,
   handle_validation_errors,
   async (req, res) => {
@@ -227,37 +227,37 @@ router.post(
       const { item_copy_id, patron_id } = req.body;
 
       // Lookup patron record
-      const patron = await db.get_by_id("PATRONS", patron_id);
+      const patron = await db.get_by_id('PATRONS', patron_id);
 
       // Validate patron account
       if (!patron) {
         return res.status(400).json({
-          error: "Return validation failure",
-          message: "Patron not found",
+          error: 'Return validation failure',
+          message: 'Patron not found',
           validation_failed: true,
         });
       }
 
       if (!patron.is_active) {
         return res.status(400).json({
-          error: "Return validation failure",
-          message: "Patron account is not active",
+          error: 'Return validation failure',
+          message: 'Patron account is not active',
           validation_failed: true,
         });
       }
 
       // Verify library item exists
-      const copy = await db.get_by_id("LIBRARY_ITEM_COPIES", item_copy_id);
+      const copy = await db.get_by_id('LIBRARY_ITEM_COPIES', item_copy_id);
       if (!copy) {
         return res.status(400).json({
-          error: "Library item copy not found",
+          error: 'Library item copy not found',
         });
       }
 
-      const reservable_statuses = ["Available", "Checked Out", "Unshelved"];
+      const reservable_statuses = ['Available', 'Checked Out', 'Unshelved'];
       if (!reservable_statuses.includes(copy.status)) {
         return res.status(400).json({
-          error: "Copy not reservable",
+          error: 'Copy not reservable',
           message: `Copy ID ${item_copy_id} has status "${copy.status}" and cannot be reserved`,
           validation_failed: true,
         });
@@ -271,8 +271,8 @@ router.post(
 
       if (existing_patron_reservation.length > 0) {
         return res.status(400).json({
-          error: "Item already reserved",
-          message: "Patron already has a reservation for this item",
+          error: 'Item already reserved',
+          message: 'Patron already has a reservation for this item',
           already_reserved: true,
         });
       }
@@ -297,9 +297,9 @@ router.post(
       // - If copy is Available AND no other reservations exist, mark as "ready"
       // - Otherwise, mark as "waiting" (copy is checked out, unshelved, or already has other reservations)
       const reservation_status =
-        copy.status === "Available" && existing_count === 0
-          ? "ready"
-          : "waiting";
+        copy.status === 'Available' && existing_count === 0
+          ? 'ready'
+          : 'waiting';
 
       const now = format_sql_datetime(new Date());
 
@@ -323,14 +323,14 @@ router.post(
       await db.execute_transaction(async () => {
         // Create reservation record
         const reservation_id = await db.create_record(
-          "RESERVATIONS",
+          'RESERVATIONS',
           reservation_data
         );
 
         // Update copy status to Reserved only if reservation is ready
-        if (reservation_status === "ready") {
-          await db.update_record("LIBRARY_ITEM_COPIES", item_copy_id, {
-            status: "Reserved",
+        if (reservation_status === 'ready') {
+          await db.update_record('LIBRARY_ITEM_COPIES', item_copy_id, {
+            status: 'Reserved',
             updated_at: now,
           });
         }
@@ -339,8 +339,8 @@ router.post(
         res.status(201).json({
           success: true,
           message:
-            reservation_status === "ready"
-              ? "Reservation ready for pickup"
+            reservation_status === 'ready'
+              ? 'Reservation ready for pickup'
               : `Added to waitlist at position ${queue_position}`,
           data: {
             item_copy_id: reservation_data.item_copy_id,
@@ -357,13 +357,13 @@ router.post(
               email: patron.email,
             },
           },
-          on_waitlist: reservation_status === "waiting",
+          on_waitlist: reservation_status === 'waiting',
           queue_position,
         });
       });
     } catch (error) {
       res.status(500).json({
-        error: "Failed to create reservation",
+        error: 'Failed to create reservation',
         message: error.message,
       });
     }
@@ -372,19 +372,19 @@ router.post(
 
 // PUT /api/v1/reservations/:id/fulfill - Fulfill reservation when item is returned
 // Sets 5-day expiry from the fulfillment date
-router.put("/:id/fulfill", async (req, res) => {
+router.put('/:id/fulfill', async (req, res) => {
   try {
-    const reservation = await db.get_by_id("RESERVATIONS", req.params.id);
+    const reservation = await db.get_by_id('RESERVATIONS', req.params.id);
 
     if (!reservation) {
       return res.status(404).json({
-        error: "Reservation not found",
+        error: 'Reservation not found',
       });
     }
 
-    if (reservation.status !== "waiting" && reservation.status !== "ready") {
+    if (reservation.status !== 'waiting' && reservation.status !== 'ready') {
       return res.status(400).json({
-        error: "Only waiting or ready reservations can be fulfilled",
+        error: 'Only waiting or ready reservations can be fulfilled',
       });
     }
 
@@ -396,7 +396,7 @@ router.put("/:id/fulfill", async (req, res) => {
 
     if (available_copies.length === 0) {
       return res.status(400).json({
-        error: "No available copies to fulfill reservation",
+        error: 'No available copies to fulfill reservation',
       });
     }
 
@@ -409,16 +409,16 @@ router.put("/:id/fulfill", async (req, res) => {
     // Wrap all operations in a transaction for atomicity
     await db.execute_transaction(async () => {
       // Update reservation status to 'ready' and set expiry date
-      await db.update_record("RESERVATIONS", req.params.id, {
-        status: "ready",
+      await db.update_record('RESERVATIONS', req.params.id, {
+        status: 'ready',
         expiry_date: format_sql_datetime(expiry_date),
         notification_sent: now,
         updated_at: now,
       });
 
       // Reserve the item copy
-      await db.update_record("LIBRARY_ITEM_COPIES", available_copies[0].id, {
-        status: "Reserved",
+      await db.update_record('LIBRARY_ITEM_COPIES', available_copies[0].id, {
+        status: 'Reserved',
         updated_at: now,
       });
 
@@ -432,7 +432,7 @@ router.put("/:id/fulfill", async (req, res) => {
     res.json({
       success: true,
       message:
-        "Reservation fulfilled successfully - patron has 5 days to collect",
+        'Reservation fulfilled successfully - patron has 5 days to collect',
       data: {
         reservation_id: req.params.id,
         copy_id: available_copies[0].id,
@@ -441,7 +441,7 @@ router.put("/:id/fulfill", async (req, res) => {
     });
   } catch (error) {
     res.status(500).json({
-      error: "Failed to fulfill reservation",
+      error: 'Failed to fulfill reservation',
       message: error.message,
     });
   }
@@ -449,13 +449,13 @@ router.put("/:id/fulfill", async (req, res) => {
 
 // GET /api/v1/reservations/validate-patron/:patron_id - Validate patron for reservation
 // Used by UI to lookup and display patron details before creating reservation
-router.get("/validate-patron/:patron_id", async (req, res) => {
+router.get('/validate-patron/:patron_id', async (req, res) => {
   try {
-    const patron = await db.get_by_id("PATRONS", req.params.patron_id);
+    const patron = await db.get_by_id('PATRONS', req.params.patron_id);
 
     if (!patron) {
       return res.status(404).json({
-        error: "Patron not found",
+        error: 'Patron not found',
         valid: false,
       });
     }
@@ -463,7 +463,7 @@ router.get("/validate-patron/:patron_id", async (req, res) => {
     // Check if patron is active
     if (!patron.is_active) {
       return res.status(400).json({
-        error: "Patron account is not active",
+        error: 'Patron account is not active',
         valid: false,
         patron: {
           first_name: patron.first_name,
@@ -490,7 +490,7 @@ router.get("/validate-patron/:patron_id", async (req, res) => {
     });
   } catch (error) {
     res.status(500).json({
-      error: "Failed to validate patron",
+      error: 'Failed to validate patron',
       message: error.message,
     });
   }
@@ -498,7 +498,7 @@ router.get("/validate-patron/:patron_id", async (req, res) => {
 
 // PUT /api/v1/reservations/expire-old - Expire reservations older than 5 days
 // Should be called periodically (e.g., daily cron job)
-router.put("/expire-old", async (_, res) => {
+router.put('/expire-old', async (_, res) => {
   try {
     const today = format_sql_datetime(new Date());
 
@@ -514,8 +514,8 @@ router.put("/expire-old", async (_, res) => {
     await db.execute_transaction(async () => {
       for (const reservation of expired_reservations) {
         // Update reservation status to expired
-        await db.update_record("RESERVATIONS", reservation.id, {
-          status: "expired",
+        await db.update_record('RESERVATIONS', reservation.id, {
+          status: 'expired',
           updated_at: today,
         });
 
@@ -526,8 +526,8 @@ router.put("/expire-old", async (_, res) => {
         );
 
         if (reserved_copies.length > 0) {
-          await db.update_record("LIBRARY_ITEM_COPIES", reserved_copies[0].id, {
-            status: "Available",
+          await db.update_record('LIBRARY_ITEM_COPIES', reserved_copies[0].id, {
+            status: 'Available',
             updated_at: today,
           });
         }
@@ -543,40 +543,40 @@ router.put("/expire-old", async (_, res) => {
     });
   } catch (error) {
     res.status(500).json({
-      error: "Failed to expire reservations",
+      error: 'Failed to expire reservations',
       message: error.message,
     });
   }
 });
 
 // DELETE /api/v1/reservations/:id - Cancel reservation
-router.delete("/:id", async (req, res) => {
+router.delete('/:id', async (req, res) => {
   const now = format_sql_datetime(new Date());
   try {
-    const reservation = await db.get_by_id("RESERVATIONS", req.params.id);
+    const reservation = await db.get_by_id('RESERVATIONS', req.params.id);
 
     if (!reservation) {
       return res.status(404).json({
-        error: "Reservation not found",
+        error: 'Reservation not found',
       });
     }
 
-    if (reservation.status !== "waiting" && reservation.status !== "ready") {
+    if (reservation.status !== 'waiting' && reservation.status !== 'ready') {
       return res.status(400).json({
-        error: "Only waiting or ready reservations can be cancelled",
+        error: 'Only waiting or ready reservations can be cancelled',
       });
     }
 
     // Wrap all cancellation operations in a transaction
     await db.execute_transaction(async () => {
       // Update reservation status to cancelled
-      await db.update_record("RESERVATIONS", req.params.id, {
-        status: "cancelled",
+      await db.update_record('RESERVATIONS', req.params.id, {
+        status: 'cancelled',
         updated_at: now,
       });
 
       // If there was a reserved copy, we need to handle it carefully
-      if (reservation.status === "ready") {
+      if (reservation.status === 'ready') {
         const reserved_copies = await db.execute_query(
           'SELECT * FROM LIBRARY_ITEM_COPIES WHERE id = ? AND status = "Reserved"',
           [reservation.item_copy_id]
@@ -598,8 +598,8 @@ router.delete("/:id", async (req, res) => {
           const new_expiry = new Date();
           new_expiry.setDate(new_expiry.getDate() + 5);
 
-          await db.update_record("RESERVATIONS", next_reservation.id, {
-            status: "ready",
+          await db.update_record('RESERVATIONS', next_reservation.id, {
+            status: 'ready',
             expiry_date: format_sql_datetime(new_expiry),
             updated_at: now,
           });
@@ -608,8 +608,8 @@ router.delete("/:id", async (req, res) => {
           // (no need to change copy status since it was already Reserved)
         } else if (reserved_copies.length > 0) {
           // No waiting reservations, so make the copy available
-          await db.update_record("LIBRARY_ITEM_COPIES", reserved_copies[0].id, {
-            status: "Available",
+          await db.update_record('LIBRARY_ITEM_COPIES', reserved_copies[0].id, {
+            status: 'Available',
             updated_at: now,
           });
         }
@@ -624,11 +624,11 @@ router.delete("/:id", async (req, res) => {
 
     res.json({
       success: true,
-      message: "Reservation cancelled successfully",
+      message: 'Reservation cancelled successfully',
     });
   } catch (error) {
     res.status(500).json({
-      error: "Failed to cancel reservation",
+      error: 'Failed to cancel reservation',
       message: error.message,
     });
   }
