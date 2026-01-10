@@ -1,14 +1,14 @@
 import {
-  Paper,
-  Typography,
-  CircularProgress,
   Box,
+  CircularProgress,
+  Paper,
   Stack,
-  ToggleButtonGroup,
   ToggleButton,
+  ToggleButtonGroup,
+  Typography,
 } from '@mui/material';
 import { LineChart } from '@mui/x-charts/LineChart';
-import { useState, type FC } from 'react';
+import { type FC, useState } from 'react';
 import { useCirculationTrends } from '../../hooks/useAnalytics';
 
 interface CirculationChartProps {
@@ -60,7 +60,7 @@ export const CirculationChart: FC<CirculationChartProps> = ({
           justifyContent: 'center',
         }}
       >
-        <Typography color='error'>Failed to load circulation data</Typography>
+        <Typography color="error">Failed to load circulation data</Typography>
       </Paper>
     );
   }
@@ -76,7 +76,7 @@ export const CirculationChart: FC<CirculationChartProps> = ({
           justifyContent: 'center',
         }}
       >
-        <Typography color='text.secondary'>
+        <Typography color="text.secondary">
           No circulation data available
         </Typography>
       </Paper>
@@ -86,23 +86,23 @@ export const CirculationChart: FC<CirculationChartProps> = ({
   return (
     <Paper sx={{ p: 3 }}>
       <Stack
-        direction='row'
-        justifyContent='space-between'
-        alignItems='center'
+        direction="row"
+        justifyContent="space-between"
+        alignItems="center"
         mb={2}
       >
-        <Typography variant='h6' fontWeight='bold'>
+        <Typography variant="h6" fontWeight="bold">
           Circulation Trends
         </Typography>
         <ToggleButtonGroup
           value={interval}
           exclusive
           onChange={(_, newInterval) => newInterval && setInterval(newInterval)}
-          size='small'
+          size="small"
         >
-          <ToggleButton value='daily'>Daily</ToggleButton>
-          <ToggleButton value='weekly'>Weekly</ToggleButton>
-          <ToggleButton value='monthly'>Monthly</ToggleButton>
+          <ToggleButton value="daily">Daily</ToggleButton>
+          <ToggleButton value="weekly">Weekly</ToggleButton>
+          <ToggleButton value="monthly">Monthly</ToggleButton>
         </ToggleButtonGroup>
       </Stack>
 
@@ -116,8 +116,8 @@ export const CirculationChart: FC<CirculationChartProps> = ({
                 interval === 'daily'
                   ? 'Date'
                   : interval === 'weekly'
-                  ? 'Week'
-                  : 'Month',
+                    ? 'Week'
+                    : 'Month',
             },
           ]}
           series={[

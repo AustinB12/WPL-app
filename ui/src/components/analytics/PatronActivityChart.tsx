@@ -1,14 +1,14 @@
 import {
-  Paper,
-  Typography,
-  CircularProgress,
   Box,
+  CircularProgress,
+  Paper,
   Stack,
-  ToggleButtonGroup,
   ToggleButton,
+  ToggleButtonGroup,
+  Typography,
 } from '@mui/material';
 import { PieChart } from '@mui/x-charts/PieChart';
-import { useState, type FC } from 'react';
+import { type FC, useState } from 'react';
 import { usePatronMetrics } from '../../hooks/useAnalytics';
 
 interface PatronActivityChartProps {
@@ -49,7 +49,7 @@ export const PatronActivityChart: FC<PatronActivityChartProps> = ({
           justifyContent: 'center',
         }}
       >
-        <Typography color='error'>
+        <Typography color="error">
           Failed to load patron activity data
         </Typography>
       </Paper>
@@ -67,7 +67,7 @@ export const PatronActivityChart: FC<PatronActivityChartProps> = ({
           justifyContent: 'center',
         }}
       >
-        <Typography color='text.secondary'>No data available</Typography>
+        <Typography color="text.secondary">No data available</Typography>
       </Paper>
     );
   }
@@ -80,41 +80,41 @@ export const PatronActivityChart: FC<PatronActivityChartProps> = ({
   return (
     <Paper sx={{ p: 3 }}>
       <Stack
-        direction='row'
-        justifyContent='space-between'
-        alignItems='center'
+        direction="row"
+        justifyContent="space-between"
+        alignItems="center"
         mb={2}
       >
-        <Typography variant='h6' fontWeight='bold'>
+        <Typography variant="h6" fontWeight="bold">
           Patron Activity
         </Typography>
         <ToggleButtonGroup
           value={period}
           exclusive
           onChange={(_, newPeriod) => newPeriod && setPeriod(newPeriod)}
-          size='small'
+          size="small"
         >
-          <ToggleButton value='7d'>7 Days</ToggleButton>
-          <ToggleButton value='30d'>30 Days</ToggleButton>
-          <ToggleButton value='90d'>90 Days</ToggleButton>
-          <ToggleButton value='1y'>1 Year</ToggleButton>
+          <ToggleButton value="7d">7 Days</ToggleButton>
+          <ToggleButton value="30d">30 Days</ToggleButton>
+          <ToggleButton value="90d">90 Days</ToggleButton>
+          <ToggleButton value="1y">1 Year</ToggleButton>
         </ToggleButtonGroup>
       </Stack>
 
-      <Stack direction='row' spacing={2} mb={2}>
+      <Stack direction="row" spacing={2} mb={2}>
         <Box>
-          <Typography variant='body2' color='text.secondary'>
+          <Typography variant="body2" color="text.secondary">
             Active Patrons
           </Typography>
-          <Typography variant='h5' fontWeight='bold'>
+          <Typography variant="h5" fontWeight="bold">
             {data.active_patrons}
           </Typography>
         </Box>
         <Box>
-          <Typography variant='body2' color='text.secondary'>
+          <Typography variant="body2" color="text.secondary">
             New Registrations
           </Typography>
-          <Typography variant='h5' fontWeight='bold'>
+          <Typography variant="h5" fontWeight="bold">
             {data.new_registrations}
           </Typography>
         </Box>
@@ -164,7 +164,7 @@ export const PatronActivityChart: FC<PatronActivityChartProps> = ({
           />
         </Box>
       ) : (
-        <Typography color='text.secondary' align='center' sx={{ mt: 4 }}>
+        <Typography color="text.secondary" align="center" sx={{ mt: 4 }}>
           No patron activity in this period
         </Typography>
       )}

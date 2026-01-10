@@ -1,5 +1,5 @@
-import { Card, CardContent, Typography, Box, Stack } from '@mui/material';
-import { TrendingUp, TrendingDown, TrendingFlat } from '@mui/icons-material';
+import { TrendingDown, TrendingFlat, TrendingUp } from '@mui/icons-material';
+import { Box, Card, CardContent, Stack, Typography } from '@mui/material';
 import type { FC, ReactNode } from 'react';
 
 interface MetricCardProps {
@@ -37,20 +37,20 @@ export const MetricCard: FC<MetricCardProps> = ({
     return trend.startsWith('+')
       ? 'success.main'
       : trend.startsWith('-')
-      ? 'error.main'
-      : 'text.secondary';
+        ? 'error.main'
+        : 'text.secondary';
   };
 
   return (
     <Card sx={{ height: '100%' }}>
       <CardContent>
         <Stack
-          direction='row'
-          justifyContent='space-between'
-          alignItems='flex-start'
+          direction="row"
+          justifyContent="space-between"
+          alignItems="flex-start"
           mb={2}
         >
-          <Typography variant='body2' color='text.secondary' fontWeight={500}>
+          <Typography variant="body2" color="text.secondary" fontWeight={500}>
             {title}
           </Typography>
           {icon && (
@@ -58,16 +58,16 @@ export const MetricCard: FC<MetricCardProps> = ({
           )}
         </Stack>
 
-        <Typography variant='h4' fontWeight='bold' mb={1}>
+        <Typography variant="h4" fontWeight="bold" mb={1}>
           {value.toLocaleString()}
         </Typography>
 
-        <Stack direction='row' alignItems='center' spacing={0.5}>
+        <Stack direction="row" alignItems="center" spacing={0.5}>
           {trend && (
             <>
               {getTrendIcon()}
               <Typography
-                variant='body2'
+                variant="body2"
                 color={getTrendColor()}
                 fontWeight={500}
               >
@@ -77,8 +77,8 @@ export const MetricCard: FC<MetricCardProps> = ({
           )}
           {subtitle && (
             <Typography
-              variant='body2'
-              color='text.secondary'
+              variant="body2"
+              color="text.secondary"
               ml={trend ? 1 : 0}
             >
               {subtitle}

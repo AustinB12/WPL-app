@@ -1,32 +1,32 @@
 import {
   Dashboard,
   LibraryBooks,
-  People,
   LocalLibrary,
-  Warning,
+  People,
   Refresh,
+  Warning,
 } from '@mui/icons-material';
 import {
+  Button,
+  CircularProgress,
   Grid,
   Paper,
   Stack,
-  ToggleButtonGroup,
   ToggleButton,
-  Button,
-  CircularProgress,
+  ToggleButtonGroup,
 } from '@mui/material';
-import { useState, type FC } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
+import { type FC, useState } from 'react';
+import {
+  CirculationChart,
+  CollectionUtilizationChart,
+  MetricCard,
+  OverdueByBranchChart,
+  PatronActivityChart,
+  PopularItemsChart,
+} from '../components/analytics';
 import { PageContainer, PageTitle } from '../components/common/PageBuilders';
 import { useAnalyticsSummary } from '../hooks/useAnalytics';
-import {
-  MetricCard,
-  CirculationChart,
-  PopularItemsChart,
-  PatronActivityChart,
-  OverdueByBranchChart,
-  CollectionUtilizationChart,
-} from '../components/analytics';
 import { useSelectedBranch } from '../hooks/useBranchHooks';
 
 export const DashboardPage: FC = () => {
@@ -79,7 +79,7 @@ export const DashboardPage: FC = () => {
 
   return (
     <PageContainer scroll={true}>
-      <PageTitle title='Library Dashboard' Icon_Component={Dashboard} />
+      <PageTitle title="Library Dashboard" Icon_Component={Dashboard} />
 
       {/* Summary Metrics */}
       <Grid container spacing={2} mb={2}>
@@ -88,10 +88,10 @@ export const DashboardPage: FC = () => {
           sx={{ borderRadius: 3, overflow: 'clip' }}
         >
           <MetricCard
-            title='Total Collection'
+            title="Total Collection"
             value={summary?.collection_size ?? 0}
             icon={<LibraryBooks />}
-            subtitle='Items in collection'
+            subtitle="Items in collection"
           />
         </Grid>
         <Grid
@@ -99,10 +99,10 @@ export const DashboardPage: FC = () => {
           sx={{ borderRadius: 3, overflow: 'clip' }}
         >
           <MetricCard
-            title='Active Patrons'
+            title="Active Patrons"
             value={summary?.active_patrons ?? 0}
             icon={<People />}
-            subtitle='Active members'
+            subtitle="Active members"
           />
         </Grid>
         <Grid
@@ -110,10 +110,10 @@ export const DashboardPage: FC = () => {
           sx={{ borderRadius: 3, overflow: 'clip' }}
         >
           <MetricCard
-            title='Checkouts Today'
+            title="Checkouts Today"
             value={summary?.current_checkouts ?? 0}
             icon={<LocalLibrary />}
-            subtitle='Items checked out'
+            subtitle="Items checked out"
           />
         </Grid>
         <Grid
@@ -121,10 +121,10 @@ export const DashboardPage: FC = () => {
           sx={{ borderRadius: 3, overflow: 'clip' }}
         >
           <MetricCard
-            title='Overdue Items'
+            title="Overdue Items"
             value={summary?.overdue_items ?? 0}
             icon={<Warning />}
-            subtitle='Items overdue'
+            subtitle="Items overdue"
           />
         </Grid>
       </Grid>
@@ -132,28 +132,28 @@ export const DashboardPage: FC = () => {
       {/* Filters Section */}
       <Paper sx={{ p: 2, mb: 2, borderRadius: 3, overflow: 'clip' }}>
         <Stack
-          direction='row'
-          justifyContent='space-between'
-          alignItems='center'
-          flexWrap='wrap'
+          direction="row"
+          justifyContent="space-between"
+          alignItems="center"
+          flexWrap="wrap"
           gap={2}
         >
-          <Stack direction='row' spacing={2} alignItems='center'>
+          <Stack direction="row" spacing={2} alignItems="center">
             <ToggleButtonGroup
               value={dateRange}
               exclusive
               onChange={(_, newRange) => newRange && setDateRange(newRange)}
-              size='small'
+              size="small"
             >
-              <ToggleButton value='7d'>7 Days</ToggleButton>
-              <ToggleButton value='30d'>30 Days</ToggleButton>
-              <ToggleButton value='90d'>90 Days</ToggleButton>
-              <ToggleButton value='1y'>1 Year</ToggleButton>
+              <ToggleButton value="7d">7 Days</ToggleButton>
+              <ToggleButton value="30d">30 Days</ToggleButton>
+              <ToggleButton value="90d">90 Days</ToggleButton>
+              <ToggleButton value="1y">1 Year</ToggleButton>
             </ToggleButtonGroup>
           </Stack>
 
           <Button
-            variant='outlined'
+            variant="outlined"
             startIcon={
               isRefreshing ? <CircularProgress size={16} /> : <Refresh />
             }

@@ -149,11 +149,11 @@ export const SettingsPage: FC = () => {
 
   return (
     <PageContainer scroll={true}>
-      <PageTitle title='Settings' Icon_Component={SettingsIcon} />
+      <PageTitle title="Settings" Icon_Component={SettingsIcon} />
       <Stack spacing={3}>
         <Paper elevation={1} sx={SECTION_PAPER_SX}>
           <SectionHeader icon={<AccessTime />}>Loan Durations</SectionHeader>
-          <Typography sx={{ pt: 1 }} variant='body2' color='text.secondary'>
+          <Typography sx={{ pt: 1 }} variant="body2" color="text.secondary">
             {'Set the default loan durations for different item types. (Days)'}
           </Typography>
           <Divider sx={{ my: 3 }} />
@@ -173,7 +173,7 @@ export const SettingsPage: FC = () => {
                 loan_durations.map((setting) => {
                   return (
                     <Grid size={{ xs: 12, sm: 6, md: 4 }} key={setting.id}>
-                      <Stack direction='row' alignItems='center'>
+                      <Stack direction="row" alignItems="center">
                         <FormControl>
                           <InputLabel htmlFor={'save-input' + setting.id}>
                             {setting.name.toUpperCase()}
@@ -183,7 +183,7 @@ export const SettingsPage: FC = () => {
                             disabled={isLoading}
                             id={'save-input' + setting.id}
                             label={`${setting.name.toUpperCase()}`}
-                            type='number'
+                            type="number"
                             value={
                               data[
                                 setting.name.toLowerCase() as keyof Loan_Duration_Values
@@ -207,7 +207,7 @@ export const SettingsPage: FC = () => {
                               },
                             }}
                             endAdornment={
-                              <InputAdornment position='end'>
+                              <InputAdornment position="end">
                                 <IconButton
                                   aria-label={
                                     'Save ' + setting.name + ' duration'
@@ -231,7 +231,7 @@ export const SettingsPage: FC = () => {
                                       ] || setting.duration
                                     )
                                   }
-                                  edge='end'
+                                  edge="end"
                                 >
                                   <Save />
                                 </IconButton>
@@ -253,14 +253,14 @@ export const SettingsPage: FC = () => {
           <Divider sx={{ my: 2 }} />
           <Stack spacing={2}>
             <SettingItem
-              label='Enable Notifications'
-              description='Receive notifications for important events'
+              label="Enable Notifications"
+              description="Receive notifications for important events"
               checked={notifications_enabled}
               onChange={handle_notifications_toggle}
             />
             <SettingItem
-              label='Email Updates'
-              description='Receive email notifications for overdue items'
+              label="Email Updates"
+              description="Receive email notifications for overdue items"
               checked={email_updates}
               onChange={handle_email_toggle}
               disabled={!notifications_enabled}
@@ -277,10 +277,10 @@ export const SettingsPage: FC = () => {
                 justifyContent: 'space-between',
               }}
             >
-              <Typography variant='body2' color='text.secondary'>
+              <Typography variant="body2" color="text.secondary">
                 Version
               </Typography>
-              <Typography variant='body2' fontWeight={500}>
+              <Typography variant="body2" fontWeight={500}>
                 1.2.8
               </Typography>
             </Box>
@@ -290,10 +290,10 @@ export const SettingsPage: FC = () => {
                 justifyContent: 'space-between',
               }}
             >
-              <Typography variant='body2' color='text.secondary'>
+              <Typography variant="body2" color="text.secondary">
                 Environment
               </Typography>
-              <Typography variant='body2' fontWeight={500}>
+              <Typography variant="body2" fontWeight={500}>
                 {import.meta.env.MODE === 'development' ? 'DEV' : 'PROD'}
               </Typography>
             </Box>
@@ -306,9 +306,9 @@ export const SettingsPage: FC = () => {
 
 const SectionHeader = memo<PropsWithChildren<{ icon: JSX.Element }>>(
   ({ icon, children }) => (
-    <Stack direction='row' alignItems='center' spacing={1}>
+    <Stack direction="row" alignItems="center" spacing={1}>
       {icon}
-      <Typography variant='h6' gutterBottom sx={{ fontWeight: 600 }}>
+      <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
         {children}
       </Typography>
     </Stack>
@@ -331,7 +331,7 @@ const SettingItem: FC<{
       }
       label={label}
     />
-    <Typography variant='body2' color='text.secondary' sx={{ ml: 4 }}>
+    <Typography variant="body2" color="text.secondary" sx={{ ml: 4 }}>
       {description}
     </Typography>
   </Box>

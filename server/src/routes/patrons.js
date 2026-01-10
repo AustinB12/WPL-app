@@ -151,7 +151,7 @@ router.get('/search-for-renewal', async (req, res) => {
        LEFT JOIN BOOKS b ON li.id = b.library_item_id
        LEFT JOIN VIDEOS v ON li.id = v.library_item_id
        WHERE t.patron_id = ?
-       ORDER BY t.due_date ASC`,
+       ORDER BY t.date ASC`,
       [patron.id]
     );
 

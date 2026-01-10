@@ -1,4 +1,4 @@
-import { Paper, Typography, CircularProgress, Box, Stack } from '@mui/material';
+import { Box, CircularProgress, Paper, Stack, Typography } from '@mui/material';
 import { BarChart } from '@mui/x-charts/BarChart';
 import { type FC } from 'react';
 import { useOverdueTracking } from '../../hooks/useAnalytics';
@@ -39,7 +39,7 @@ export const OverdueByBranchChart: FC<OverdueByBranchChartProps> = ({
           justifyContent: 'center',
         }}
       >
-        <Typography color='error'>
+        <Typography color="error">
           Failed to load overdue tracking data
         </Typography>
       </Paper>
@@ -57,7 +57,7 @@ export const OverdueByBranchChart: FC<OverdueByBranchChartProps> = ({
           justifyContent: 'center',
         }}
       >
-        <Typography color='text.secondary'>No overdue items</Typography>
+        <Typography color="text.secondary">No overdue items</Typography>
       </Paper>
     );
   }
@@ -65,30 +65,30 @@ export const OverdueByBranchChart: FC<OverdueByBranchChartProps> = ({
   return (
     <Paper sx={{ p: 3 }}>
       <Stack
-        direction='row'
-        justifyContent='space-between'
-        alignItems='center'
+        direction="row"
+        justifyContent="space-between"
+        alignItems="center"
         mb={2}
       >
-        <Typography variant='h6' fontWeight='bold'>
+        <Typography variant="h6" fontWeight="bold">
           Overdue Items by Branch
         </Typography>
       </Stack>
 
-      <Stack direction='row' spacing={3} mb={3}>
+      <Stack direction="row" spacing={3} mb={3}>
         <Box>
-          <Typography variant='body2' color='text.secondary'>
+          <Typography variant="body2" color="text.secondary">
             Total Overdue
           </Typography>
-          <Typography variant='h5' fontWeight='bold' color='error.main'>
+          <Typography variant="h5" fontWeight="bold" color="error.main">
             {data.total_overdue}
           </Typography>
         </Box>
         <Box>
-          <Typography variant='body2' color='text.secondary'>
+          <Typography variant="body2" color="text.secondary">
             Total Fines
           </Typography>
-          <Typography variant='h5' fontWeight='bold' color='warning.main'>
+          <Typography variant="h5" fontWeight="bold" color="warning.main">
             ${data.total_fines.toFixed(2)}
           </Typography>
         </Box>

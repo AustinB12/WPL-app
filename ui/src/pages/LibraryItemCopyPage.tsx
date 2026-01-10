@@ -1,4 +1,4 @@
-import { Book as BookIcon, Delete, Edit, MoreVert } from "@mui/icons-material";
+import { Book as BookIcon, Delete, Edit, MoreVert } from '@mui/icons-material';
 import {
   Card,
   CardHeader,
@@ -11,13 +11,13 @@ import {
   MenuList,
   Stack,
   Typography,
-} from "@mui/material";
-import React, { Activity, Suspense } from "react";
-import { useParams } from "react-router-dom";
-import { GenreChip } from "../components/common/GenreChip";
-import { PageContainer, PageTitle } from "../components/common/PageBuilders";
-import { useCopyById } from "../hooks/useCopies";
-import { useLibraryItemById } from "../hooks/useLibraryItems";
+} from '@mui/material';
+import React, { Activity, Suspense } from 'react';
+import { useParams } from 'react-router-dom';
+import { GenreChip } from '../components/common/GenreChip';
+import { PageContainer, PageTitle } from '../components/common/PageBuilders';
+import { useCopyById } from '../hooks/useCopies';
+import { useLibraryItemById } from '../hooks/useLibraryItems';
 
 export const Library_Item_Copy_Page = () => {
   const { library_item_copy_id } = useParams();
@@ -40,7 +40,7 @@ export const Library_Item_Copy_Page = () => {
 
   const page_loading = !library_item_copy_id || item_loading;
   return (
-    <PageContainer width="xl" sx={{ overflowY: "auto" }}>
+    <PageContainer width="xl" sx={{ overflowY: 'auto' }}>
       <Stack spacing={2} onClick={() => console.log(item_copy, library_item)}>
         <Card sx={{ borderRadius: 3 }}>
           <CardHeader
@@ -56,7 +56,7 @@ export const Library_Item_Copy_Page = () => {
                   onClose={handleClose}
                   slotProps={{
                     list: {
-                      "aria-labelledby": "basic-button",
+                      'aria-labelledby': 'basic-button',
                     },
                   }}
                 >
@@ -80,7 +80,7 @@ export const Library_Item_Copy_Page = () => {
             title={
               <PageTitle
                 loading={page_loading}
-                title={page_loading ? "Library Item" : `${item_copy?.title}`}
+                title={page_loading ? 'Library Item' : `${item_copy?.title}`}
                 Icon_Component={BookIcon}
               ></PageTitle>
             }
@@ -89,8 +89,8 @@ export const Library_Item_Copy_Page = () => {
           <Typography sx={{ px: 2 }} variant="subtitle1" color="text.secondary">
             {item_copy?.description}
           </Typography>
-          <Activity mode={library_item?.genres ? "visible" : "hidden"}>
-            <Stack sx={{ px: 2, py: 1 }} direction={"row"} gap={1}>
+          <Activity mode={library_item?.genres ? 'visible' : 'hidden'}>
+            <Stack sx={{ px: 2, py: 1 }} direction={'row'} gap={1}>
               {library_item?.genres.map((b) => (
                 <GenreChip genre={b} />
               ))}
@@ -149,13 +149,13 @@ export const Library_Item_Copy_Page = () => {
             </Grid>
             <Grid size={4}>
               <img
-                style={{ width: "97%", borderRadius: "8px" }}
+                style={{ width: '97%', borderRadius: '8px' }}
                 src={
                   library_item?.cover_image_url ||
                   library_item?.audiobook_cover_image ||
-                  ""
+                  ''
                 }
-                alt={`Cover image of ${library_item?.title || ""}`}
+                alt={`Cover image of ${library_item?.title || ''}`}
               />
             </Grid>
           </Suspense>
