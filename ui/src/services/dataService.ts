@@ -658,4 +658,131 @@ export const data_service = {
       body: JSON.stringify({ duration }),
     });
   },
+
+  // Analytics endpoints
+  async get_circulation_trends(
+    start_date?: string,
+    end_date?: string,
+    interval: 'daily' | 'weekly' | 'monthly' = 'daily',
+    branch_id?: number
+  ): Promise<{
+    labels: string[];
+    checkouts: number[];
+    checkins: number[];
+    renewals: number[];
+  }> {
+    const params = new URLSearchParams();
+    if (start_date) params.append('start_date', start_date);
+    if (end_date) params.append('end_date', end_date);
+    params.append('interval', interval);
+    if (branch_id) params.append('branch_id', branch_id.toString());
+
+    return await api_request(`/analytics/circulation?${params.toString()}`);
+  },
+
+  async get_popular_items(
+    period: '7d' | '30d' | '90d' | '1y' = '30d',
+    branch_id?: number,
+    limit: number = 10
+  ): Promise<{
+    top_items: Array<{
+      library_item_id: number;
+      title: string;
+      checkout_count: number;
+    }>;
+    top_genres: Array<{ genre: string; checkout_count: number }>;
+    by_item_type: Array<{ item_type: string; checkout_count: number }>;
+  }> {
+    const params = new URLSearchParams();
+    params.append('period', period);
+    params.append('limit', limit.toString());
+    if (branch_id) params.append('branch_id', branch_id.toString());
+
+    return await api_request(`/analytics/popular-items?${params.toString()}`);
+  },
+
+  async get_patron_metrics(
+    period: '7d' | '30d' | '90d' | '1y' = '30d',
+    branch_id?: number
+  ): Promise<{
+    active_patrons: number;
+    new_registrations: number;
+    checkout_distribution: Array<{
+      patron_id: number;
+      first_name: string;
+      last_name: string;
+      checkout_count: number;
+    }>;
+    patron_types: {
+      heavy_users: number;
+      regular_users: number;
+      light_users: number;
+    };
+  }> {
+    const params = new URLSearchParams();
+    params.append('period', period);
+    if (branch_id) params.append('branch_id', branch_id.toString());
+
+    return await api_request(`/analytics/patrons?${params.toString()}`);
+  },
+
+  async get_overdue_tracking(branch_id?: number): Promise<{
+    total_overdue: number;
+    total_fines: number;
+    by_branch: Array<{
+      branch_id: number;
+      branch_name: string;
+      overdue_count: number;
+      total_fines: number;
+    }>;
+    overdue_items: Array<any>;
+    trend: Array<{ week_label: string; overdue_count: number }>;
+  }> {
+    const params = new URLSearchParams();
+    if (branch_id) params.append('branch_id', branch_id.toString());
+
+    return await api_request(`/analytics/overdue?${params.toString()}`);
+  },
+
+  async get_collection_utilization(
+    branch_id?: number,
+    min_days: number = 30
+  ): Promise<{
+    summary: {
+      total_never_checked: number;
+      oldest_item_days: number;
+    };
+    never_checked_out: Array<any>;
+    checkout_rate_by_type: Array<{
+      item_type: string;
+      total_copies: number;
+      checked_out_ever: number;
+      utilization_rate: number;
+    }>;
+    age_analysis: {
+      labels: string[];
+      total_items: number[];
+      never_checked: number[];
+    };
+  }> {
+    const params = new URLSearchParams();
+    if (branch_id) params.append('branch_id', branch_id.toString());
+    params.append('min_days', min_days.toString());
+
+    return await api_request(
+      `/analytics/collection-utilization?${params.toString()}`
+    );
+  },
+
+  async get_analytics_summary(branch_id?: number): Promise<{
+    collection_size: number;
+    active_patrons: number;
+    current_checkouts: number;
+    overdue_items: number;
+  }> {
+    const params = new URLSearchParams();
+    if (branch_id) params.append('branch_id', branch_id.toString());
+
+    return await api_request(`/analytics/summary?${params.toString()}`);
+  },
 };

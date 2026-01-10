@@ -1,6 +1,10 @@
 import express from 'express';
 import { body, validationResult } from 'express-validator';
 import * as db from '../config/database.js';
+import {
+  queue_checkin_receipt,
+  queue_checkout_receipt,
+} from '../services/emailService.js';
 import { format_sql_datetime } from '../utils.js';
 
 const router = express.Router();
@@ -342,12 +346,12 @@ router.get('/checked-out', async (req, res) => {
         p.last_name,
         p.email,
         CASE 
-           WHEN t.due_date < DATETIME('now', 'localtime') THEN 1  
+           WHEN ic.due_date < DATETIME('now', 'localtime') THEN 1  
           ELSE 0 
         END as is_overdue,
         CASE 
-          WHEN t.due_date > DATETIME('now', 'localtime') THEN 
-            CAST(julianday('now') - julianday(t.due_date) AS INTEGER)
+          WHEN ic.due_date > DATETIME('now', 'localtime') THEN 
+            CAST(julianday('now') - julianday(ic.due_date) AS INTEGER)
           ELSE 0 
         END as days_overdue
       FROM ITEM_TRANSACTIONS t
@@ -359,7 +363,7 @@ router.get('/checked-out', async (req, res) => {
              OR UPPER(ic.status) = 'RENEWED ONCE' 
              OR UPPER(ic.status) = 'RENEWED TWICE')
         ${branch_id ? 'AND (ic.current_branch_id = ? OR ic.owning_branch_id = ?)' : ''}
-      ORDER BY t.due_date ASC, li.title ASC
+      ORDER BY ic.due_date ASC, li.title ASC
     `;
 
     const params = branch_id ? [branch_id, branch_id] : [];
@@ -842,6 +846,25 @@ router.post(
       const results = await db.execute_query(query, [copy_id, patron_id]);
       const enriched_transaction = results[0];
 
+      // Queue checkout receipt email
+      try {
+        await queue_checkout_receipt(
+          patron,
+          {
+            title: library_item.title,
+            item_type: library_item.item_type,
+            copy_id: copy_id,
+          },
+          {
+            date: now,
+            due_date: calculated_due_date,
+          }
+        );
+      } catch (email_error) {
+        console.error('Failed to queue checkout email:', email_error);
+        // Don't fail the checkout if email queueing fails
+      }
+
       res.status(201).json({
         success: true,
         message: reservation_info
@@ -1091,6 +1114,29 @@ router.post(
           'LIBRARY_ITEM_COPIES',
           copy_id
         );
+
+        // Queue checkin receipt email
+        try {
+          const patron_for_email = await db.get_by_id(
+            'PATRONS',
+            transaction.patron_id
+          );
+          if (patron_for_email?.email) {
+            await queue_checkin_receipt(
+              patron_for_email,
+              {
+                title: enriched_transaction.title,
+                item_type: enriched_transaction.item_type,
+                copy_id: copy_id,
+              },
+              { date: now },
+              fine_amount
+            );
+          }
+        } catch (email_error) {
+          console.error('Failed to queue checkin email:', email_error);
+          // Don't fail the checkin if email queueing fails
+        }
 
         res.json({
           success: true,

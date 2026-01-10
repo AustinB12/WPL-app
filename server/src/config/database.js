@@ -257,6 +257,35 @@ async function create_tables() {
         FOREIGN KEY (transaction_id) REFERENCES ITEM_TRANSACTIONS(id) ON DELETE CASCADE,
         FOREIGN KEY (patron_id) REFERENCES PATRONS(id) ON DELETE CASCADE
       );
+
+      CREATE TABLE IF NOT EXISTS EMAIL_NOTIFICATIONS (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        patron_id INTEGER NOT NULL,
+        email_type TEXT NOT NULL,
+        recipient_email TEXT NOT NULL,
+        subject TEXT NOT NULL,
+        body_text TEXT NOT NULL,
+        body_html TEXT,
+        status TEXT NOT NULL DEFAULT 'pending',
+        priority INTEGER DEFAULT 5,
+        scheduled_for DATETIME DEFAULT CURRENT_TIMESTAMP,
+        sent_at DATETIME,
+        error_message TEXT,
+        retry_count INTEGER DEFAULT 0,
+        max_retries INTEGER DEFAULT 3,
+        metadata TEXT,
+        related_item_copy_id INTEGER,
+        related_transaction_id INTEGER,
+        related_reservation_id INTEGER,
+        related_fine_id INTEGER,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (patron_id) REFERENCES PATRONS(id) ON DELETE CASCADE,
+        FOREIGN KEY (related_item_copy_id) REFERENCES LIBRARY_ITEM_COPIES(id) ON DELETE SET NULL,
+        FOREIGN KEY (related_transaction_id) REFERENCES ITEM_TRANSACTIONS(id) ON DELETE SET NULL,
+        FOREIGN KEY (related_reservation_id) REFERENCES RESERVATIONS(id) ON DELETE SET NULL,
+        FOREIGN KEY (related_fine_id) REFERENCES FINES(id) ON DELETE SET NULL
+      );
     `);
 
     // Create optimized indexes for better performance
@@ -297,6 +326,14 @@ async function create_tables() {
       CREATE INDEX IF NOT EXISTS idx_fines_transaction ON FINES(transaction_id);
       CREATE INDEX IF NOT EXISTS idx_fines_unpaid_patron ON FINES(patron_id, is_paid, amount) WHERE is_paid = 0;
       
+      -- Email notification indexes for queue processing and monitoring
+      CREATE INDEX IF NOT EXISTS idx_email_notifications_status ON EMAIL_NOTIFICATIONS(status);
+      CREATE INDEX IF NOT EXISTS idx_email_notifications_patron ON EMAIL_NOTIFICATIONS(patron_id);
+      CREATE INDEX IF NOT EXISTS idx_email_notifications_type ON EMAIL_NOTIFICATIONS(email_type);
+      CREATE INDEX IF NOT EXISTS idx_email_notifications_scheduled ON EMAIL_NOTIFICATIONS(scheduled_for, status) WHERE status = 'pending';
+      CREATE INDEX IF NOT EXISTS idx_email_notifications_queue ON EMAIL_NOTIFICATIONS(status, priority, scheduled_for) WHERE status = 'pending';
+      CREATE INDEX IF NOT EXISTS idx_email_notifications_retry ON EMAIL_NOTIFICATIONS(status, retry_count, max_retries) WHERE status = 'failed';
+      
       -- Foreign key relationship indexes for better JOIN performance
       CREATE INDEX IF NOT EXISTS idx_books_library_item ON BOOKS(library_item_id);
       CREATE INDEX IF NOT EXISTS idx_videos_library_item ON VIDEOS(library_item_id);
@@ -328,6 +365,12 @@ async function create_tables() {
       AFTER UPDATE ON RESERVATIONS 
       BEGIN 
         UPDATE RESERVATIONS SET updated_at = CURRENT_TIMESTAMP WHERE id = NEW.id; 
+      END;
+
+      CREATE TRIGGER IF NOT EXISTS update_email_notifications_timestamp 
+      AFTER UPDATE ON EMAIL_NOTIFICATIONS 
+      BEGIN 
+        UPDATE EMAIL_NOTIFICATIONS SET updated_at = CURRENT_TIMESTAMP WHERE id = NEW.id; 
       END;
     `);
 

@@ -2,6 +2,7 @@ import express from 'express';
 import { body, validationResult } from 'express-validator';
 import pico from 'picocolors';
 import * as db from '../config/database.js';
+import { queue_reservation_ready } from '../services/emailService.js';
 import { format_sql_datetime } from '../utils.js';
 
 const router = express.Router();
@@ -428,6 +429,34 @@ router.put('/:id/fulfill', async (req, res) => {
         [reservation.item_copy_id, reservation.queue_position]
       );
     });
+
+    // Queue reservation ready email
+    try {
+      const patron = await db.get_by_id('PATRONS', reservation.patron_id);
+      const item_copy = await db.get_by_id(
+        'LIBRARY_ITEM_COPIES',
+        available_copies[0].id
+      );
+      const library_item = await db.get_by_id(
+        'LIBRARY_ITEMS',
+        item_copy.library_item_id
+      );
+
+      if (patron?.email && library_item) {
+        await queue_reservation_ready(
+          patron,
+          {
+            id: item_copy.id,
+            title: library_item.title,
+            item_type: library_item.item_type,
+          },
+          { expiry_date: format_sql_datetime(expiry_date) }
+        );
+      }
+    } catch (email_error) {
+      console.error('Failed to queue reservation ready email:', email_error);
+      // Don't fail the fulfillment if email queueing fails
+    }
 
     res.json({
       success: true,

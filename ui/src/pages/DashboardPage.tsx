@@ -1,164 +1,201 @@
 import {
-  AttachMoney,
   Dashboard,
-  EventNote,
   LibraryBooks,
+  People,
+  LocalLibrary,
+  Warning,
+  Refresh,
 } from '@mui/icons-material';
 import {
-  Box,
-  Card,
-  CardContent,
   Grid,
-  Skeleton,
-  Typography,
+  Paper,
+  Stack,
+  ToggleButtonGroup,
+  ToggleButton,
+  Button,
+  CircularProgress,
 } from '@mui/material';
-import { PieChart } from '@mui/x-charts/PieChart';
-import type { FC, PropsWithChildren } from 'react';
-import { memo, useMemo } from 'react';
-import { Link } from 'react-router-dom';
+import { useState, type FC } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { PageContainer, PageTitle } from '../components/common/PageBuilders';
-import { useStats } from '../hooks/useStats';
-
-// Constant style objects to prevent re-creation
-const LINK_STYLE = { textDecoration: 'none' };
-const GRID_CONTAINER_SX = { mb: 4 };
-const ICON_BOX_SX = { display: 'flex', alignItems: 'center', mb: 1 };
-const HEADING_SX = { fontWeight: 600 };
-const VALUE_SX_PRIMARY = { fontWeight: 'bold', color: 'primary.main' };
-const VALUE_SX_SECONDARY = { fontWeight: 'bold', color: 'secondary.main' };
-const VALUE_SX_ERROR = { fontWeight: 'bold', color: 'error.main' };
-const ICON_SX_PRIMARY = { mr: 1, color: 'primary.main' };
-const ICON_SX_SECONDARY = { mr: 1, color: 'secondary.main' };
-const ICON_SX_ERROR = { mr: 1, color: 'error.main' };
+import { useAnalyticsSummary } from '../hooks/useAnalytics';
+import {
+  MetricCard,
+  CirculationChart,
+  PopularItemsChart,
+  PatronActivityChart,
+  OverdueByBranchChart,
+  CollectionUtilizationChart,
+} from '../components/analytics';
+import { useSelectedBranch } from '../hooks/useBranchHooks';
 
 export const DashboardPage: FC = () => {
-  const { data, isLoading, error } = useStats();
+  const { selected_branch } = useSelectedBranch();
+  const queryClient = useQueryClient();
 
-  // Memoize pie chart data to prevent re-creation on every render
-  const pie_chart_data = useMemo(() => {
-    if (!data) return null;
-    return [
-      {
-        data: [
-          {
-            id: 0,
-            value: data.available_items,
-            label: 'Available',
-          },
-          {
-            id: 1,
-            value: data.borrowed_items,
-            label: 'Checked Out',
-          },
-          {
-            id: 2,
-            value: data.unshelved_items,
-            label: 'Unshelved',
-          },
-          {
-            id: 3,
-            value: data.reserved_items,
-            label: 'Reserved',
-          },
-        ],
-      },
-    ];
-  }, [data]);
+  // Date range state
+  const [dateRange, setDateRange] = useState<'7d' | '30d' | '90d' | '1y'>(
+    '30d'
+  );
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  // Calculate date range for circulation chart
+  const getDateRange = () => {
+    const end_date = new Date();
+    const start_date = new Date();
+
+    switch (dateRange) {
+      case '7d':
+        start_date.setDate(end_date.getDate() - 7);
+        break;
+      case '30d':
+        start_date.setDate(end_date.getDate() - 30);
+        break;
+      case '90d':
+        start_date.setDate(end_date.getDate() - 90);
+        break;
+      case '1y':
+        start_date.setFullYear(end_date.getFullYear() - 1);
+        break;
+    }
+
+    return {
+      start_date: start_date.toISOString().split('T')[0],
+      end_date: end_date.toISOString().split('T')[0],
+    };
+  };
+
+  // Fetch summary metrics
+  const { data: summary } = useAnalyticsSummary(selected_branch?.id);
+
+  // Manual refresh all analytics data
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    await queryClient.invalidateQueries({ queryKey: ['analytics'] });
+    setTimeout(() => setIsRefreshing(false), 1000);
+  };
+
+  const { start_date, end_date } = getDateRange();
 
   return (
-    <PageContainer>
-      <PageTitle title="Library Dashboard" Icon_Component={Dashboard} />
-      <Grid container spacing={3} sx={GRID_CONTAINER_SX}>
-        <Grid size={{ xs: 12, md: 4 }}>
-          <DashboardCard>
-            <CardContent>
-              <Link to="/library-items" style={LINK_STYLE}>
-                <Box sx={ICON_BOX_SX}>
-                  <LibraryBooks sx={ICON_SX_PRIMARY} />
-                  <Typography variant="h6" component="h3" sx={HEADING_SX}>
-                    Items Borrowed
-                  </Typography>
-                </Box>
-              </Link>
-              {isLoading && <Skeleton variant="text" width={100} height={30} />}
-              {error && <Typography>-</Typography>}
-              {data && !isLoading && !error && (
-                <Typography variant="h3" sx={VALUE_SX_PRIMARY}>
-                  {data.borrowed_items}
-                </Typography>
-              )}
-            </CardContent>
-          </DashboardCard>
-        </Grid>
+    <PageContainer scroll={true}>
+      <PageTitle title='Library Dashboard' Icon_Component={Dashboard} />
 
-        <Grid size={{ xs: 12, md: 4 }}>
-          <DashboardCard>
-            <CardContent>
-              <Link to="/reservations" style={LINK_STYLE}>
-                <Box sx={ICON_BOX_SX}>
-                  <EventNote sx={ICON_SX_SECONDARY} />
-                  <Typography variant="h6" component="h3" sx={HEADING_SX}>
-                    Reservations
-                  </Typography>
-                </Box>
-              </Link>
-              {isLoading && <Skeleton variant="text" width={100} height={30} />}
-              {error && <Typography>-</Typography>}
-              {data && !isLoading && !error && (
-                <Typography variant="h3" sx={VALUE_SX_SECONDARY}>
-                  {data.total_reservations}
-                </Typography>
-              )}
-            </CardContent>
-          </DashboardCard>
+      {/* Summary Metrics */}
+      <Grid container spacing={2} mb={2}>
+        <Grid
+          size={{ xs: 12, sm: 6, md: 3 }}
+          sx={{ borderRadius: 3, overflow: 'clip' }}
+        >
+          <MetricCard
+            title='Total Collection'
+            value={summary?.collection_size ?? 0}
+            icon={<LibraryBooks />}
+            subtitle='Items in collection'
+          />
         </Grid>
-
-        <Grid size={{ xs: 12, md: 4 }}>
-          <DashboardCard>
-            <CardContent>
-              <Box sx={ICON_BOX_SX}>
-                <AttachMoney sx={ICON_SX_ERROR} />
-                <Typography variant="h6" component="h3" sx={HEADING_SX}>
-                  Outstanding Fines
-                </Typography>
-              </Box>
-              {isLoading && <Skeleton variant="text" width={100} height={30} />}
-              {error && <Typography>-</Typography>}
-              {data && !isLoading && !error && (
-                <Typography variant="h3" sx={VALUE_SX_ERROR}>
-                  ${Number(data.total_outstanding_fines).toFixed(2)}
-                </Typography>
-              )}
-            </CardContent>
-          </DashboardCard>
+        <Grid
+          size={{ xs: 12, sm: 6, md: 3 }}
+          sx={{ borderRadius: 3, overflow: 'clip' }}
+        >
+          <MetricCard
+            title='Active Patrons'
+            value={summary?.active_patrons ?? 0}
+            icon={<People />}
+            subtitle='Active members'
+          />
+        </Grid>
+        <Grid
+          size={{ xs: 12, sm: 6, md: 3 }}
+          sx={{ borderRadius: 3, overflow: 'clip' }}
+        >
+          <MetricCard
+            title='Checkouts Today'
+            value={summary?.current_checkouts ?? 0}
+            icon={<LocalLibrary />}
+            subtitle='Items checked out'
+          />
+        </Grid>
+        <Grid
+          size={{ xs: 12, sm: 6, md: 3 }}
+          sx={{ borderRadius: 3, overflow: 'clip' }}
+        >
+          <MetricCard
+            title='Overdue Items'
+            value={summary?.overdue_items ?? 0}
+            icon={<Warning />}
+            subtitle='Items overdue'
+          />
         </Grid>
       </Grid>
 
+      {/* Filters Section */}
+      <Paper sx={{ p: 2, mb: 2, borderRadius: 3, overflow: 'clip' }}>
+        <Stack
+          direction='row'
+          justifyContent='space-between'
+          alignItems='center'
+          flexWrap='wrap'
+          gap={2}
+        >
+          <Stack direction='row' spacing={2} alignItems='center'>
+            <ToggleButtonGroup
+              value={dateRange}
+              exclusive
+              onChange={(_, newRange) => newRange && setDateRange(newRange)}
+              size='small'
+            >
+              <ToggleButton value='7d'>7 Days</ToggleButton>
+              <ToggleButton value='30d'>30 Days</ToggleButton>
+              <ToggleButton value='90d'>90 Days</ToggleButton>
+              <ToggleButton value='1y'>1 Year</ToggleButton>
+            </ToggleButtonGroup>
+          </Stack>
+
+          <Button
+            variant='outlined'
+            startIcon={
+              isRefreshing ? <CircularProgress size={16} /> : <Refresh />
+            }
+            onClick={handleRefresh}
+            disabled={isRefreshing}
+          >
+            Refresh Data
+          </Button>
+        </Stack>
+      </Paper>
+
+      {/* Charts Section */}
       <Grid container spacing={3}>
+        {/* Circulation Trends - Full Width */}
         <Grid size={{ xs: 12 }}>
-          <DashboardCard>
-            <CardContent>
-              <Typography
-                variant="h6"
-                component="h3"
-                gutterBottom
-                sx={HEADING_SX}
-              >
-                Inventory Status
-              </Typography>
-              {pie_chart_data && !isLoading && !error && (
-                <PieChart series={pie_chart_data} width={300} height={400} />
-              )}
-            </CardContent>
-          </DashboardCard>
+          <CirculationChart
+            branch_id={selected_branch?.id}
+            start_date={start_date}
+            end_date={end_date}
+          />
+        </Grid>
+
+        {/* Popular Items & Genres */}
+        <Grid size={{ xs: 12, md: 6 }}>
+          <PopularItemsChart branch_id={selected_branch?.id} />
+        </Grid>
+
+        {/* Patron Activity */}
+        <Grid size={{ xs: 12, md: 6 }}>
+          <PatronActivityChart branch_id={selected_branch?.id} />
+        </Grid>
+
+        {/* Overdue Tracking */}
+        <Grid size={{ xs: 12, md: 6 }}>
+          <OverdueByBranchChart branch_id={selected_branch?.id} />
+        </Grid>
+
+        {/* Collection Utilization */}
+        <Grid size={{ xs: 12, md: 6 }}>
+          <CollectionUtilizationChart branch_id={selected_branch?.id} />
         </Grid>
       </Grid>
     </PageContainer>
   );
 };
-
-const CARD_SX = { height: 1, borderRadius: 3, boxShadow: 3 };
-
-const DashboardCard = memo(({ children }: PropsWithChildren) => {
-  return <Card sx={CARD_SX}>{children}</Card>;
-});
