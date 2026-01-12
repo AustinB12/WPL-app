@@ -16,7 +16,7 @@ import type {
   Item_Condition,
   Library_Copy_Status,
   Library_Item_Type,
-} from '../../types';
+} from '../../types/item_types';
 import ItemTypeChip from '../library_items/ItemTypeChip';
 import { ItemCopyConditionChip } from './ItemCopyConditionChip';
 import { ItemCopyStatusChip } from './ItemCopyStatusChip';
@@ -40,7 +40,7 @@ export const DeleteCopyModal = ({
     <Dialog
       open={open}
       onClose={on_close}
-      maxWidth="md"
+      maxWidth='md'
       fullWidth
       slotProps={{
         paper: {
@@ -62,9 +62,9 @@ export const DeleteCopyModal = ({
               borderRadius: '50%',
             }}
           >
-            <Delete fontSize="large" />
+            <Delete fontSize='large' />
           </Stack>
-          <Typography variant="h6" component="div">
+          <Typography variant='h6' component='div'>
             Delete Copy
           </Typography>
         </Stack>
@@ -73,7 +73,7 @@ export const DeleteCopyModal = ({
       <Divider />
 
       <DialogContent sx={{ pt: 3 }}>
-        <Alert severity="warning" sx={{ mb: 3 }}>
+        <Alert severity='warning' sx={{ mb: 3 }}>
           Are you sure you want to delete this copy? This action cannot be
           undone.
         </Alert>
@@ -91,57 +91,57 @@ export const DeleteCopyModal = ({
             <Grid container spacing={3}>
               <Grid size={{ xs: 12 }}>
                 <Typography
-                  variant="caption"
-                  color="text.secondary"
+                  variant='caption'
+                  color='text.secondary'
                   sx={{ mb: 0.5, display: 'block' }}
                 >
                   Title
                 </Typography>
-                <Typography variant="body1" fontWeight={500}>
+                <Typography variant='body1' fontWeight={500}>
                   {String(copy.title || copy.title || 'N/A')}
                 </Typography>
               </Grid>
               <Grid size={{ xs: 4 }}>
                 <Typography
-                  variant="caption"
-                  color="text.secondary"
+                  variant='caption'
+                  color='text.secondary'
                   sx={{ mb: 0.5, display: 'block' }}
                 >
                   Copy ID
                 </Typography>
-                <Typography variant="body1" fontWeight={600}>
+                <Typography variant='body1' fontWeight={600}>
                   #{String(copy.id)}
                 </Typography>
               </Grid>
               <Grid size={{ xs: 4 }}>
                 <Typography
-                  variant="caption"
-                  color="text.secondary"
+                  variant='caption'
+                  color='text.secondary'
                   sx={{ mb: 0.5, display: 'block' }}
                 >
                   Price
                 </Typography>
-                <Typography variant="body1" fontWeight={600}>
+                <Typography variant='body1' fontWeight={600}>
                   ${String((copy.cost as number)?.toFixed(2) || 'N/A')}
                 </Typography>
               </Grid>
               <Grid size={{ xs: 4 }}>
                 <Typography
-                  variant="caption"
-                  color="text.secondary"
+                  variant='caption'
+                  color='text.secondary'
                   sx={{ mb: 0.5, display: 'block' }}
                 >
                   Branch
                 </Typography>
-                <Typography variant="body1" fontWeight={600}>
+                <Typography variant='body1' fontWeight={600}>
                   {String(copy?.branch_name || 'N/A')}
                 </Typography>
               </Grid>
 
               <Grid size={{ xs: 4 }}>
                 <Typography
-                  variant="caption"
-                  color="text.secondary"
+                  variant='caption'
+                  color='text.secondary'
                   sx={{ mb: 1, display: 'block' }}
                 >
                   Item Type
@@ -150,8 +150,8 @@ export const DeleteCopyModal = ({
               </Grid>
               <Grid size={{ xs: 4 }}>
                 <Typography
-                  variant="caption"
-                  color="text.secondary"
+                  variant='caption'
+                  color='text.secondary'
                   sx={{ mb: 1, display: 'block' }}
                 >
                   Status
@@ -163,8 +163,8 @@ export const DeleteCopyModal = ({
 
               <Grid size={{ xs: 4 }}>
                 <Typography
-                  variant="caption"
-                  color="text.secondary"
+                  variant='caption'
+                  color='text.secondary'
                   sx={{ mb: 1, display: 'block' }}
                 >
                   Condition
@@ -179,20 +179,20 @@ export const DeleteCopyModal = ({
       </DialogContent>
       <DialogActions sx={{ px: 3, py: 2 }}>
         <Button
-          color="inherit"
+          color='inherit'
           onClick={on_close}
           disabled={is_loading}
-          size="large"
-          variant="outlined"
+          size='large'
+          variant='outlined'
         >
           Cancel
         </Button>
         <Button
           onClick={on_confirm}
-          color="error"
-          variant="contained"
+          color='error'
+          variant='contained'
           disabled={is_loading}
-          size="large"
+          size='large'
           sx={{ minWidth: 100 }}
         >
           Delete

@@ -6,124 +6,124 @@ import { lazy, Suspense } from 'react';
 import { Route, Routes } from 'react-router-dom';
 import { GlobalSnackbar } from './components/common/GlobalSnackbar';
 import { Layout } from './components/common/Layout';
-import { SnackbarProvider } from './contexts/SnackbarContext';
+import { SnackbarProvider } from './contexts/Snackbar_Context';
 import { Full_Page_Loading } from './pages/Full_Page_Loading/Full_Page_Loading';
 
 const HomePage = lazy(() =>
-  import('./pages/HomePage').then((module) => ({
+  import('./pages/home_page').then((module) => ({
     default: module.HomePage,
   }))
 );
 
 const LibraryItemsPage = lazy(() =>
-  import('./pages/LibraryItemsPage').then((module) => ({
+  import('./pages/library_items_page').then((module) => ({
     default: module.LibraryItemsPage,
   }))
 );
 
 const Library_Item_Page = lazy(() =>
-  import('./pages/LibraryItemPage').then((module) => ({
+  import('./pages/library_item_page').then((module) => ({
     default: module.Library_Item_Page,
   }))
 );
 
 const Library_Item_Copy_Page = lazy(() =>
-  import('./pages/LibraryItemCopyPage').then((module) => ({
+  import('./pages/library_item_copy_page').then((module) => ({
     default: module.Library_Item_Copy_Page,
   }))
 );
 
 const Patrons = lazy(() =>
-  import('./pages/Patrons').then((module) => ({
+  import('./pages/patrons_page').then((module) => ({
     default: module.Patrons,
   }))
 );
 
 const PatronPage = lazy(() =>
-  import('./pages/PatronPage').then((module) => ({
+  import('./pages/patron_page').then((module) => ({
     default: module.PatronPage,
   }))
 );
 
 const BranchPage = lazy(() =>
-  import('./pages/BranchPage').then((module) => ({
+  import('./pages/branch_page').then((module) => ({
     default: module.BranchPage,
   }))
 );
 
 const SearchPage = lazy(() =>
-  import('./pages/SearchPage').then((module) => ({
+  import('./pages/search_page').then((module) => ({
     default: module.SearchPage,
   }))
 );
 
 const RenewItem = lazy(() =>
-  import('./pages/RenewItem').then((module) => ({
+  import('./pages/renew_item').then((module) => ({
     default: module.RenewItem,
   }))
 );
 
 const CheckInNew = lazy(() =>
-  import('./pages/CheckInItem').then((module) => ({
+  import('./pages/check_in_item').then((module) => ({
     default: module.CheckInNew,
   }))
 );
 
 const CheckOutItem = lazy(() =>
-  import('./pages/CheckOutItem').then((module) => ({
+  import('./pages/check_out_item').then((module) => ({
     default: module.CheckOutItem,
   }))
 );
 
 const ReserveItemPage = lazy(() =>
-  import('./pages/ReserveItemPage').then((module) => ({
+  import('./pages/reserve_item_page').then((module) => ({
     default: module.ReserveItemPage,
   }))
 );
 
 const BranchesPage = lazy(() =>
-  import('./pages/BranchesPage').then((module) => ({
+  import('./pages/branches_page').then((module) => ({
     default: module.BranchesPage,
   }))
 );
 
 const SettingsPage = lazy(() =>
-  import('./pages/SettingsPage').then((module) => ({
+  import('./pages/settings_page').then((module) => ({
     default: module.SettingsPage,
   }))
 );
 const RenewalsPage = lazy(() =>
-  import('./pages/RenewalsPage').then((module) => ({
+  import('./pages/renewals_page').then((module) => ({
     default: module.RenewalsPage,
   }))
 );
 const MarkAvailablePage = lazy(() =>
-  import('./pages/MarkAvailablePage').then((module) => ({
+  import('./pages/mark_available_page').then((module) => ({
     default: module.MarkAvailablePage,
   }))
 );
 const ReservationsPage = lazy(() =>
-  import('./pages/ReservationsPage').then((module) => ({
+  import('./pages/reservations_page').then((module) => ({
     default: module.ReservationsPage,
   }))
 );
 const ReshelveItemsPageNew = lazy(() =>
-  import('./pages/ReshelveItemsPageNew').then((module) => ({
+  import('./pages/reshelve_items_page').then((module) => ({
     default: module.ReshelveItemsPageNew,
   }))
 );
 const LibraryItemCopiesPage = lazy(() =>
-  import('./pages/LibraryItemCopiesPage').then((module) => ({
+  import('./pages/library_item_copies_page').then((module) => ({
     default: module.LibraryItemCopiesPage,
   }))
 );
 const TransactionsPage = lazy(() =>
-  import('./pages/TransactionsPage').then((module) => ({
+  import('./pages/transactions_page').then((module) => ({
     default: module.TransactionsPage,
   }))
 );
 const DashboardPage = lazy(() =>
-  import('./pages/DashboardPage').then((module) => ({
+  import('./pages/dashboard_page').then((module) => ({
     default: module.DashboardPage,
   }))
 );

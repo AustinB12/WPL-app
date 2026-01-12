@@ -12,11 +12,12 @@ import { Activity, type SyntheticEvent, useCallback, useState } from 'react';
 import { PageContainer, PageTitle } from '../components/common/PageBuilders';
 import { ItemReservationCard } from '../components/reservations/ItemReservationCard';
 import { Patron_Reservation_Card } from '../components/reservations/PatronReservationCard';
-import { useAvailableCopies } from '../hooks/useCopies';
-import { useAllPatrons } from '../hooks/usePatrons';
-import { useSnackbar } from '../hooks/useSnackbar';
-import type { Item_Copy_Result, Patron } from '../types';
-import { useCheckoutItem } from '../hooks/useTransactions';
+import { useAvailableCopies } from '../hooks/use_copies';
+import { useAllPatrons } from '../hooks/use_patrons';
+import { useSnackbar } from '../hooks/use_snackbar';
+import { useCheckoutItem } from '../hooks/use_transactions';
+import type { Item_Copy_Result } from '../types/item_types';
+import type { Patron } from '../types/patron_types';
 
 const AUTOCOMPLETE_SX: SxProps<Theme> = {
   flex: 1,
@@ -131,7 +132,13 @@ const Check_Out_New_Page_Content = () => {
         }
       );
     }
-  }, [selected_patron, selected_item, check_out_item]);
+  }, [
+    selected_patron,
+    selected_item,
+    check_out_item,
+    handle_error,
+    handle_success,
+  ]);
 
   // Autocomplete formatters
   const format_patron_label = useCallback(

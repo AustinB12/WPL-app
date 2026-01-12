@@ -19,14 +19,14 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import dayjs, { Dayjs } from 'dayjs';
 import { useEffect, useState } from 'react';
 import type {
-  Branch,
   Item_Condition,
   Item_Copy_Result,
   Library_Copy_Status,
-} from '../../types';
-import { format_sql_datetime } from '../../utils/dateUtils';
+} from '../../types/item_types';
+import { format_sql_datetime } from '../../utils/date_utils';
 import { ItemCopyConditionChip } from './ItemCopyConditionChip';
 import { ItemCopyStatusChip } from './ItemCopyStatusChip';
+import type { Branch } from '../../types/others';
 
 interface Edit_Copy_Modal_Props {
   open: boolean;
@@ -120,23 +120,23 @@ export const EditCopyModal = ({
   };
 
   return (
-    <Dialog open={open} onClose={on_close} maxWidth="md" fullWidth>
+    <Dialog open={open} onClose={on_close} maxWidth='md' fullWidth>
       <DialogTitle>Edit Copy #{String(copy?.id || '')}</DialogTitle>
       <DialogContent>
         <LocalizationProvider dateAdapter={AdapterDayjs}>
           <Grid container spacing={2} sx={{ mt: 1 }}>
             <Grid size={{ xs: 12 }}>
-              <DialogContentText variant="body2" color="text.secondary">
+              <DialogContentText variant='body2' color='text.secondary'>
                 Title: <strong>{String(copy?.title || 'N/A')}</strong>
               </DialogContentText>
             </Grid>
             <Grid size={{ xs: 12, sm: 6 }}>
               <FormControl fullWidth>
-                <InputLabel id="edit-status-label">Status</InputLabel>
+                <InputLabel id='edit-status-label'>Status</InputLabel>
                 <Select
-                  labelId="edit-status-label"
+                  labelId='edit-status-label'
                   value={form_data.status}
-                  label="Status"
+                  label='Status'
                   onChange={(e) =>
                     set_form_data({
                       ...form_data,
@@ -154,11 +154,11 @@ export const EditCopyModal = ({
             </Grid>
             <Grid size={{ xs: 12, sm: 6 }}>
               <FormControl fullWidth>
-                <InputLabel id="edit-condition-label">Condition</InputLabel>
+                <InputLabel id='edit-condition-label'>Condition</InputLabel>
                 <Select
-                  labelId="edit-condition-label"
+                  labelId='edit-condition-label'
                   value={form_data.condition}
-                  label="Condition"
+                  label='Condition'
                   onChange={(e) =>
                     set_form_data({
                       ...form_data,
@@ -176,15 +176,15 @@ export const EditCopyModal = ({
             </Grid>
             <Grid size={{ xs: 12, sm: 6 }}>
               <FormControl fullWidth>
-                <InputLabel id="edit-branch-label">Current Branch</InputLabel>
+                <InputLabel id='edit-branch-label'>Current Branch</InputLabel>
                 <Select
-                  labelId="edit-branch-label"
+                  labelId='edit-branch-label'
                   value={
                     form_data.current_branch_id === 0
                       ? ''
                       : String(form_data.current_branch_id)
                   }
-                  label="Current Branch"
+                  label='Current Branch'
                   onChange={(e) =>
                     set_form_data({
                       ...form_data,
@@ -203,17 +203,17 @@ export const EditCopyModal = ({
             </Grid>
             <Grid size={{ xs: 12, sm: 6 }}>
               <FormControl fullWidth>
-                <InputLabel id="edit-owning-branch-label">
+                <InputLabel id='edit-owning-branch-label'>
                   Owning Branch
                 </InputLabel>
                 <Select
-                  labelId="edit-owning-branch-label"
+                  labelId='edit-owning-branch-label'
                   value={
                     form_data.owning_branch_id === 0
                       ? ''
                       : String(form_data.owning_branch_id)
                   }
-                  label="Owning Branch"
+                  label='Owning Branch'
                   onChange={(e) =>
                     set_form_data({
                       ...form_data,
@@ -233,8 +233,8 @@ export const EditCopyModal = ({
             <Grid size={{ xs: 12, sm: 6 }}>
               <TextField
                 fullWidth
-                label="Cost"
-                type="number"
+                label='Cost'
+                type='number'
                 value={form_data.cost}
                 onChange={(e) =>
                   set_form_data({
@@ -260,7 +260,7 @@ export const EditCopyModal = ({
               >
                 <span>
                   <DatePicker
-                    label="Due Date"
+                    label='Due Date'
                     value={
                       form_data?.due_date ? dayjs(form_data?.due_date) : null
                     }
@@ -285,7 +285,7 @@ export const EditCopyModal = ({
             <Grid size={{ xs: 12 }}>
               <TextField
                 fullWidth
-                label="Notes"
+                label='Notes'
                 multiline
                 rows={3}
                 value={form_data.notes}
@@ -306,8 +306,8 @@ export const EditCopyModal = ({
         </Button>
         <Button
           onClick={handle_save}
-          variant="contained"
-          color="primary"
+          variant='contained'
+          color='primary'
           disabled={is_loading}
         >
           Save Changes

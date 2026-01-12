@@ -24,7 +24,7 @@ import {
 } from '@mui/material';
 // import dayjs from 'dayjs';
 import { Activity, type FC, useState } from 'react';
-import type { Item_Condition, Item_Copy_Result } from '../../types';
+import type { Item_Condition, Item_Copy_Result } from '../../types/item_types';
 import { ItemCopyConditionChip } from '../copies/ItemCopyConditionChip';
 import ItemTypeChip from '../library_items/ItemTypeChip';
 
@@ -74,11 +74,11 @@ export const QuickCheckInCard: FC<QuickCheckInCardProps> = ({
       <CardContent>
         <Stack spacing={2} sx={{ position: 'relative' }}>
           <Activity
-            name="success-alert"
+            name='success-alert'
             mode={hide_alert ? 'hidden' : 'visible'}
           >
             <Alert
-              severity="success"
+              severity='success'
               icon={<CheckCircle />}
               sx={{
                 borderRadius: 2,
@@ -95,25 +95,25 @@ export const QuickCheckInCard: FC<QuickCheckInCardProps> = ({
 
           {/* Item Information */}
           <Box>
-            <Typography variant="h5" fontWeight="bold" gutterBottom>
+            <Typography variant='h5' fontWeight='bold' gutterBottom>
               {item_info.title}
             </Typography>
             <Stack
-              direction="row"
+              direction='row'
               spacing={1}
-              alignItems="center"
-              flexWrap="wrap"
+              alignItems='center'
+              flexWrap='wrap'
             >
-              <Typography variant="body2" color="text.secondary">
+              <Typography variant='body2' color='text.secondary'>
                 Copy #{item_info.id}
               </Typography>
-              <Typography variant="body2" color="text.secondary">
+              <Typography variant='body2' color='text.secondary'>
                 •
               </Typography>
-              <Typography variant="body2" color="text.secondary">
+              <Typography variant='body2' color='text.secondary'>
                 {item_info.copy_label}
               </Typography>
-              <ItemTypeChip item_type={item_info.item_type} size="small" />
+              <ItemTypeChip item_type={item_info.item_type} size='small' />
             </Stack>
           </Box>
 
@@ -121,18 +121,18 @@ export const QuickCheckInCard: FC<QuickCheckInCardProps> = ({
 
           {/* Patron Information */}
           <Activity
-            name="patron-info"
+            name='patron-info'
             mode={is_checked_out ? 'visible' : 'hidden'}
           >
             <Box>
               <Typography
-                variant="subtitle2"
-                color="text.secondary"
+                variant='subtitle2'
+                color='text.secondary'
                 gutterBottom
               >
                 Checked Out By:
               </Typography>
-              <Typography variant="body1">
+              <Typography variant='body1'>
                 {`${item_info.patron_first_name} ${item_info.patron_last_name} ID: ${item_info.checked_out_by}`}
               </Typography>
             </Box>
@@ -179,7 +179,7 @@ export const QuickCheckInCard: FC<QuickCheckInCardProps> = ({
 
           {/* Reservation Alert */}
           {has_reservation && (
-            <Alert severity="info" icon={<Info />} sx={{ borderRadius: 2 }}>
+            <Alert severity='info' icon={<Info />} sx={{ borderRadius: 2 }}>
               <AlertTitle sx={{ fontWeight: 600 }}>
                 Reservation Pending
               </AlertTitle>
@@ -194,7 +194,7 @@ export const QuickCheckInCard: FC<QuickCheckInCardProps> = ({
 
           {/* Current Condition */}
           <Box>
-            <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+            <Typography variant='subtitle2' color='text.secondary' gutterBottom>
               Current Condition
             </Typography>
             <ItemCopyConditionChip condition={item_info?.condition || 'Good'} />
@@ -229,13 +229,13 @@ export const QuickCheckInCard: FC<QuickCheckInCardProps> = ({
                     onChange={(e) =>
                       set_new_condition(e.target.value as Item_Condition)
                     }
-                    label="New Condition"
+                    label='New Condition'
                   >
                     {conditions.map((condition) => (
                       <MenuItem key={condition} value={condition}>
                         <ItemCopyConditionChip
                           condition={condition}
-                          size="small"
+                          size='small'
                         />
                       </MenuItem>
                     ))}
@@ -243,7 +243,7 @@ export const QuickCheckInCard: FC<QuickCheckInCardProps> = ({
                 </FormControl>
 
                 <TextField
-                  label="Notes (Optional)"
+                  label='Notes (Optional)'
                   value={notes}
                   onChange={(e) => set_notes(e.target.value)}
                   multiline
@@ -256,9 +256,9 @@ export const QuickCheckInCard: FC<QuickCheckInCardProps> = ({
           </Box>
 
           {/* Action Buttons */}
-          <Stack direction="row" spacing={2} sx={{ pt: 1 }}>
+          <Stack direction='row' spacing={2} sx={{ pt: 1 }}>
             <Button
-              variant="outlined"
+              variant='outlined'
               onClick={on_cancel}
               disabled={is_processing}
               fullWidth
@@ -266,10 +266,10 @@ export const QuickCheckInCard: FC<QuickCheckInCardProps> = ({
               Cancel
             </Button>
             <Button
-              variant="contained"
+              variant='contained'
               onClick={handle_confirm}
               disabled={is_processing || has_reservation || !is_checked_out}
-              size="large"
+              size='large'
               fullWidth
               sx={{ fontWeight: 600 }}
             >

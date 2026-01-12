@@ -15,11 +15,11 @@ import {
   TextField,
 } from '@mui/material';
 import { useState } from 'react';
-import { data_service } from '../../services/dataService';
+import { data_service } from '../../services/data_service';
 import {
   type Create_Library_Item_Form_Data,
   Library_Item_Type,
-} from '../../types';
+} from '../../types/item_types';
 import { validate_required, validate_year } from '../../utils/validators';
 
 interface CreateLibraryItemDialogProps {
@@ -152,7 +152,7 @@ export const CreateLibraryItemDialog = ({
     <Dialog
       open={open}
       onClose={handle_close}
-      maxWidth="sm"
+      maxWidth='sm'
       fullWidth
       slotProps={{
         paper: {
@@ -173,7 +173,7 @@ export const CreateLibraryItemDialog = ({
           }}
         >
           {submitError && (
-            <Alert severity="error" sx={{ mb: 2 }}>
+            <Alert severity='error' sx={{ mb: 2 }}>
               {submitError}
             </Alert>
           )}
@@ -181,7 +181,7 @@ export const CreateLibraryItemDialog = ({
           <TextField
             required
             fullWidth
-            label="Title"
+            label='Title'
             value={form_data.title}
             onChange={handleInputChange('title')}
             error={!!errors.title}
@@ -194,7 +194,7 @@ export const CreateLibraryItemDialog = ({
             <Select
               value={form_data.item_type}
               onChange={handle_select_change}
-              label="Item Type"
+              label='Item Type'
               disabled={isSubmitting}
             >
               {Object.values(Library_Item_Type).map((type) => (
@@ -207,7 +207,7 @@ export const CreateLibraryItemDialog = ({
 
           <TextField
             fullWidth
-            label="Description"
+            label='Description'
             multiline
             rows={3}
             value={form_data.description || ''}
@@ -217,8 +217,8 @@ export const CreateLibraryItemDialog = ({
 
           <TextField
             fullWidth
-            label="Publication Year"
-            type="number"
+            label='Publication Year'
+            type='number'
             value={form_data.publication_year || ''}
             onChange={handleInputChange('publication_year')}
             error={!!errors.publication_year}
@@ -237,8 +237,8 @@ export const CreateLibraryItemDialog = ({
           Cancel
         </Button>
         <Button
-          type="submit"
-          variant="contained"
+          type='submit'
+          variant='contained'
           disabled={isSubmitting}
           startIcon={isSubmitting ? <CircularProgress size={20} /> : null}
         >

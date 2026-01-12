@@ -10,7 +10,7 @@ import {
 import { Chip, type ChipProps, type SxProps, useTheme } from '@mui/material';
 import { mangoFusionPalette } from '@mui/x-charts/colorPalettes';
 import type { JSX } from 'react';
-import type { Library_Item_Type } from '../../types';
+import type { Library_Item_Type } from '../../types/item_types';
 
 const dark_colors = mangoFusionPalette('dark');
 const light_colors = mangoFusionPalette('light');

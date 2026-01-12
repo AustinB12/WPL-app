@@ -1,7 +1,7 @@
 import { Box, CircularProgress, Paper, Stack, Typography } from '@mui/material';
 import { BarChart } from '@mui/x-charts/BarChart';
 import { type FC } from 'react';
-import { useCollectionUtilization } from '../../hooks/useAnalytics';
+import { useCollectionUtilization } from '../../hooks/use_analytics';
 
 interface CollectionUtilizationChartProps {
   branch_id?: number;

@@ -13,14 +13,14 @@ import {
   useCreatePatron,
   useDeletePatronById,
   useUpdatePatron,
-} from '../../hooks/usePatrons';
-import { useSnackbar } from '../../hooks/useSnackbar';
+} from '../../hooks/use_patrons';
+import { useSnackbar } from '../../hooks/use_snackbar';
 import type {
   Create_Patron_Data,
   Patron,
   Update_Patron_Data,
-} from '../../types';
-import { is_overdue } from '../../utils/dateUtils';
+} from '../../types/patron_types';
+import { is_overdue } from '../../utils/date_utils';
 import { BaseDataGrid } from '../common/BaseDataGrid';
 import { SearchWithNameOrId } from '../common/SearchWithNameOrId';
 import { DeletePatronModal } from './DeletePatronModal';
@@ -39,7 +39,7 @@ const NoResultsOverlay = () => {
         height: '100%',
       }}
     >
-      <Typography variant="h6" color="text.secondary">
+      <Typography variant='h6' color='text.secondary'>
         No results found
       </Typography>
     </Box>
@@ -60,7 +60,7 @@ const create_columns = (
     headerName: 'Name',
     flex: 2,
     renderCell: (params: GridRenderCellParams) => (
-      <Stack direction="row" spacing={1} alignItems="center">
+      <Stack direction='row' spacing={1} alignItems='center'>
         <Avatar
           sx={{
             bgcolor:
@@ -163,7 +163,7 @@ const create_columns = (
         <Chip
           label={`${count} / 20`}
           color={tooMany ? 'error' : 'success'}
-          variant="filled"
+          variant='filled'
         />
       );
     },
@@ -185,13 +185,13 @@ const create_columns = (
     getActions: (params) => [
       <GridActionsCellItem
         icon={<Edit />}
-        label="Edit"
+        label='Edit'
         onClick={() => handle_edit(Number(params.id))}
         showInMenu
       />,
       <GridActionsCellItem
         icon={<Delete />}
-        label="Delete"
+        label='Delete'
         onClick={() => handle_delete(Number(params.id))}
         showInMenu
       />,
@@ -349,7 +349,7 @@ export const PatronsDataGrid: FC<PatronsDataGridProps> = ({
           set_search_term={set_search_term}
         />
         <Button
-          variant="contained"
+          variant='contained'
           startIcon={<PersonAdd />}
           onClick={() => set_dialog_open(true)}
           sx={{ textWrap: 'nowrap', ml: 2, px: 4 }}
@@ -359,7 +359,7 @@ export const PatronsDataGrid: FC<PatronsDataGridProps> = ({
       </Stack>
       <Box sx={{ flex: 1, overflow: 'hidden' }}>
         <BaseDataGrid
-          label="Patrons"
+          label='Patrons'
           rows={filtered_patrons}
           columns={final_columns}
           loading={loading}
@@ -372,6 +372,7 @@ export const PatronsDataGrid: FC<PatronsDataGridProps> = ({
           }}
           slots={{ noRowsOverlay: NoResultsOverlay }}
           hidden_columns={hidden_columns}
+          refetch={refetch}
         />
       </Box>
       <New_Patron_Modal

@@ -11,12 +11,12 @@ import {
   useDeleteLibraryItem,
   useLibraryItems,
   useUpdateLibraryItem,
-} from '../../hooks/useLibraryItems';
-import { useSnackbar } from '../../hooks/useSnackbar';
+} from '../../hooks/use_library_items';
+import { useSnackbar } from '../../hooks/use_snackbar';
 import {
   type Create_Library_Item_Form_Data,
   type Library_Item,
-} from '../../types';
+} from '../../types/item_types';
 import { BaseDataGrid } from '../common/BaseDataGrid';
 import { DeleteLibraryItem } from './DeleteLibraryItem';
 import { EditLibraryItem } from './EditLibraryItem';
@@ -177,21 +177,21 @@ export const LibraryItemDataGrid = () => {
         width: 150,
         getActions: (params) => [
           <GridActionsCellItem
-            key="details"
+            key='details'
             icon={<ReadMore />}
-            label="Details"
+            label='Details'
             onClick={() => handle_item_selected(params.id)}
           />,
           <GridActionsCellItem
-            key="edit"
+            key='edit'
             icon={<Edit />}
-            label="Edit"
+            label='Edit'
             onClick={() => handle_edit_click(params.id)}
           />,
           <GridActionsCellItem
-            key="delete"
+            key='delete'
             icon={<Delete />}
-            label="Delete"
+            label='Delete'
             onClick={() => handle_delete_click(params.id)}
           />,
         ],
@@ -204,7 +204,7 @@ export const LibraryItemDataGrid = () => {
     <>
       <Box sx={{ overflow: 'hidden', maxHeight: 1 }}>
         <BaseDataGrid
-          label="Library Items"
+          label='Library Items'
           sx={{ height: 1 }}
           rows={rows}
           columns={columns}

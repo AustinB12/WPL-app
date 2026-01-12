@@ -52,11 +52,11 @@ export function PageTitle({
   loading,
 }: Page_Title_Props) {
   return (
-    <Stack direction="row" alignItems="center" spacing={2}>
-      <Icon_Component color="primary" fontSize="large" />
+    <Stack direction='row' alignItems='center' spacing={2}>
+      <Icon_Component color='primary' fontSize='large' />
 
       <Typography
-        variant="h1"
+        variant='h1'
         gutterBottom
         sx={{
           fontWeight: 'bold',
@@ -69,7 +69,7 @@ export function PageTitle({
       >
         {loading ? (
           <Skeleton
-            variant="text"
+            variant='text'
             sx={{
               fontSize: {
                 xs: '2.5rem',

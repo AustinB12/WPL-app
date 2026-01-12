@@ -6,8 +6,8 @@ import {
   useEffect,
   useState,
 } from 'react';
-import { useBranches } from '../hooks/useBranches';
-import type { Branch } from '../types';
+import { useBranches } from '../hooks/use_branches';
+import type { Branch } from '../types/others';
 
 interface BranchContextType {
   branches: Branch[];

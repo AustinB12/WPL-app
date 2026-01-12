@@ -21,8 +21,8 @@ import {
   Typography,
 } from '@mui/material';
 import { type FC } from 'react';
-import { useSelectedBranch } from '../../hooks/useBranchHooks';
-import type { Check_Out_Details } from '../../types';
+import { useSelectedBranch } from '../../hooks/use_branch_hooks';
+import type { Check_Out_Details } from '../../types/transaction_types';
 
 interface CheckoutReceiptProps {
   open: boolean;
@@ -45,7 +45,7 @@ export const CheckoutReceipt: FC<CheckoutReceiptProps> = ({
     <Dialog
       open={open}
       onClose={handle_close}
-      maxWidth="md"
+      maxWidth='md'
       fullWidth
       slotProps={{
         paper: {
@@ -55,22 +55,22 @@ export const CheckoutReceipt: FC<CheckoutReceiptProps> = ({
     >
       <DialogTitle sx={{ pb: 1 }}>
         <Stack
-          direction="row"
-          alignItems="center"
-          justifyContent="space-between"
+          direction='row'
+          alignItems='center'
+          justifyContent='space-between'
         >
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <CheckCircle sx={{ color: 'success.main', fontSize: 32 }} />
             <Box>
-              <Typography variant="h5" fontWeight="bold">
+              <Typography variant='h5' fontWeight='bold'>
                 Checkout Receipt
               </Typography>
               {receipt &&
                 receipt.reservation &&
                 receipt.reservation.was_reserved && (
                   <Typography
-                    variant="caption"
-                    color="success.main"
+                    variant='caption'
+                    color='success.main'
                     sx={{
                       display: 'flex',
                       alignItems: 'center',
@@ -78,13 +78,13 @@ export const CheckoutReceipt: FC<CheckoutReceiptProps> = ({
                       mt: 0.5,
                     }}
                   >
-                    <EventNote fontSize="small" />
+                    <EventNote fontSize='small' />
                     Reservation Fulfilled
                   </Typography>
                 )}
             </Box>
           </Box>
-          <IconButton onClick={handle_close} size="small">
+          <IconButton onClick={handle_close} size='small'>
             <Close />
           </IconButton>
         </Stack>
@@ -93,7 +93,7 @@ export const CheckoutReceipt: FC<CheckoutReceiptProps> = ({
       <DialogContent>
         {receipt && receipt.reservation && receipt.reservation.was_reserved && (
           <Alert
-            severity="success"
+            severity='success'
             icon={<EventNote />}
             sx={{
               mb: 3,
@@ -105,7 +105,7 @@ export const CheckoutReceipt: FC<CheckoutReceiptProps> = ({
             <AlertTitle sx={{ fontWeight: 'bold', fontSize: '1.1rem' }}>
               ✓ Reservation Fulfilled - Patron Left Queue
             </AlertTitle>
-            <Typography variant="body1" sx={{ mb: 1, fontWeight: 500 }}>
+            <Typography variant='body1' sx={{ mb: 1, fontWeight: 500 }}>
               This checkout fulfilled an active reservation.
             </Typography>
             <Box
@@ -120,15 +120,15 @@ export const CheckoutReceipt: FC<CheckoutReceiptProps> = ({
               <Chip
                 icon={<EventNote />}
                 label={`Queue Position: #${receipt.reservation.queue_position}`}
-                color="info"
-                size="small"
+                color='info'
+                size='small'
                 sx={{ fontWeight: 600 }}
               />
               <Chip
                 icon={<PersonRemove />}
-                label="Removed from Queue"
-                color="success"
-                size="small"
+                label='Removed from Queue'
+                color='success'
+                size='small'
                 sx={{ fontWeight: 600 }}
               />
             </Box>
@@ -144,26 +144,26 @@ export const CheckoutReceipt: FC<CheckoutReceiptProps> = ({
           {receipt && (
             <>
               <Box sx={{ mb: 2 }}>
-                <Typography variant="subtitle2" gutterBottom fontWeight="bold">
+                <Typography variant='subtitle2' gutterBottom fontWeight='bold'>
                   PATRON INFORMATION
                 </Typography>
                 {receipt.patron_id && (
-                  <Typography variant="body2">
+                  <Typography variant='body2'>
                     Patron ID: {receipt.patron_id}
                   </Typography>
                 )}
                 {(receipt.first_name || receipt.last_name) && (
-                  <Typography variant="body2">
+                  <Typography variant='body2'>
                     Name: {receipt.first_name} {receipt.last_name}
                   </Typography>
                 )}
                 {receipt?.email && (
-                  <Typography variant="body2">
+                  <Typography variant='body2'>
                     Email: {receipt.email}
                   </Typography>
                 )}
                 {receipt?.phone && (
-                  <Typography variant="body2">
+                  <Typography variant='body2'>
                     Phone: {receipt.phone}
                   </Typography>
                 )}
@@ -172,22 +172,22 @@ export const CheckoutReceipt: FC<CheckoutReceiptProps> = ({
               <Divider sx={{ my: 2 }} />
 
               <Box sx={{ mb: 2 }}>
-                <Typography variant="subtitle2" gutterBottom fontWeight="bold">
+                <Typography variant='subtitle2' gutterBottom fontWeight='bold'>
                   BOOK INFORMATION
                 </Typography>
                 {receipt?.title && (
-                  <Typography variant="body2">
+                  <Typography variant='body2'>
                     Title: {receipt.title}
                   </Typography>
                 )}
                 {receipt?.item_type && (
-                  <Typography variant="body2">
+                  <Typography variant='body2'>
                     Type: {receipt.item_type}
                   </Typography>
                 )}
-                {receipt?.copy_id && (
-                  <Typography variant="body2">
-                    Copy ID: {receipt.copy_id}
+                {receipt?.item_copy_id && (
+                  <Typography variant='body2'>
+                    Copy ID: {receipt.item_copy_id}
                   </Typography>
                 )}
               </Box>
@@ -197,24 +197,24 @@ export const CheckoutReceipt: FC<CheckoutReceiptProps> = ({
                 <>
                   <Box sx={{ mb: 2 }}>
                     <Typography
-                      variant="subtitle2"
+                      variant='subtitle2'
                       gutterBottom
-                      fontWeight="bold"
+                      fontWeight='bold'
                     >
                       BRANCH INFORMATION
                     </Typography>
-                    {receipt?.title && (
-                      <Typography variant="body2">
+                    {selected_branch?.branch_name && (
+                      <Typography variant='body2'>
                         Branch: {selected_branch.branch_name}
                       </Typography>
                     )}
-                    {receipt?.item_type && (
-                      <Typography variant="body2">
+                    {selected_branch?.address && (
+                      <Typography variant='body2'>
                         Address: {selected_branch.address}
                       </Typography>
                     )}
-                    {receipt?.copy_id && (
-                      <Typography variant="body2">
+                    {selected_branch?.phone && (
+                      <Typography variant='body2'>
                         Phone #: {selected_branch.phone}
                       </Typography>
                     )}
@@ -224,13 +224,13 @@ export const CheckoutReceipt: FC<CheckoutReceiptProps> = ({
               )}
 
               <Box sx={{ mb: 2 }}>
-                <Typography variant="subtitle2" gutterBottom fontWeight="bold">
+                <Typography variant='subtitle2' gutterBottom fontWeight='bold'>
                   DUE DATE
                 </Typography>
                 <Typography
-                  variant="body2"
-                  color="primary.main"
-                  fontWeight="bold"
+                  variant='body2'
+                  color='primary.main'
+                  fontWeight='bold'
                   sx={{ mb: 1 }}
                 >
                   {receipt?.due_date
@@ -238,13 +238,13 @@ export const CheckoutReceipt: FC<CheckoutReceiptProps> = ({
                     : 'N/A'}
                 </Typography>
                 <Typography
-                  variant="body2"
-                  color="text.secondary"
+                  variant='body2'
+                  color='text.secondary'
                   sx={{ mt: 1 }}
                 >
                   Loan Duration Rules:
                 </Typography>
-                <Typography variant="body2" component="div" sx={{ pl: 2 }}>
+                <Typography variant='body2' component='div' sx={{ pl: 2 }}>
                   • Books: 4 weeks
                   <br />• Movies: 1 week
                   <br />• New (movies): 3 days
@@ -258,7 +258,7 @@ export const CheckoutReceipt: FC<CheckoutReceiptProps> = ({
           {/* Item Availability Notice */}
           {receipt?.reservation?.was_reserved && (
             <Alert
-              severity="warning"
+              severity='warning'
               sx={{
                 mb: 2,
                 border: '1px solid',
@@ -268,7 +268,7 @@ export const CheckoutReceipt: FC<CheckoutReceiptProps> = ({
               <AlertTitle sx={{ fontWeight: 'bold' }}>
                 ⚠️ Item No Longer Available
               </AlertTitle>
-              <Typography variant="body2" sx={{ mt: 1 }}>
+              <Typography variant='body2' sx={{ mt: 1 }}>
                 This item was reserved and is now checked out. It is{' '}
                 <strong>no longer available</strong> for other patrons until it
                 is returned.
@@ -279,9 +279,9 @@ export const CheckoutReceipt: FC<CheckoutReceiptProps> = ({
           {/* Footer Message */}
           <Box sx={{ textAlign: 'center', py: 1 }}>
             <Typography
-              variant="body2"
-              color="text.secondary"
-              fontStyle="italic"
+              variant='body2'
+              color='text.secondary'
+              fontStyle='italic'
             >
               Please return by the specified due date to avoid fines. Thank you!
             </Typography>
@@ -290,7 +290,7 @@ export const CheckoutReceipt: FC<CheckoutReceiptProps> = ({
       </DialogContent>
 
       <DialogActions sx={{ px: 3, pb: 3, gap: 1 }}>
-        <Button onClick={handle_close} variant="contained" size="large">
+        <Button onClick={handle_close} variant='contained' size='large'>
           Done
         </Button>
       </DialogActions>

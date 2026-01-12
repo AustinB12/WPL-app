@@ -18,11 +18,11 @@ import transactions_routes from './routes/transactions.js';
 import {
   start_email_worker,
   stop_email_worker,
-} from './services/emailWorker.js';
+} from './services/email_worker.js';
 import {
   start_overdue_checker,
   stop_overdue_checker,
-} from './services/overdueChecker.js';
+} from './services/overdue_checker.js';
 
 dotenv.config();
 
@@ -142,7 +142,9 @@ const server = app.listen(PORT, url, async () => {
     start_overdue_checker();
   } catch (_error) {
     console.error(
-      pico.red('⚠️  Email system initialization failed, emails will not be sent')
+      pico.red(
+        '⚠️  Email system initialization failed, emails will not be sent'
+      )
     );
   }
 });

@@ -19,7 +19,7 @@ import {
   type Create_Library_Item_Form_Data,
   type Library_Item,
   Library_Item_Type,
-} from '../../types';
+} from '../../types/item_types';
 import { validate_required, validate_year } from '../../utils/validators';
 
 interface Edit_Library_Item_Props {
@@ -125,7 +125,7 @@ export const EditLibraryItem: FC<Edit_Library_Item_Props> = ({
   };
 
   return (
-    <Dialog open={open} onClose={handle_close} maxWidth="sm" fullWidth>
+    <Dialog open={open} onClose={handle_close} maxWidth='sm' fullWidth>
       <DialogTitle>
         <Box
           sx={{
@@ -135,10 +135,10 @@ export const EditLibraryItem: FC<Edit_Library_Item_Props> = ({
           }}
         >
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <EditIcon color="primary" />
+            <EditIcon color='primary' />
             Edit Library Item
           </Box>
-          <IconButton onClick={handle_close} disabled={is_loading} size="small">
+          <IconButton onClick={handle_close} disabled={is_loading} size='small'>
             <CloseIcon />
           </IconButton>
         </Box>
@@ -154,7 +154,7 @@ export const EditLibraryItem: FC<Edit_Library_Item_Props> = ({
           }}
         >
           <TextField
-            label="Title"
+            label='Title'
             value={form_data.title}
             onChange={handle_input_change('title')}
             error={Boolean(errors.title)}
@@ -169,7 +169,7 @@ export const EditLibraryItem: FC<Edit_Library_Item_Props> = ({
             <Select
               value={form_data.item_type}
               onChange={handle_select_change}
-              label="Item Type"
+              label='Item Type'
             >
               {Object.values(Library_Item_Type).map((type) => (
                 <MenuItem key={type} value={type}>
@@ -180,7 +180,7 @@ export const EditLibraryItem: FC<Edit_Library_Item_Props> = ({
           </FormControl>
 
           <TextField
-            label="Description"
+            label='Description'
             value={form_data.description}
             onChange={handle_input_change('description')}
             multiline
@@ -190,8 +190,8 @@ export const EditLibraryItem: FC<Edit_Library_Item_Props> = ({
           />
 
           <TextField
-            label="Publication Year"
-            type="number"
+            label='Publication Year'
+            type='number'
             value={form_data.publication_year || ''}
             onChange={handle_input_change('publication_year')}
             error={Boolean(errors.publication_year)}
@@ -208,7 +208,7 @@ export const EditLibraryItem: FC<Edit_Library_Item_Props> = ({
         </Button>
         <Button
           onClick={handle_submit}
-          variant="contained"
+          variant='contained'
           disabled={is_loading || !item}
         >
           {is_loading ? 'Saving...' : 'Save Changes'}

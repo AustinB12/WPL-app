@@ -29,12 +29,12 @@ import {
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import dayjs from 'dayjs';
 import { type FC, type ReactNode, useEffect, useState } from 'react';
-import { useCopyById } from '../../hooks/useCopies';
-import { useLibraryItemById } from '../../hooks/useLibraryItems';
-import { usePatronById, useUpdatePatron } from '../../hooks/usePatrons';
-import { useSnackbar } from '../../hooks/useSnackbar';
-import type { Item_Copy_Result } from '../../types';
-import { is_overdue } from '../../utils/dateUtils';
+import { useCopyById } from '../../hooks/use_copies';
+import { useLibraryItemById } from '../../hooks/use_library_items';
+import { usePatronById, useUpdatePatron } from '../../hooks/use_patrons';
+import { useSnackbar } from '../../hooks/use_snackbar';
+import type { Item_Copy_Result } from '../../types/item_types';
+import { is_overdue } from '../../utils/date_utils';
 import { ItemCopyConditionChip } from '../copies/ItemCopyConditionChip';
 
 interface ConfirmCheckoutDetailsProps {
@@ -68,14 +68,14 @@ const InfoRow: FC<InfoRowProps> = ({ label, value, highlight }) => (
     })}
   >
     <Typography
-      variant="body2"
-      color="text.secondary"
+      variant='body2'
+      color='text.secondary'
       sx={{ fontWeight: highlight ? 600 : 400 }}
     >
       {label}
     </Typography>
     {typeof value === 'string' ? (
-      <Typography variant="body2" sx={{ fontWeight: highlight ? 700 : 600 }}>
+      <Typography variant='body2' sx={{ fontWeight: highlight ? 700 : 600 }}>
         {value}
       </Typography>
     ) : (
@@ -114,14 +114,14 @@ const CardHeaderSection: FC<CardHeaderSectionProps> = ({
     </Avatar>
     <Box>
       <Typography
-        variant="overline"
+        variant='overline'
         sx={{ color: 'text.secondary', fontSize: '0.7rem' }}
       >
         {overline}
       </Typography>
       <Typography
-        variant="h6"
-        component="h3"
+        variant='h6'
+        component='h3'
         sx={{ fontWeight: 600, lineHeight: 1.2 }}
       >
         {title}
@@ -189,7 +189,7 @@ const UpdateDialog: FC<UpdateDialogProps> = ({
       <Button onClick={on_close}>Cancel</Button>
       <Button
         onClick={on_confirm}
-        variant="contained"
+        variant='contained'
         disabled={confirm_disabled}
       >
         {confirm_label}
@@ -202,23 +202,23 @@ const UpdateDialog: FC<UpdateDialogProps> = ({
 const LoadingCardSkeleton: FC<{ has_chips?: boolean }> = ({
   has_chips = false,
 }) => (
-  <Card variant="outlined">
+  <Card variant='outlined'>
     <CardContent>
       <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-        <Skeleton variant="circular" width={40} height={40} sx={{ mr: 2 }} />
-        <Skeleton variant="text" width={200} height={32} />
+        <Skeleton variant='circular' width={40} height={40} sx={{ mr: 2 }} />
+        <Skeleton variant='text' width={200} height={32} />
       </Box>
       <Box sx={{ ml: 7 }}>
-        <Skeleton variant="text" width={150} height={24} sx={{ mb: 1 }} />
-        <Skeleton variant="text" width={100} height={20} sx={{ mb: 1 }} />
+        <Skeleton variant='text' width={150} height={24} sx={{ mb: 1 }} />
+        <Skeleton variant='text' width={100} height={20} sx={{ mb: 1 }} />
         {has_chips && (
           <Box sx={{ display: 'flex', gap: 1, mb: 1 }}>
-            <Skeleton variant="rectangular" width={60} height={24} />
-            <Skeleton variant="rectangular" width={50} height={24} />
+            <Skeleton variant='rectangular' width={60} height={24} />
+            <Skeleton variant='rectangular' width={50} height={24} />
           </Box>
         )}
-        <Skeleton variant="rectangular" width={80} height={24} sx={{ mb: 1 }} />
-        <Skeleton variant="rectangular" width={120} height={24} />
+        <Skeleton variant='rectangular' width={80} height={24} sx={{ mb: 1 }} />
+        <Skeleton variant='rectangular' width={120} height={24} />
       </Box>
     </CardContent>
   </Card>
@@ -240,7 +240,7 @@ export const ConfirmCheckoutDetails: FC<ConfirmCheckoutDetailsProps> = ({
   const { mutate: updatePatron } = useUpdatePatron();
 
   // Get number of books currently checked out
-  const active_checkout_count = patron?.active_checkout_count || 0;
+  const active_checkout_count = patron?.active_checkouts || 0;
   const hasTooManyBooks = active_checkout_count >= 20;
 
   // Validation override states
@@ -355,7 +355,7 @@ export const ConfirmCheckoutDetails: FC<ConfirmCheckoutDetailsProps> = ({
   if (is_any_loading) {
     return (
       <Container sx={{ p: 2 }}>
-        <Typography variant="h5" component="h2" gutterBottom sx={{ mb: 3 }}>
+        <Typography variant='h5' component='h2' gutterBottom sx={{ mb: 3 }}>
           Confirm Checkout Details
         </Typography>
 
@@ -375,12 +375,12 @@ export const ConfirmCheckoutDetails: FC<ConfirmCheckoutDetailsProps> = ({
   if (is_any_loading) {
     return (
       <Container sx={{ p: 2 }}>
-        <Typography variant="h5" component="h2" gutterBottom sx={{ mb: 3 }}>
+        <Typography variant='h5' component='h2' gutterBottom sx={{ mb: 3 }}>
           Confirm Checkout Details
         </Typography>
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
           <LinearProgress />
-          <Typography variant="body2" color="text.secondary">
+          <Typography variant='body2' color='text.secondary'>
             Loading checkout details...
           </Typography>
         </Box>
@@ -391,17 +391,17 @@ export const ConfirmCheckoutDetails: FC<ConfirmCheckoutDetailsProps> = ({
   if (!patron || !item_copy || !library_item) {
     return (
       <Container sx={{ p: 2 }}>
-        <Typography variant="h5" component="h2" gutterBottom sx={{ mb: 3 }}>
+        <Typography variant='h5' component='h2' gutterBottom sx={{ mb: 3 }}>
           Confirm Checkout Details
         </Typography>
-        <Alert severity="error">
+        <Alert severity='error'>
           <AlertTitle>Error Loading Data</AlertTitle>
-          <Typography variant="body2" sx={{ mb: 1 }}>
+          <Typography variant='body2' sx={{ mb: 1 }}>
             Unable to load the required information for this checkout.
           </Typography>
           <Typography
-            variant="body2"
-            component="div"
+            variant='body2'
+            component='div'
             sx={{ mt: 1, fontSize: '0.75rem' }}
           >
             <strong>Debug Info:</strong>
@@ -419,7 +419,7 @@ export const ConfirmCheckoutDetails: FC<ConfirmCheckoutDetailsProps> = ({
     );
   }
   return (
-    <Container maxWidth="xl" sx={{ p: 2 }}>
+    <Container maxWidth='xl' sx={{ p: 2 }}>
       {/* Warnings */}
       {(hasOutstandingBalance || isCardExpired || hasTooManyBooks) && (
         <Snackbar
@@ -429,12 +429,12 @@ export const ConfirmCheckoutDetails: FC<ConfirmCheckoutDetailsProps> = ({
           <Stack columnGap={2} direction={'row'}>
             {hasOutstandingBalance && (
               <Alert
-                severity="warning"
+                severity='warning'
                 sx={{ mb: 1 }}
                 action={
                   <Button
-                    color="inherit"
-                    size="small"
+                    color='inherit'
+                    size='small'
                     onClick={() => set_show_fine_dialog(true)}
                   >
                     Update Balance
@@ -448,12 +448,12 @@ export const ConfirmCheckoutDetails: FC<ConfirmCheckoutDetailsProps> = ({
             )}
             {isCardExpired && (
               <Alert
-                severity="error"
+                severity='error'
                 sx={{ mb: 2 }}
                 action={
                   <Button
-                    color="inherit"
-                    size="small"
+                    color='inherit'
+                    size='small'
                     onClick={() => set_show_override_dialog(true)}
                   >
                     Extend Card
@@ -467,7 +467,7 @@ export const ConfirmCheckoutDetails: FC<ConfirmCheckoutDetailsProps> = ({
               </Alert>
             )}
             {hasTooManyBooks && (
-              <Alert severity="warning" sx={{ mb: 1 }}>
+              <Alert severity='warning' sx={{ mb: 1 }}>
                 <AlertTitle>Too Many Active Checkouts</AlertTitle>
                 This patron has {active_checkout_count} books checked out.
                 Maximum is 20.
@@ -477,7 +477,7 @@ export const ConfirmCheckoutDetails: FC<ConfirmCheckoutDetailsProps> = ({
             <Box sx={{ mb: 3 }}>
               {/* Card Extended */}
               {card_override && (
-                <Alert severity="success" sx={{ mb: 2 }}>
+                <Alert severity='success' sx={{ mb: 2 }}>
                   <AlertTitle>✓ Card Extended</AlertTitle>
                   Card expiration has been updated. You may proceed with
                   checkout.
@@ -486,7 +486,7 @@ export const ConfirmCheckoutDetails: FC<ConfirmCheckoutDetailsProps> = ({
 
               {/* Too Many Books - HARD BLOCK (cannot override) */}
               {hasTooManyBooks && (
-                <Alert severity="error" sx={{ mb: 2 }}>
+                <Alert severity='error' sx={{ mb: 2 }}>
                   <AlertTitle>🚫 Too Many Books Checked Out</AlertTitle>
                   This patron has {active_checkout_count} books checked out.
                   Maximum is 20. Transaction cannot proceed until books are
@@ -501,7 +501,7 @@ export const ConfirmCheckoutDetails: FC<ConfirmCheckoutDetailsProps> = ({
       {/* Update Balance Dialog */}
       <UpdateDialog
         open={show_fine_dialog}
-        title="Update Patron Balance"
+        title='Update Patron Balance'
         on_close={() => {
           set_show_fine_dialog(false);
           set_fine_amount_input('');
@@ -510,18 +510,18 @@ export const ConfirmCheckoutDetails: FC<ConfirmCheckoutDetailsProps> = ({
         confirm_disabled={
           fine_amount_input === '' || parseFloat(fine_amount_input) < 0
         }
-        confirm_label="Update Balance"
+        confirm_label='Update Balance'
       >
-        <Typography variant="body2" sx={{ mb: 2 }}>
+        <Typography variant='body2' sx={{ mb: 2 }}>
           Current balance: ${patron?.balance.toFixed(2)}
         </Typography>
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+        <Typography variant='body2' color='text.secondary' sx={{ mb: 2 }}>
           Enter the new balance amount for this patron
         </Typography>
         <TextField
           autoFocus
-          label="New Balance"
-          type="number"
+          label='New Balance'
+          type='number'
           fullWidth
           value={fine_amount_input}
           onChange={(e) => set_fine_amount_input(e.target.value)}
@@ -532,19 +532,19 @@ export const ConfirmCheckoutDetails: FC<ConfirmCheckoutDetailsProps> = ({
       {/* Override Card Dialog */}
       <UpdateDialog
         open={show_override_dialog}
-        title="Extend Library Card"
+        title='Extend Library Card'
         on_close={() => {
           set_show_override_dialog(false);
           set_new_expiration_date(null);
         }}
         on_confirm={handle_override_card}
         confirm_disabled={!new_expiration_date}
-        confirm_label="Update Card"
+        confirm_label='Update Card'
       >
-        <Typography variant="body2" sx={{ mb: 2 }}>
+        <Typography variant='body2' sx={{ mb: 2 }}>
           Patron: {patron?.first_name} {patron?.last_name}
         </Typography>
-        <Typography variant="body2" sx={{ mb: 2 }}>
+        <Typography variant='body2' sx={{ mb: 2 }}>
           Current expiration:
           {new Date(patron?.card_expiration_date).toLocaleDateString()}
           {new_expiration_date && (
@@ -555,12 +555,12 @@ export const ConfirmCheckoutDetails: FC<ConfirmCheckoutDetailsProps> = ({
             </>
           )}
         </Typography>
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+        <Typography variant='body2' color='text.secondary' sx={{ mb: 2 }}>
           Set new expiration date for this patron's library card
         </Typography>
         <DatePicker
           disablePast
-          label="New Expiration Date"
+          label='New Expiration Date'
           value={new_expiration_date || dayjs().add(2, 'year')}
           onChange={(value) => {
             set_new_expiration_date(value as dayjs.Dayjs | null);
@@ -576,10 +576,10 @@ export const ConfirmCheckoutDetails: FC<ConfirmCheckoutDetailsProps> = ({
         <InfoCard>
           <CardHeaderSection
             icon={<Person sx={{ fontSize: 32 }} />}
-            overline="Patron"
+            overline='Patron'
             title={`${patron.first_name} ${patron.last_name}`}
             avatar_src={patron.image_url}
-            bgcolor="primary.main"
+            bgcolor='primary.main'
           />
 
           <Box
@@ -590,33 +590,33 @@ export const ConfirmCheckoutDetails: FC<ConfirmCheckoutDetailsProps> = ({
             }}
           >
             <Stack direction={'row'} spacing={2} sx={{ width: 1 }}>
-              <InfoRow label="Patron ID" value={`#${patron.id}`} />
+              <InfoRow label='Patron ID' value={`#${patron.id}`} />
               <InfoRow
-                label="Balance"
+                label='Balance'
                 value={
                   <Chip
                     label={`$${patron.balance.toFixed(2)}`}
-                    size="small"
+                    size='small'
                     color={patron.balance > 0 ? 'warning' : 'success'}
                     sx={{ fontWeight: 600 }}
                   />
                 }
               />
             </Stack>
-            <InfoRow label="Email" value={patron.email} />
+            <InfoRow label='Email' value={patron.email} />
             <Stack direction={'row'} spacing={2} sx={{ width: 1 }}>
               <InfoRow
-                label="Books Checked Out"
+                label='Books Checked Out'
                 value={
                   <Chip
                     label={`${active_checkout_count} / 20`}
-                    size="small"
+                    size='small'
                     color={
                       hasTooManyBooks
                         ? 'error'
                         : active_checkout_count >= 15
-                          ? 'warning'
-                          : 'default'
+                        ? 'warning'
+                        : 'default'
                     }
                     sx={{ fontWeight: 600 }}
                   />
@@ -624,11 +624,11 @@ export const ConfirmCheckoutDetails: FC<ConfirmCheckoutDetailsProps> = ({
               />
               {patron.card_expiration_date && (
                 <InfoRow
-                  label="Card Expires"
+                  label='Card Expires'
                   value={
                     <Chip
                       label={patron.card_expiration_date}
-                      size="small"
+                      size='small'
                       color={isCardExpired ? 'error' : 'default'}
                       sx={{ fontWeight: 600 }}
                     />
@@ -637,7 +637,7 @@ export const ConfirmCheckoutDetails: FC<ConfirmCheckoutDetailsProps> = ({
               )}
             </Stack>
             <Stack direction={'row'} spacing={2} sx={{ width: 1 }}>
-              <InfoRow label="Phone" value={patron.phone} />
+              <InfoRow label='Phone' value={patron.phone} />
             </Stack>
           </Box>
         </InfoCard>
@@ -646,9 +646,9 @@ export const ConfirmCheckoutDetails: FC<ConfirmCheckoutDetailsProps> = ({
         <InfoCard>
           <CardHeaderSection
             icon={<LibraryBooks sx={{ fontSize: 32 }} />}
-            overline="Library Item"
+            overline='Library Item'
             title={library_item.title}
-            bgcolor="secondary.main"
+            bgcolor='secondary.main'
           />
 
           <Box
@@ -660,7 +660,7 @@ export const ConfirmCheckoutDetails: FC<ConfirmCheckoutDetailsProps> = ({
           >
             {library_item.description && (
               <Typography
-                variant="body2"
+                variant='body2'
                 sx={{
                   color: 'text.secondary',
                   mb: 2,
@@ -676,33 +676,33 @@ export const ConfirmCheckoutDetails: FC<ConfirmCheckoutDetailsProps> = ({
             )}
             <Stack direction={'row'} spacing={2} sx={{ width: 1 }}>
               <InfoRow
-                label="Item Type"
+                label='Item Type'
                 value={
                   <Chip
                     label={library_item.item_type}
-                    size="small"
-                    color="secondary"
+                    size='small'
+                    color='secondary'
                     sx={{ fontWeight: 600 }}
                   />
                 }
               />
               {library_item.publication_year && (
                 <InfoRow
-                  label="Published"
+                  label='Published'
                   value={library_item.publication_year.toString()}
                 />
               )}
             </Stack>
-            {item_copy.branch_name && (
-              <InfoRow label="Branch" value={item_copy.branch_name} />
+            {item_copy.current_branch_name && (
+              <InfoRow label='Branch' value={item_copy.current_branch_name} />
             )}
             {item_copy.status && (
               <InfoRow
-                label="Status"
+                label='Status'
                 value={
                   <Chip
                     label={item_copy.status}
-                    size="small"
+                    size='small'
                     color={
                       item_copy.status === 'Available' ? 'success' : 'default'
                     }
@@ -718,9 +718,9 @@ export const ConfirmCheckoutDetails: FC<ConfirmCheckoutDetailsProps> = ({
         <InfoCard>
           <CardHeaderSection
             icon={<CalendarToday sx={{ fontSize: 32 }} />}
-            overline="Due Date Information"
+            overline='Due Date Information'
             title={due_date ? due_date.toLocaleDateString() : 'N/A'}
-            bgcolor="info.main"
+            bgcolor='info.main'
           />
           <Stack
             sx={{
@@ -728,12 +728,12 @@ export const ConfirmCheckoutDetails: FC<ConfirmCheckoutDetailsProps> = ({
               justifyContent: 'space-between',
             }}
           >
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+            <Typography variant='body2' color='text.secondary' sx={{ mb: 1 }}>
               Item must be returned by this date
             </Typography>
             <Box>
               <InfoRow
-                label="Loan Duration:"
+                label='Loan Duration:'
                 value={
                   library_item &&
                   String(library_item.item_type).toUpperCase() === 'VIDEO'
@@ -758,9 +758,9 @@ export const ConfirmCheckoutDetails: FC<ConfirmCheckoutDetailsProps> = ({
                 sx={{ fontSize: 32 }}
               />
             }
-            overline="Copy Information"
+            overline='Copy Information'
             title={`Item ID #${item_copy.id}`}
-            bgcolor="success.main"
+            bgcolor='success.main'
           />
           <Stack
             sx={{
@@ -769,16 +769,16 @@ export const ConfirmCheckoutDetails: FC<ConfirmCheckoutDetailsProps> = ({
               justifyContent: 'center',
             }}
           >
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+            <Typography variant='body2' color='text.secondary' sx={{ mb: 1 }}>
               {item_copy.copy_label}
             </Typography>
             <Grid container spacing={2} sx={{ width: 1 }}>
               <Grid size={{ xs: 12, sm: 6 }}>
                 <InfoRow
-                  label="Condition"
+                  label='Condition'
                   value={
                     <ItemCopyConditionChip
-                      size="small"
+                      size='small'
                       condition={item_copy?.condition || 'Good'}
                     />
                   }
@@ -786,7 +786,7 @@ export const ConfirmCheckoutDetails: FC<ConfirmCheckoutDetailsProps> = ({
               </Grid>
               <Grid size={{ xs: 12, sm: 6 }}>
                 <InfoRow
-                  label="Location"
+                  label='Location'
                   value={item_copy.current_branch_name}
                 />
               </Grid>

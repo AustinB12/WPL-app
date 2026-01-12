@@ -1,7 +1,7 @@
 import { ListItem, Skeleton } from '@mui/material';
 import { blueberryTwilightPalette } from '@mui/x-charts/colorPalettes';
-import { useState, type FC } from 'react';
-import { useAllPatrons } from '../../hooks/usePatrons';
+import { type FC, useState } from 'react';
+import { useAllPatrons } from '../../hooks/use_patrons';
 import { ListViewCell } from '../common/ListViewCell';
 import Small_List from '../common/Small_List';
 
@@ -12,7 +12,7 @@ const PatronsList: FC = () => {
   const [desc_sort, set_desc_sort] = useState(false);
 
   if (loading) {
-    return <Skeleton variant='rectangular' height={'40vh'} />;
+    return <Skeleton variant="rectangular" height={'40vh'} />;
   }
 
   return (

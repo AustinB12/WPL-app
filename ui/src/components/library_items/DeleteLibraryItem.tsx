@@ -11,7 +11,7 @@ import {
   Typography,
 } from '@mui/material';
 import type { FC } from 'react';
-import type { Library_Item } from '../../types';
+import type { Library_Item } from '../../types/item_types';
 import ItemTypeChip from './ItemTypeChip';
 
 interface Delete_Library_Item_Props {
@@ -39,7 +39,7 @@ export const DeleteLibraryItem: FC<Delete_Library_Item_Props> = ({
     <Dialog
       open={open}
       onClose={on_close}
-      maxWidth="sm"
+      maxWidth='sm'
       fullWidth
       slotProps={{
         paper: {
@@ -55,14 +55,14 @@ export const DeleteLibraryItem: FC<Delete_Library_Item_Props> = ({
       </DialogTitle>
 
       <DialogContent>
-        <Alert severity="warning" sx={{ mb: 2, borderRadius: 2 }}>
+        <Alert severity='warning' sx={{ mb: 2, borderRadius: 2 }}>
           This action cannot be undone. All copies and records will also be
           deleted.
         </Alert>
 
         {item && (
           <Box>
-            <Typography variant="body1" gutterBottom>
+            <Typography variant='body1' gutterBottom>
               Are you sure you want to delete the following item?
             </Typography>
 
@@ -74,34 +74,34 @@ export const DeleteLibraryItem: FC<Delete_Library_Item_Props> = ({
                 borderRadius: 2,
               }}
             >
-              <Typography variant="subtitle2" color="text.secondary">
+              <Typography variant='subtitle2' color='text.secondary'>
                 Title
               </Typography>
-              <Typography variant="body1" gutterBottom>
+              <Typography variant='body1' gutterBottom>
                 {item.title}
               </Typography>
 
               <Typography
-                variant="subtitle2"
-                color="text.secondary"
+                variant='subtitle2'
+                color='text.secondary'
                 sx={{ mt: 1 }}
               >
                 Type
               </Typography>
-              <Typography variant="body1" gutterBottom>
+              <Typography variant='body1' gutterBottom>
                 <ItemTypeChip item_type={item.item_type} />
               </Typography>
 
               {item.description && (
                 <>
                   <Typography
-                    variant="subtitle2"
-                    color="text.secondary"
+                    variant='subtitle2'
+                    color='text.secondary'
                     sx={{ mt: 1 }}
                   >
                     Description
                   </Typography>
-                  <Typography variant="body1">{item.description}</Typography>
+                  <Typography variant='body1'>{item.description}</Typography>
                 </>
               )}
             </Paper>
@@ -110,13 +110,13 @@ export const DeleteLibraryItem: FC<Delete_Library_Item_Props> = ({
       </DialogContent>
 
       <DialogActions sx={{ px: 3, pb: 2 }}>
-        <Button onClick={on_close} disabled={is_loading} color="inherit">
+        <Button onClick={on_close} disabled={is_loading} color='inherit'>
           Cancel
         </Button>
         <Button
           onClick={handle_confirm}
-          variant="contained"
-          color="error"
+          variant='contained'
+          color='error'
           disabled={is_loading || !item}
         >
           {is_loading ? 'Deleting...' : 'Delete'}

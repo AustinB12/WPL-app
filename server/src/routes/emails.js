@@ -3,8 +3,8 @@ import * as db from '../config/database.js';
 import {
   get_email_queue_stats,
   trigger_email_processing,
-} from '../services/emailWorker.js';
-import { trigger_overdue_check } from '../services/overdueChecker.js';
+} from '../services/email_worker.js';
+import { trigger_overdue_check } from '../services/overdue_checker.js';
 import { format_sql_datetime } from '../utils.js';
 
 const router = express.Router();

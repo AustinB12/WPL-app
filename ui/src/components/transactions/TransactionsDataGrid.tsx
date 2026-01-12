@@ -1,5 +1,5 @@
 import { type GridColDef } from '@mui/x-data-grid';
-import { useAllCopyTransactions } from '../../hooks/useCopies';
+import { useAllCopyTransactions } from '../../hooks/use_copies';
 import { BaseDataGrid } from '../common/BaseDataGrid';
 import { TransactionTypeChip } from './TransactionTypeChip';
 
@@ -11,15 +11,25 @@ const transaction_cols: GridColDef[] = [
     valueGetter: (value) => Number(value),
   },
   {
+    field: 'title',
+    headerName: 'Title',
+    width: 200,
+  },
+  {
     field: 'item_copy_id',
     headerName: 'Copy ID',
     width: 90,
   },
   {
-    field: 'patron_id',
-    headerName: 'Patron ID',
-    width: 90,
-    type: 'number',
+    field: 'patron_name',
+    headerName: 'Patron',
+    width: 200,
+    valueGetter: (_value, row) => {
+      if (row.first_name && row.last_name) {
+        return `${row.first_name} ${row.last_name}`;
+      }
+      return '-----';
+    },
   },
   {
     field: 'transaction_type',
@@ -38,8 +48,14 @@ const transaction_cols: GridColDef[] = [
     },
   },
   {
-    field: 'branch_id',
-    headerName: 'Branch ID',
+    field: 'current_branch_name',
+    headerName: 'Current Branch',
+    width: 100,
+    editable: false,
+  },
+  {
+    field: 'owning_branch_name',
+    headerName: 'Owning Branch',
     width: 100,
     editable: false,
   },
@@ -53,19 +69,20 @@ export const TransactionsDataGrid = ({
   label?: string;
   hidden_columns?: string[];
 }) => {
-  const { data, isLoading: loading } = useAllCopyTransactions();
+  const { data, isLoading: loading, refetch } = useAllCopyTransactions();
 
   return (
     <BaseDataGrid
       rows={data || []}
+      refetch={refetch}
       columns={transaction_cols}
       label={label}
       loading={loading}
       hidden_columns={[
         ...hidden_columns,
         'id',
-        'current_branch_id',
-        'owning_branch_id',
+        'current_branch_name',
+        'owning_branch_name',
       ]}
     />
   );

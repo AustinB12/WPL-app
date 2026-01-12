@@ -2,7 +2,7 @@ import express from 'express';
 import { body, validationResult } from 'express-validator';
 import pico from 'picocolors';
 import * as db from '../config/database.js';
-import { queue_reservation_ready } from '../services/emailService.js';
+import { queue_reservation_ready } from '../services/email_service.js';
 import { format_sql_datetime } from '../utils.js';
 
 const router = express.Router();

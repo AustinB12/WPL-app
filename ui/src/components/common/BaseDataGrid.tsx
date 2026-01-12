@@ -1,4 +1,4 @@
-import { Settings } from '@mui/icons-material';
+import { Refresh, Settings } from '@mui/icons-material';
 import CancelIcon from '@mui/icons-material/Cancel';
 import CheckIcon from '@mui/icons-material/Check';
 import FilterListIcon from '@mui/icons-material/FilterList';
@@ -34,6 +34,7 @@ import { useState } from 'react';
 
 interface BaseDataGridProps extends DataGridProps {
   hidden_columns?: string[];
+  refetch?: () => void;
 }
 export const BaseDataGrid = (props: BaseDataGridProps) => {
   const [density, set_density] = useState<GridDensity>('standard');
@@ -60,10 +61,11 @@ export const BaseDataGrid = (props: BaseDataGridProps) => {
         toolbar: {
           density: density,
           onDensityChange: set_density,
+          refetch: props.refetch,
           printOptions: { disableToolbarButton: true },
           csvOptions: { disableToolbarButton: true },
           label: props.label,
-        },
+        } as CustomToolbarProps,
       }}
       initialState={{
         pagination: {
@@ -100,10 +102,11 @@ type CustomToolbarProps = {
   density: GridDensity;
   onDensityChange: (newDensity: GridDensity) => void;
   label: string;
+  refetch?: () => void;
 };
 
 export function CustomToolbar(props: CustomToolbarProps) {
-  const { density, onDensityChange, label } = props;
+  const { density, onDensityChange, label, refetch } = props;
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
 
@@ -122,42 +125,49 @@ export function CustomToolbar(props: CustomToolbarProps) {
 
   return (
     <Toolbar>
-      <Typography variant="h6" sx={{ flex: 1 }}>
+      <Typography variant='h6' sx={{ flex: 1 }}>
         {label}
       </Typography>
-      <Tooltip title="Columns">
+      {refetch && (
+        <Tooltip title='Refresh Data'>
+          <ToolbarButton onClick={refetch}>
+            <Refresh fontSize='small' />
+          </ToolbarButton>
+        </Tooltip>
+      )}
+      <Tooltip title='Columns'>
         <ColumnsPanelTrigger render={<ToolbarButton />}>
-          <ViewColumnIcon fontSize="small" />
+          <ViewColumnIcon fontSize='small' />
         </ColumnsPanelTrigger>
       </Tooltip>
 
-      <Tooltip title="Filters">
+      <Tooltip title='Filters'>
         <FilterPanelTrigger
           render={(props, state) => (
-            <ToolbarButton {...props} color="default">
+            <ToolbarButton {...props} color='default'>
               <Badge
                 badgeContent={state.filterCount}
-                color="primary"
-                variant="dot"
+                color='primary'
+                variant='dot'
               >
-                <FilterListIcon fontSize="small" />
+                <FilterListIcon fontSize='small' />
               </Badge>
             </ToolbarButton>
           )}
         />
       </Tooltip>
-      <Tooltip title="Adjust row density">
+      <Tooltip title='Adjust row density'>
         <IconButton
           onClick={handleClick}
           aria-controls={open ? 'density-menu' : undefined}
-          aria-haspopup="true"
+          aria-haspopup='true'
           aria-expanded={open ? 'true' : undefined}
         >
           <Settings />
         </IconButton>
       </Tooltip>
       <Menu
-        id="density-menu"
+        id='density-menu'
         anchorEl={anchorEl}
         open={open}
         onClose={handleClose}
@@ -172,7 +182,7 @@ export function CustomToolbar(props: CustomToolbarProps) {
             selected={density === option.value}
           >
             <ListItemIcon>
-              {density === option.value && <CheckIcon fontSize="small" />}
+              {density === option.value && <CheckIcon fontSize='small' />}
             </ListItemIcon>
             <ListItemText>{option.label}</ListItemText>
           </MenuItem>
@@ -189,14 +199,14 @@ export function CustomToolbar(props: CustomToolbarProps) {
       >
         <QuickFilterTrigger
           render={(triggerProps, state) => (
-            <Tooltip title="Search" enterDelay={0}>
+            <Tooltip title='Search' enterDelay={0}>
               <StyledToolbarButton
                 {...triggerProps}
                 ownerState={{ expanded: state.expanded }}
-                color="default"
+                color='default'
                 aria-disabled={state.expanded}
               >
-                <SearchIcon fontSize="small" />
+                <SearchIcon fontSize='small' />
               </StyledToolbarButton>
             </Tooltip>
           )}
@@ -207,27 +217,27 @@ export function CustomToolbar(props: CustomToolbarProps) {
               {...controlProps}
               ownerState={{ expanded: state.expanded }}
               inputRef={ref}
-              aria-label="Search"
-              placeholder="Search..."
-              size="small"
+              aria-label='Search'
+              placeholder='Search...'
+              size='small'
               slotProps={{
                 input: {
                   startAdornment: (
-                    <InputAdornment position="start">
-                      <SearchIcon fontSize="small" />
+                    <InputAdornment position='start'>
+                      <SearchIcon fontSize='small' />
                     </InputAdornment>
                   ),
                   endAdornment: state.value ? (
-                    <InputAdornment position="end">
+                    <InputAdornment position='end'>
                       <QuickFilterClear
-                        edge="end"
-                        size="small"
-                        aria-label="Clear search"
+                        edge='end'
+                        size='small'
+                        aria-label='Clear search'
                         material={{
                           sx: { marginRight: -0.75 },
                         }}
                       >
-                        <CancelIcon fontSize="small" />
+                        <CancelIcon fontSize='small' />
                       </QuickFilterClear>
                     </InputAdornment>
                   ) : null,

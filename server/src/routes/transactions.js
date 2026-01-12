@@ -4,7 +4,7 @@ import * as db from '../config/database.js';
 import {
   queue_checkin_receipt,
   queue_checkout_receipt,
-} from '../services/emailService.js';
+} from '../services/email_service.js';
 import { format_sql_datetime } from '../utils.js';
 
 const router = express.Router();

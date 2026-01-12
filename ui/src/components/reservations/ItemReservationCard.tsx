@@ -17,8 +17,8 @@ import {
   Typography,
 } from '@mui/material';
 import { useState } from 'react';
-import { useReservationsByItemCopy } from '../../hooks/useReservations';
-import type { Item_Copy_Result } from '../../types';
+import { useReservationsByItemCopy } from '../../hooks/use_reservations';
+import type { Item_Copy_Result } from '../../types/item_types';
 import { ItemCopyConditionChip } from '../copies/ItemCopyConditionChip';
 import ItemTypeChip from '../library_items/ItemTypeChip';
 
@@ -52,37 +52,37 @@ export const ItemReservationCard = ({ item }: ItemReservationCardProps) => {
             item &&
             has_reservation && (
               <IconButton
-                title="View reservations"
+                title='View reservations'
                 onClick={() => set_drawer_open(true)}
               >
                 <Search />
               </IconButton>
             )
           }
-          component="div"
+          component='div'
           title={
             item ? (
-              <Typography variant="h5" fontWeight="bold" component="div">
+              <Typography variant='h5' fontWeight='bold' component='div'>
                 {item.title}
               </Typography>
             ) : (
-              <Typography variant="h4" fontWeight="bold" component="div">
+              <Typography variant='h4' fontWeight='bold' component='div'>
                 <Skeleton animation={false} width={180} />
               </Typography>
             )
           }
           subheader={
             item ? (
-              <Typography variant="body2" color="text.secondary">
+              <Typography variant='body2' color='text.secondary'>
                 <ItemTypeChip
                   sx={{ mr: 1 }}
                   item_type={item.item_type}
-                  size="small"
+                  size='small'
                 />
                 ID: {item.id}
               </Typography>
             ) : (
-              <Typography variant="body2" color="text.secondary">
+              <Typography variant='body2' color='text.secondary'>
                 <Skeleton animation={false} width={100} />
               </Typography>
             )
@@ -100,7 +100,7 @@ export const ItemReservationCard = ({ item }: ItemReservationCardProps) => {
             <Box>
               {item && (
                 <Box
-                  component="img"
+                  component='img'
                   src={
                     item?.cover_image ||
                     'https://unrulyguides.com/wp-content/uploads/2011/12/generic-cover.jpg'
@@ -122,7 +122,7 @@ export const ItemReservationCard = ({ item }: ItemReservationCardProps) => {
                   sx={{
                     borderRadius: 2,
                   }}
-                  variant="rectangular"
+                  variant='rectangular'
                   width={120}
                   height={160}
                   animation={false}
@@ -132,37 +132,37 @@ export const ItemReservationCard = ({ item }: ItemReservationCardProps) => {
 
             <Stack justifyContent={'space-between'}>
               <Box>
-                <Typography variant="caption" color="text.secondary">
+                <Typography variant='caption' color='text.secondary'>
                   Copy Label
                 </Typography>
                 {item ? (
-                  <Typography variant="body2">{item.copy_label}</Typography>
+                  <Typography variant='body2'>{item.copy_label}</Typography>
                 ) : (
-                  <Typography variant="body2">
+                  <Typography variant='body2'>
                     <Skeleton animation={false} width={150} />
                   </Typography>
                 )}
               </Box>
               <Box>
-                <Typography variant="caption" color="text.secondary">
+                <Typography variant='caption' color='text.secondary'>
                   Current Location
                 </Typography>
                 {item ? (
-                  <Typography variant="body2">
+                  <Typography variant='body2'>
                     {item.current_branch_name}
                   </Typography>
                 ) : (
-                  <Typography variant="body2">
+                  <Typography variant='body2'>
                     <Skeleton animation={false} width={120} />
                   </Typography>
                 )}
               </Box>
               <Box>
-                <Typography variant="caption" color="text.secondary">
+                <Typography variant='caption' color='text.secondary'>
                   Reservations
                 </Typography>
                 {item ? (
-                  <Typography variant="body2">
+                  <Typography variant='body2'>
                     {item.reservation_count}
                   </Typography>
                 ) : (
@@ -173,10 +173,10 @@ export const ItemReservationCard = ({ item }: ItemReservationCardProps) => {
 
             {item && is_checked_out && (
               <Box>
-                <Typography variant="caption" color="text.secondary">
+                <Typography variant='caption' color='text.secondary'>
                   Checked Out To
                 </Typography>
-                <Typography variant="body2">
+                <Typography variant='body2'>
                   {item.patron_first_name} {item.patron_last_name}
                 </Typography>
               </Box>
@@ -184,11 +184,11 @@ export const ItemReservationCard = ({ item }: ItemReservationCardProps) => {
 
             {item && item.due_date && (
               <Box>
-                <Typography variant="caption" color="text.secondary">
+                <Typography variant='caption' color='text.secondary'>
                   Due Date
                 </Typography>
                 <Typography
-                  variant="body2"
+                  variant='body2'
                   color={is_overdue ? 'warning.main' : 'text.primary'}
                   fontWeight={is_overdue ? 500 : 400}
                 >
@@ -205,10 +205,10 @@ export const ItemReservationCard = ({ item }: ItemReservationCardProps) => {
             sx={{ gap: 1, mt: 2, flexWrap: 'wrap' }}
           >
             {item && is_overdue && (
-              <Chip icon={<Warning />} label="Overdue" color="warning" />
+              <Chip icon={<Warning />} label='Overdue' color='warning' />
             )}
             {item && item.status === 'Available' && !has_reservation && (
-              <Chip label="Available" color="success" />
+              <Chip label='Available' color='success' />
             )}
             {item && item.condition && (
               <ItemCopyConditionChip condition={item.condition} />
@@ -218,7 +218,7 @@ export const ItemReservationCard = ({ item }: ItemReservationCardProps) => {
       </Card>
 
       <Drawer
-        anchor="right"
+        anchor='right'
         open={drawer_open}
         onClose={() => set_drawer_open(false)}
       >
@@ -231,7 +231,7 @@ export const ItemReservationCard = ({ item }: ItemReservationCardProps) => {
               mb: 2,
             }}
           >
-            <Typography variant="h6">Reservations</Typography>
+            <Typography variant='h6'>Reservations</Typography>
             <IconButton onClick={() => set_drawer_open(false)}>
               <Close />
             </IconButton>
@@ -250,10 +250,10 @@ const Reservations_List = ({ item_copy_id }: { item_copy_id: number }) => {
     <List>
       {loading &&
         [1, 2, 3].map((n) => (
-          <Skeleton animation="wave" key={n} width={'100%'} height={60} />
+          <Skeleton animation='wave' key={n} width={'100%'} height={60} />
         ))}
       {!loading && reservations && reservations.length === 0 && (
-        <Typography variant="body2">No reservations found.</Typography>
+        <Typography variant='body2'>No reservations found.</Typography>
       )}
       {!loading &&
         reservations &&
@@ -262,9 +262,9 @@ const Reservations_List = ({ item_copy_id }: { item_copy_id: number }) => {
             key={reservation.id}
             secondaryAction={
               <IconButton
-                edge="end"
-                title="Delete Reservation"
-                aria-label="delete"
+                edge='end'
+                title='Delete Reservation'
+                aria-label='delete'
               >
                 <Delete />
               </IconButton>

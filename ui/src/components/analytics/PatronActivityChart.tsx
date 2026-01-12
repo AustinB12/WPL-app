@@ -9,7 +9,7 @@ import {
 } from '@mui/material';
 import { PieChart } from '@mui/x-charts/PieChart';
 import { type FC, useState } from 'react';
-import { usePatronMetrics } from '../../hooks/useAnalytics';
+import { usePatronMetrics } from '../../hooks/use_analytics';
 
 interface PatronActivityChartProps {
   branch_id?: number;

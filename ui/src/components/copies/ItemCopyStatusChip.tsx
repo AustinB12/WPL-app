@@ -1,6 +1,6 @@
 import { Chip, type ChipProps } from '@mui/material';
 import type { JSX } from 'react';
-import type { Library_Copy_Status } from '../../types';
+import type { Library_Copy_Status } from '../../types/item_types';
 
 export function ItemCopyStatusChip({
   status,
@@ -11,24 +11,24 @@ export function ItemCopyStatusChip({
 }): JSX.Element {
   switch (status) {
     case 'Available':
-      return <Chip size={size} label="Available" color="success" />;
+      return <Chip size={size} label='Available' color='success' />;
     case 'Checked Out':
-      return <Chip size={size} label="Checked Out" color="primary" />;
+      return <Chip size={size} label='Checked Out' color='primary' />;
     case 'Reserved':
-      return <Chip size={size} label="Reserved" color="error" />;
+      return <Chip size={size} label='Reserved' color='error' />;
     case 'Processing':
-      return <Chip size={size} label="Processing" color="success" />;
+      return <Chip size={size} label='Processing' color='success' />;
     case 'Unshelved':
-      return <Chip size={size} label="Unshelved" color="warning" />;
+      return <Chip size={size} label='Unshelved' color='warning' />;
     case 'Ready For Pickup':
-      return <Chip size={size} label="Ready For Pickup" color="success" />;
+      return <Chip size={size} label='Ready For Pickup' color='success' />;
     case 'Overdue':
-      return <Chip size={size} label="Overdue" color="warning" />;
+      return <Chip size={size} label='Overdue' color='warning' />;
     case 'Damaged':
-      return <Chip size={size} label="Damaged" color="secondary" />;
+      return <Chip size={size} label='Damaged' color='secondary' />;
     case 'Lost':
-      return <Chip size={size} label="Lost" color="default" />;
+      return <Chip size={size} label='Lost' color='default' />;
     default:
-      return <Chip size={size} label="Unknown" />;
+      return <Chip size={size} label='Unknown' />;
   }
 }

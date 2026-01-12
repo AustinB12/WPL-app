@@ -1,7 +1,7 @@
 import { Avatar, Chip, Stack, Typography } from '@mui/material';
 import { isAfter } from 'date-fns';
 import { Link } from 'react-router-dom';
-import type { Patron } from '../../types';
+import type { Patron } from '../../types/patron_types';
 
 const today = new Date();
 
@@ -15,7 +15,7 @@ export function ListViewCell({
   const expired_card = isAfter(today, new Date(patron.card_expiration_date));
   return (
     <Stack
-      direction="row"
+      direction='row'
       sx={{
         alignItems: 'center',
         height: '100%',
@@ -36,11 +36,11 @@ export function ListViewCell({
         }}
       >
         <Link style={{ textDecoration: 'none' }} to={`/patron/${patron.id}`}>
-          <Typography variant="body2" fontWeight={500}>
+          <Typography variant='body2' fontWeight={500}>
             {patron.first_name} {patron.last_name}
           </Typography>
         </Link>
-        <Stack direction="row" spacing={0.5}>
+        <Stack direction='row' spacing={0.5}>
           <Chip
             label={`${patron.active_checkouts || 0}/20`}
             color={(patron.active_checkouts || 0) >= 20 ? 'error' : 'default'}
@@ -53,7 +53,7 @@ export function ListViewCell({
             label={expired_card ? 'Expired' : 'Active'}
             color={expired_card ? 'warning' : 'success'}
             size={'small'}
-            variant="outlined"
+            variant='outlined'
           />
         </Stack>
       </Stack>

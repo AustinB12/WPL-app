@@ -11,10 +11,14 @@ import { useNavigate } from 'react-router-dom';
 import {
   useBranchesContext,
   useSelectedBranch,
-} from '../../hooks/useBranchHooks';
-import { useCopies, useDeleteCopy, useUpdateCopy } from '../../hooks/useCopies';
-import { useSnackbar } from '../../hooks/useSnackbar';
-import type { Item_Copy, Item_Copy_Result } from '../../types';
+} from '../../hooks/use_branch_hooks';
+import {
+  useCopies,
+  useDeleteCopy,
+  useUpdateCopy,
+} from '../../hooks/use_copies';
+import { useSnackbar } from '../../hooks/use_snackbar';
+import type { Item_Copy, Item_Copy_Result } from '../../types/item_types';
 import { BaseDataGrid } from '../common/BaseDataGrid';
 import { GenreChip } from '../common/GenreChip';
 import ItemTypeChip from '../library_items/ItemTypeChip';
@@ -176,7 +180,7 @@ export const CopiesDataGrid = ({
               spacing={1}
               direction={'row'}
               alignItems={'center'}
-              height="100%"
+              height='100%'
             >
               {x.map((genre: string) => (
                 <GenreChip key={genre} genre={genre} />
@@ -246,9 +250,9 @@ export const CopiesDataGrid = ({
       width: 60,
       getActions: (params) => [
         <GridActionsCellItem
-          key="delete"
+          key='delete'
           icon={<Delete />}
-          label="Delete"
+          label='Delete'
           onClick={(e) => {
             e.stopPropagation();
             e.preventDefault();
@@ -257,9 +261,9 @@ export const CopiesDataGrid = ({
           showInMenu
         />,
         <GridActionsCellItem
-          key="edit"
+          key='edit'
           icon={<Edit />}
-          label="Edit"
+          label='Edit'
           onClick={(e) => {
             e.stopPropagation();
             e.preventDefault();
@@ -347,7 +351,7 @@ export const CopiesDataGrid = ({
             },
           },
         }}
-        label="Copies"
+        label='Copies'
         isRowSelectable={(params: GridRowParams) =>
           params.row.status === 'Available'
         }

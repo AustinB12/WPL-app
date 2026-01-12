@@ -1,6 +1,6 @@
 import { Chip, type ChipProps } from '@mui/material';
 import type { JSX } from 'react';
-import { Genre } from '../../types';
+import { Genre } from '../../types/item_types';
 
 export function GenreChip({
   genre,

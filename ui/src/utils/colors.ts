@@ -1,5 +1,5 @@
 import { blueberryTwilightPalette } from '@mui/x-charts/colorPalettes';
-import { Library_Item_Type } from '../types';
+import { Library_Item_Type } from '../types/item_types';
 
 type ChipColor =
   | 'default'
@@ -50,5 +50,5 @@ export const get_status_color = (status: string): ChipColor => {
 };
 
 export const get_condition_color = (condition?: string): ChipColor => {
-  return condition ? (CONDITION_COLOR_MAP[condition] ?? 'default') : 'default';
+  return condition ? CONDITION_COLOR_MAP[condition] ?? 'default' : 'default';
 };

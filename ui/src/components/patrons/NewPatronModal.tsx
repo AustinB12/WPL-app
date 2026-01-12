@@ -24,8 +24,8 @@ import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { addYears } from 'date-fns';
 import { type FC, useState } from 'react';
-import { useBranchesContext } from '../../hooks/useBranchHooks';
-import type { Create_Patron_Data } from '../../types';
+import { useBranchesContext } from '../../hooks/use_branch_hooks';
+import type { Create_Patron_Data } from '../../types/patron_types';
 import { validate_required } from '../../utils/validators';
 
 export interface Patron_Form_Errors {
@@ -152,6 +152,7 @@ const New_Patron_Modal: FC<New_Patron_Modal_Props> = ({
     }
 
     on_submit(form_data);
+    handle_close();
   };
 
   const handle_close = () => {
@@ -174,7 +175,7 @@ const New_Patron_Modal: FC<New_Patron_Modal_Props> = ({
       <Dialog
         open={open}
         onClose={handle_close}
-        maxWidth="md"
+        maxWidth='md'
         fullWidth
         PaperProps={{
           sx: { minHeight: '500px' },
@@ -182,15 +183,15 @@ const New_Patron_Modal: FC<New_Patron_Modal_Props> = ({
       >
         <DialogTitle>
           <Box
-            display="flex"
-            justifyContent="space-between"
-            alignItems="center"
+            display='flex'
+            justifyContent='space-between'
+            alignItems='center'
           >
             Create New Patron
             <IconButton
               onClick={handle_close}
               disabled={is_loading}
-              size="small"
+              size='small'
             >
               <CloseIcon />
             </IconButton>
@@ -199,7 +200,7 @@ const New_Patron_Modal: FC<New_Patron_Modal_Props> = ({
 
         <DialogContent dividers>
           {submit_error && (
-            <Alert severity="error" sx={{ mb: 2 }}>
+            <Alert severity='error' sx={{ mb: 2 }}>
               {submit_error}
             </Alert>
           )}
@@ -215,7 +216,7 @@ const New_Patron_Modal: FC<New_Patron_Modal_Props> = ({
             >
               <TextField
                 fullWidth
-                label="First Name"
+                label='First Name'
                 value={form_data.first_name}
                 onChange={handle_input_change('first_name')}
                 error={!!errors.first_name}
@@ -225,7 +226,7 @@ const New_Patron_Modal: FC<New_Patron_Modal_Props> = ({
               />
               <TextField
                 fullWidth
-                label="Last Name"
+                label='Last Name'
                 value={form_data.last_name}
                 onChange={handle_input_change('last_name')}
                 error={!!errors.last_name}
@@ -244,7 +245,7 @@ const New_Patron_Modal: FC<New_Patron_Modal_Props> = ({
               }}
             >
               <DatePicker
-                label="Birthday (Optional)"
+                label='Birthday (Optional)'
                 value={form_data.birthday ? new Date(form_data.birthday) : null}
                 onChange={(date) =>
                   handle_date_change('birthday')(date as Date | null)
@@ -260,7 +261,7 @@ const New_Patron_Modal: FC<New_Patron_Modal_Props> = ({
                 }}
               />
               <DatePicker
-                label="Card Expiration Date"
+                label='Card Expiration Date'
                 value={new Date(form_data.card_expiration_date)}
                 onChange={(date) =>
                   handle_date_change('card_expiration_date')(
@@ -290,8 +291,8 @@ const New_Patron_Modal: FC<New_Patron_Modal_Props> = ({
             >
               <TextField
                 fullWidth
-                label="Initial Balance"
-                type="number"
+                label='Initial Balance'
+                type='number'
                 value={form_data.balance}
                 onChange={handle_input_change('balance')}
                 error={!!errors.balance}
@@ -301,13 +302,13 @@ const New_Patron_Modal: FC<New_Patron_Modal_Props> = ({
               />
               <TextField
                 fullWidth
-                label="Profile Image URL (Optional)"
+                label='Profile Image URL (Optional)'
                 value={form_data.image_url}
                 onChange={handle_input_change('image_url')}
                 error={!!errors.image_url}
                 helperText={errors.image_url}
                 disabled={is_loading}
-                placeholder="https://example.com/image.jpg"
+                placeholder='https://example.com/image.jpg'
               />
             </Box>
             <FormControl
@@ -315,12 +316,12 @@ const New_Patron_Modal: FC<New_Patron_Modal_Props> = ({
               error={!!errors.local_branch_id}
               disabled={is_loading || branches_loading}
             >
-              <InputLabel id="branch-select-label">Local Branch *</InputLabel>
+              <InputLabel id='branch-select-label'>Local Branch *</InputLabel>
               <Select
-                labelId="branch-select-label"
-                id="branch-select"
+                labelId='branch-select-label'
+                id='branch-select'
                 value={form_data.local_branch_id}
-                label="Local Branch *"
+                label='Local Branch *'
                 onChange={handle_select_change('local_branch_id')}
               >
                 {branches?.map((branch) => (
@@ -344,16 +345,16 @@ const New_Patron_Modal: FC<New_Patron_Modal_Props> = ({
           <Button
             onClick={handle_close}
             disabled={is_loading}
-            variant="outlined"
-            size="large"
+            variant='outlined'
+            size='large'
           >
             Cancel
           </Button>
           <Button
             onClick={handle_submit}
             disabled={is_loading}
-            variant="contained"
-            size="large"
+            variant='contained'
+            size='large'
             startIcon={is_loading ? undefined : <PersonAddIcon />}
           >
             {is_loading ? 'Creating...' : 'Create Patron'}

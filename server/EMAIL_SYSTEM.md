@@ -12,7 +12,7 @@ Complete email notification system for the Wayback Public Library management sys
 - Links to related entities (patrons, items, transactions, reservations, fines)
 - 90-day retention for sent emails, indefinite for failed
 
-### 2. **Background Email Worker** (`emailWorker.js`)
+### 2. **Background Email Worker** (`email_worker.js`)
 
 - Runs every 2 minutes to process pending emails
 - Automatic retry with exponential backoff (5min, 10min, 20min)
@@ -59,7 +59,7 @@ Complete email notification system for the Wayback Public Library management sys
 - Only sent once per 5 days per item
 - Priority: 5 (normal)
 
-### 5. **Daily Overdue Checker** (`overdueChecker.js`)
+### 5. **Daily Overdue Checker** (`overdue_checker.js`)
 
 - Runs at 8 AM: Check overdue items, queue reminders
 - Runs at 9 AM: Check items due soon, queue reminders
@@ -111,7 +111,7 @@ If SMTP is not configured, the system automatically creates an Ethereal test acc
 ### Queue Custom Email
 
 ```javascript
-import { queue_email } from './services/emailService.js';
+import { queue_email } from './services/email_service.js';
 
 await queue_email({
   patron_id: 123,
@@ -174,7 +174,7 @@ SELECT status, COUNT(*) FROM EMAIL_NOTIFICATIONS GROUP BY status;
                      │
                      ▼
 ┌─────────────────────────────────────────────────────┐
-│  emailService.js (queue_* functions)                │
+│  email_service.js (queue_* functions)                │
 │  Queues emails to EMAIL_NOTIFICATIONS table         │
 └────────────────────┬────────────────────────────────┘
                      │
@@ -186,7 +186,7 @@ SELECT status, COUNT(*) FROM EMAIL_NOTIFICATIONS GROUP BY status;
                      │
                      ▼
 ┌─────────────────────────────────────────────────────┐
-│  emailWorker.js (cron every 2 min)                  │
+│  email_worker.js (cron every 2 min)                  │
 │  Processes pending emails, handles retries          │
 └────────────────────┬────────────────────────────────┘
                      │
@@ -214,8 +214,8 @@ SELECT status, COUNT(*) FROM EMAIL_NOTIFICATIONS GROUP BY status;
 
 ### Too Many Emails
 
-- Adjust cron schedules in `emailWorker.js` and `overdueChecker.js`
-- Increase cooldown periods in `overdueChecker.js`
+- Adjust cron schedules in `email_worker.js` and `overdue_checker.js`
+- Increase cooldown periods in `overdue_checker.js`
 - Disable specific email types by commenting out queue calls
 
 ### Test Without Sending

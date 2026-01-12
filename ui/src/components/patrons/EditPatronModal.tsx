@@ -19,8 +19,8 @@ import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import dayjs, { Dayjs } from 'dayjs';
 import { type FC, useEffect, useState } from 'react';
-import { useBranchesContext } from '../../hooks/useBranchHooks';
-import type { Patron, Update_Patron_Data } from '../../types';
+import { useBranchesContext } from '../../hooks/use_branch_hooks';
+import type { Patron, Update_Patron_Data } from '../../types/patron_types';
 
 interface Edit_Patron_Modal_Props {
   open: boolean;
@@ -95,7 +95,7 @@ export const EditPatronModal: FC<Edit_Patron_Modal_Props> = ({
   };
 
   return (
-    <Dialog open={open} onClose={on_close} maxWidth="lg" fullWidth>
+    <Dialog open={open} onClose={on_close} maxWidth='lg' fullWidth>
       <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
         <Edit /> Edit Patron Information
       </DialogTitle>
@@ -104,7 +104,7 @@ export const EditPatronModal: FC<Edit_Patron_Modal_Props> = ({
           <Grid container spacing={{ xs: 2, sm: 4 }} sx={{ mt: 2 }}>
             <Grid size={{ xs: 12, sm: 6 }}>
               <TextField
-                label="First Name"
+                label='First Name'
                 value={form_data.first_name}
                 onChange={(e) =>
                   handle_input_change('first_name', e.target.value)
@@ -116,7 +116,7 @@ export const EditPatronModal: FC<Edit_Patron_Modal_Props> = ({
             </Grid>
             <Grid size={{ xs: 12, sm: 6 }}>
               <TextField
-                label="Last Name"
+                label='Last Name'
                 value={form_data.last_name}
                 onChange={(e) =>
                   handle_input_change('last_name', e.target.value)
@@ -128,8 +128,8 @@ export const EditPatronModal: FC<Edit_Patron_Modal_Props> = ({
             </Grid>
             <Grid size={{ xs: 12, sm: 6 }}>
               <TextField
-                label="Email"
-                type="email"
+                label='Email'
+                type='email'
                 value={form_data.email}
                 onChange={(e) => handle_input_change('email', e.target.value)}
                 fullWidth
@@ -138,8 +138,8 @@ export const EditPatronModal: FC<Edit_Patron_Modal_Props> = ({
             </Grid>
             <Grid size={{ xs: 12, sm: 6 }}>
               <TextField
-                label="Phone Number"
-                type="tel"
+                label='Phone Number'
+                type='tel'
                 value={form_data.phone}
                 onChange={(e) => handle_input_change('phone', e.target.value)}
                 fullWidth
@@ -149,12 +149,12 @@ export const EditPatronModal: FC<Edit_Patron_Modal_Props> = ({
 
             <Grid size={{ xs: 12, sm: 6 }}>
               <FormControl fullWidth disabled={is_loading || branches_loading}>
-                <InputLabel id="branch-select-label">Local Branch</InputLabel>
+                <InputLabel id='branch-select-label'>Local Branch</InputLabel>
                 <Select
-                  labelId="branch-select-label"
-                  id="branch-select"
+                  labelId='branch-select-label'
+                  id='branch-select'
                   value={form_data.local_branch_id || ''}
-                  label="Local Branch"
+                  label='Local Branch'
                   onChange={(e) =>
                     handle_input_change(
                       'local_branch_id',
@@ -174,7 +174,7 @@ export const EditPatronModal: FC<Edit_Patron_Modal_Props> = ({
 
             <Grid size={{ xs: 12, sm: 6 }}>
               <DatePicker
-                label="Birthday"
+                label='Birthday'
                 value={dayjs(form_data.birthday)}
                 onChange={(value) => handle_date_change('birthday', value)}
                 disabled={is_loading}
@@ -187,7 +187,7 @@ export const EditPatronModal: FC<Edit_Patron_Modal_Props> = ({
             </Grid>
             <Grid size={{ xs: 12, sm: 6 }}>
               <DatePicker
-                label="Card Expiration Date"
+                label='Card Expiration Date'
                 value={dayjs(form_data.card_expiration_date)}
                 onChange={(value) =>
                   handle_date_change('card_expiration_date', value)
@@ -203,8 +203,8 @@ export const EditPatronModal: FC<Edit_Patron_Modal_Props> = ({
             </Grid>
             <Grid size={{ xs: 12, sm: 6 }}>
               <TextField
-                label="Profile Image URL"
-                type="url"
+                label='Profile Image URL'
+                type='url'
                 value={form_data.image_url}
                 onChange={(e) =>
                   handle_input_change('image_url', e.target.value)
@@ -215,8 +215,8 @@ export const EditPatronModal: FC<Edit_Patron_Modal_Props> = ({
             </Grid>
             <Grid size={{ xs: 12, sm: 5 }}>
               <TextField
-                label="Balance"
-                type="number"
+                label='Balance'
+                type='number'
                 value={form_data.balance}
                 onChange={(e) => handle_input_change('balance', e.target.value)}
                 fullWidth
@@ -234,7 +234,7 @@ export const EditPatronModal: FC<Edit_Patron_Modal_Props> = ({
                     disabled={is_loading}
                   />
                 }
-                label="Active?"
+                label='Active?'
               />
             </Grid>
           </Grid>
@@ -244,7 +244,7 @@ export const EditPatronModal: FC<Edit_Patron_Modal_Props> = ({
         <Button onClick={on_close} disabled={is_loading}>
           Cancel
         </Button>
-        <Button onClick={handle_save} variant="contained" disabled={is_loading}>
+        <Button onClick={handle_save} variant='contained' disabled={is_loading}>
           {is_loading ? 'Saving...' : 'Save Changes'}
         </Button>
       </DialogActions>

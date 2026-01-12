@@ -11,15 +11,15 @@ import {
   Typography,
 } from '@mui/material';
 import { useState } from 'react';
-import { useBranches } from '../../hooks/useBranches';
-import { useCreateCopy } from '../../hooks/useCopies';
-import { useLibraryItems } from '../../hooks/useLibraryItems';
-import { useSnackbar } from '../../hooks/useSnackbar';
+import { useBranches } from '../../hooks/use_branches';
+import { useCreateCopy } from '../../hooks/use_copies';
+import { useLibraryItems } from '../../hooks/use_library_items';
+import { useSnackbar } from '../../hooks/use_snackbar';
 import type {
   Item_Condition,
   Library_Copy_Status,
   Library_Item,
-} from '../../types';
+} from '../../types/item_types';
 
 interface Create_Copy_Dialog_Props {
   open: boolean;
@@ -126,7 +126,7 @@ export const CreateCopyDialog = ({
   };
 
   return (
-    <Dialog open={open} onClose={handle_close} maxWidth="sm" fullWidth>
+    <Dialog open={open} onClose={handle_close} maxWidth='sm' fullWidth>
       <DialogTitle>Create New Item Copy</DialogTitle>
       <form onSubmit={handle_submit}>
         <DialogContent>
@@ -157,16 +157,16 @@ export const CreateCopyDialog = ({
               renderInput={(params) => (
                 <TextField
                   {...params}
-                  label="Library Item *"
-                  placeholder="Search for a library item..."
+                  label='Library Item *'
+                  placeholder='Search for a library item...'
                   required
                 />
               )}
               renderOption={(props, option) => (
                 <li {...props} key={option.id}>
                   <Box>
-                    <Typography variant="body1">{option.title}</Typography>
-                    <Typography variant="caption" color="text.secondary">
+                    <Typography variant='body1'>{option.title}</Typography>
+                    <Typography variant='caption' color='text.secondary'>
                       {option.item_type} • {option.publication_year || 'N/A'}
                     </Typography>
                   </Box>
@@ -177,7 +177,7 @@ export const CreateCopyDialog = ({
             {/* Branch Selector */}
             <TextField
               select
-              label="Owning Branch *"
+              label='Owning Branch *'
               value={form_data.branch_id || ''}
               onChange={(e) =>
                 set_form_data((prev) => ({
@@ -198,7 +198,7 @@ export const CreateCopyDialog = ({
             {/* Condition Selector */}
             <TextField
               select
-              label="Condition"
+              label='Condition'
               value={form_data.condition}
               onChange={(e) =>
                 set_form_data((prev) => ({
@@ -217,7 +217,7 @@ export const CreateCopyDialog = ({
             {/* Status Selector */}
             <TextField
               select
-              label="Status"
+              label='Status'
               value={form_data.status}
               onChange={(e) =>
                 set_form_data((prev) => ({
@@ -235,8 +235,8 @@ export const CreateCopyDialog = ({
 
             {/* Cost Input */}
             <TextField
-              label="Cost"
-              type="number"
+              label='Cost'
+              type='number'
               value={form_data.cost}
               onChange={(e) =>
                 set_form_data((prev) => ({
@@ -248,12 +248,12 @@ export const CreateCopyDialog = ({
                 min: 0,
                 step: '0.01',
               }}
-              placeholder="0.00"
+              placeholder='0.00'
             />
 
             {/* Notes Input */}
             <TextField
-              label="Notes"
+              label='Notes'
               multiline
               rows={3}
               value={form_data.notes}
@@ -263,7 +263,7 @@ export const CreateCopyDialog = ({
                   notes: e.target.value,
                 }))
               }
-              placeholder="Add any additional notes about this copy..."
+              placeholder='Add any additional notes about this copy...'
             />
           </Box>
         </DialogContent>
@@ -273,8 +273,8 @@ export const CreateCopyDialog = ({
             Cancel
           </Button>
           <Button
-            type="submit"
-            variant="contained"
+            type='submit'
+            variant='contained'
             disabled={
               create_copy.isPending ||
               !form_data.library_item_id ||

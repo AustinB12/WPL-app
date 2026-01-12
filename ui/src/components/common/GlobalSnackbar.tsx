@@ -1,5 +1,5 @@
 import { Alert, AlertTitle, Snackbar } from '@mui/material';
-import { useSnackbar } from '../../hooks/useSnackbar';
+import { useSnackbar } from '../../hooks/use_snackbar';
 
 export const GlobalSnackbar = () => {
   const { snackbar_state, hide_snackbar } = useSnackbar();

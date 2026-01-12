@@ -12,7 +12,7 @@ import {
 import { BarChart } from '@mui/x-charts/BarChart';
 import { PieChart } from '@mui/x-charts/PieChart';
 import { type FC, useState } from 'react';
-import { usePopularItems } from '../../hooks/useAnalytics';
+import { usePopularItems } from '../../hooks/use_analytics';
 
 interface PopularItemsChartProps {
   branch_id?: number;
@@ -53,7 +53,7 @@ export const PopularItemsChart: FC<PopularItemsChartProps> = ({
           justifyContent: 'center',
         }}
       >
-        <Typography color='error'>Failed to load popular items data</Typography>
+        <Typography color="error">Failed to load popular items data</Typography>
       </Paper>
     );
   }
@@ -69,7 +69,7 @@ export const PopularItemsChart: FC<PopularItemsChartProps> = ({
           justifyContent: 'center',
         }}
       >
-        <Typography color='text.secondary'>No data available</Typography>
+        <Typography color="text.secondary">No data available</Typography>
       </Paper>
     );
   }
@@ -77,24 +77,24 @@ export const PopularItemsChart: FC<PopularItemsChartProps> = ({
   return (
     <Paper sx={{ p: 3 }}>
       <Stack
-        direction='row'
-        justifyContent='space-between'
-        alignItems='center'
+        direction="row"
+        justifyContent="space-between"
+        alignItems="center"
         mb={2}
       >
-        <Typography variant='h6' fontWeight='bold'>
+        <Typography variant="h6" fontWeight="bold">
           Popular Items & Genres
         </Typography>
         <ToggleButtonGroup
           value={period}
           exclusive
           onChange={(_, newPeriod) => newPeriod && set_period(newPeriod)}
-          size='small'
+          size="small"
         >
-          <ToggleButton value='7d'>7 Days</ToggleButton>
-          <ToggleButton value='30d'>30 Days</ToggleButton>
-          <ToggleButton value='90d'>90 Days</ToggleButton>
-          <ToggleButton value='1y'>1 Year</ToggleButton>
+          <ToggleButton value="7d">7 Days</ToggleButton>
+          <ToggleButton value="30d">30 Days</ToggleButton>
+          <ToggleButton value="90d">90 Days</ToggleButton>
+          <ToggleButton value="1y">1 Year</ToggleButton>
         </ToggleButtonGroup>
       </Stack>
 
@@ -103,15 +103,15 @@ export const PopularItemsChart: FC<PopularItemsChartProps> = ({
         onChange={(_, newValue) => set_view(newValue)}
         sx={{ mb: 2 }}
       >
-        <Tab label='Top Items' value='items' />
-        <Tab label='Top Genres' value='genres' />
-        <Tab label='By Type' value='types' />
+        <Tab label="Top Items" value="items" />
+        <Tab label="Top Genres" value="genres" />
+        <Tab label="By Type" value="types" />
       </Tabs>
 
       <Box sx={{ width: '100%', height: 400 }}>
         {view === 'items' && data.top_items.length > 0 && (
           <BarChart
-            layout='horizontal'
+            layout="horizontal"
             yAxis={[
               {
                 scaleType: 'band',

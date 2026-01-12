@@ -9,7 +9,7 @@ import {
 } from '@mui/material';
 import { LineChart } from '@mui/x-charts/LineChart';
 import { type FC, useState } from 'react';
-import { useCirculationTrends } from '../../hooks/useAnalytics';
+import { useCirculationTrends } from '../../hooks/use_analytics';
 
 interface CirculationChartProps {
   branch_id?: number;

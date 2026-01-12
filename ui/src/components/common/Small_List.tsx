@@ -1,6 +1,6 @@
 import { ExpandMore } from '@mui/icons-material';
-import { AppBar, Toolbar, Typography, IconButton, List } from '@mui/material';
-import type { PropsWithChildren, Dispatch, JSX } from 'react';
+import { AppBar, IconButton, List, Toolbar, Typography } from '@mui/material';
+import type { Dispatch, JSX, PropsWithChildren } from 'react';
 
 function Small_List({
   total,
@@ -14,11 +14,11 @@ function Small_List({
 }>): JSX.Element {
   return (
     <>
-      <AppBar position='relative' sx={{ borderRadius: '8px 8px 0 0 ' }}>
+      <AppBar position="relative" sx={{ borderRadius: '8px 8px 0 0 ' }}>
         <Toolbar>
           <Typography
-            variant='body1'
-            component='div'
+            variant="body1"
+            component="div"
             fontWeight={'bold'}
             sx={{ flexGrow: 1 }}
           >

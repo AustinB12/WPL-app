@@ -1,10 +1,10 @@
 import { MenuBook, Newspaper, PersonalVideo } from '@mui/icons-material';
 import HeadsetIcon from '@mui/icons-material/Headset';
 import { Box, Paper, Stack, Typography } from '@mui/material';
-import { useBranches } from '../../hooks/useBranches';
-import { useCopiesOfLibraryItem } from '../../hooks/useCopies';
-import type { Branch, Library_Item } from '../../types';
-import { Library_Item_Type } from '../../types';
+import { useBranches } from '../../hooks/use_branches';
+import { useCopiesOfLibraryItem } from '../../hooks/use_copies';
+import type { Branch } from '../../types/others';
+import { Library_Item_Type, type Library_Item } from '../../types/item_types';
 import { DetailsDrawer } from '../common/DetailsDrawer';
 import { CopiesTable } from './LibraryItemCopiesTable';
 
@@ -38,7 +38,7 @@ const getLayoutConfig = (item: Library_Item): LayoutConfig => {
           { label: 'Genre', value: 'Literature' },
           { label: 'Pages', value: 'Estimated 300-400' },
         ],
-        icon: <MenuBook fontSize="large" />,
+        icon: <MenuBook fontSize='large' />,
       };
     case Library_Item_Type.Periodical:
       return {
@@ -50,7 +50,7 @@ const getLayoutConfig = (item: Library_Item): LayoutConfig => {
           { label: 'Frequency', value: 'Monthly' },
           { label: 'Publisher', value: 'Academic Press' },
         ],
-        icon: <Newspaper fontSize="large" />,
+        icon: <Newspaper fontSize='large' />,
       };
     case Library_Item_Type.Recording:
       return {
@@ -62,7 +62,7 @@ const getLayoutConfig = (item: Library_Item): LayoutConfig => {
           { label: 'Duration', value: 'Approx. 45-60 minutes' },
           { label: 'Format', value: 'CD/Vinyl' },
         ],
-        icon: <HeadsetIcon fontSize="large" />,
+        icon: <HeadsetIcon fontSize='large' />,
       };
     case Library_Item_Type.Video:
       return {
@@ -74,7 +74,7 @@ const getLayoutConfig = (item: Library_Item): LayoutConfig => {
           { label: 'Runtime', value: 'Feature Length' },
           { label: 'Format', value: 'DVD/Blu-ray' },
         ],
-        icon: <PersonalVideo fontSize="large" />,
+        icon: <PersonalVideo fontSize='large' />,
       };
     case Library_Item_Type.Magazine:
       return {
@@ -97,7 +97,7 @@ const getLayoutConfig = (item: Library_Item): LayoutConfig => {
           { label: 'Duration', value: '8-12 hours' },
           { label: 'Narrator', value: 'Professional Voice Actor' },
         ],
-        icon: <MenuBook fontSize="large" />,
+        icon: <MenuBook fontSize='large' />,
       };
     default:
       return {
@@ -140,14 +140,14 @@ const ItemInfoSection = ({
   fields: ItemInfoField[];
 }) => (
   <Paper elevation={1} sx={{ p: 2 }}>
-    <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+    <Typography variant='subtitle2' color='text.secondary' gutterBottom>
       {title}
     </Typography>
     <Stack spacing={1}>
       {fields.map(
         (field, index) =>
           field.value && (
-            <Typography key={index} variant="body2">
+            <Typography key={index} variant='body2'>
               <strong>{field.label}:</strong> {field.value}
             </Typography>
           )
@@ -166,10 +166,10 @@ const DescriptionSection = ({
   if (!description) return null;
   return (
     <Paper elevation={1} sx={{ p: 2 }}>
-      <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+      <Typography variant='subtitle2' color='text.secondary' gutterBottom>
         {title}
       </Typography>
-      <Typography variant="body1">{description}</Typography>
+      <Typography variant='body1'>{description}</Typography>
     </Paper>
   );
 };
@@ -191,15 +191,15 @@ const CopiesSection = ({
     <Paper elevation={1} sx={{ py: 2, px: 0 }}>
       <Typography
         sx={{ pl: 2 }}
-        variant="subtitle2"
-        color="text.secondary"
+        variant='subtitle2'
+        color='text.secondary'
         gutterBottom
       >
         Available Copies
       </Typography>
-      {loading && <Typography variant="body2">Loading...</Typography>}
+      {loading && <Typography variant='body2'>Loading...</Typography>}
       {error && (
-        <Typography variant="body2" color="error">
+        <Typography variant='body2' color='error'>
           {error.message}
         </Typography>
       )}
@@ -220,7 +220,7 @@ export const LibraryItemDetails = ({
     return (
       <DetailsDrawer open={is_open} handleClose={onClose}>
         <Box p={3}>
-          <Typography variant="h6" color="text.secondary">
+          <Typography variant='h6' color='text.secondary'>
             No item selected
           </Typography>
         </Box>
@@ -236,7 +236,7 @@ export const LibraryItemDetails = ({
         <Stack spacing={3}>
           <Stack spacing={2} direction={'row'} sx={{ alignItems: 'center' }}>
             {config?.icon && config.icon}
-            <Typography variant="h4" component="h1">
+            <Typography variant='h4' component='h1'>
               {item.title}
             </Typography>
           </Stack>

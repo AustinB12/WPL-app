@@ -1,7 +1,7 @@
 import express from 'express';
 import { body, validationResult } from 'express-validator';
 import * as db from '../config/database.js';
-import { format_sql_datetime } from '../utils.js';
+import { format_sql_datetime, format_sql_date } from '../utils.js';
 
 const router = express.Router();
 
@@ -21,11 +21,11 @@ const validate_patron = [
     .withMessage('Branch ID must be a valid positive integer'),
   body('card_expiration_date')
     .optional()
-    .isISO8601()
+    .isString()
     .withMessage('Card expiration date must be a valid date (YYYY-MM-DD)'),
   body('birthday')
     .optional()
-    .isISO8601()
+    .isString()
     .withMessage('Birthday must be a valid date (YYYY-MM-DD)'),
 ];
 
@@ -307,9 +307,12 @@ router.post(
         email: req.body.email || null,
         phone: req.body.phone || null,
         address: req.body.address || null,
-        birthday: req.body.birthday || null,
+        image_url: req.body.image_url || null,
+        birthday: req.body.birthday ? format_sql_date(req.body.birthday) : null,
         local_branch_id: req.body.local_branch_id || 1,
-        card_expiration_date: req.body.card_expiration_date || null,
+        card_expiration_date: req.body.card_expiration_date
+          ? format_sql_date(req.body.card_expiration_date)
+          : null,
         balance: req.body.balance || 0.0,
         is_active: true,
         created_at: format_sql_datetime(new Date()),

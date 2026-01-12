@@ -183,9 +183,27 @@ router.get('/item-transactions', async (req, res) => {
       start_date || end_date ? ` WHERE ${filters.join(' AND ')}` : '';
 
     const query = `
-			SELECT * FROM ITEM_TRANSACTIONS
-			${conditions}
-			ORDER BY created_at DESC;`;
+      SELECT 
+        t.*,
+        p.first_name,
+        p.last_name,
+        li.title,
+        li.item_type,
+        ic.library_item_id,
+        ic.condition,
+        b.id as current_branch_id,
+        b.branch_name as current_branch_name,
+        bb.id as owning_branch_id,
+        bb.branch_name as owning_branch_name
+      FROM ITEM_TRANSACTIONS t
+      LEFT JOIN PATRONS p ON t.patron_id = p.id
+      LEFT JOIN LIBRARY_ITEM_COPIES ic ON t.item_copy_id = ic.id
+      LEFT JOIN LIBRARY_ITEMS li ON ic.library_item_id = li.id
+      LEFT JOIN BRANCHES b ON ic.current_branch_id = b.id
+      LEFT JOIN BRANCHES bb ON ic.owning_branch_id = bb.id
+      ${conditions}
+      ORDER BY t.created_at DESC
+    `;
 
     const results = await db.execute_query(query, params);
 

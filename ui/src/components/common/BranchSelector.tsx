@@ -10,7 +10,7 @@ import {
 import {
   useBranchesContext,
   useSelectedBranch,
-} from '../../hooks/useBranchHooks';
+} from '../../hooks/use_branch_hooks';
 
 interface BranchSelectorProps {
   size?: 'small' | 'medium';
