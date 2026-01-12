@@ -17,6 +17,13 @@ export const useCopies = (
   });
 };
 
+export const useAvailableCopies = (branch_id?: number) => {
+  return useQuery({
+    queryKey: ['available_item_copies', branch_id],
+    queryFn: () => data_service.get_available_copies(branch_id),
+  });
+};
+
 export const useCopiesOfLibraryItem = (item_id: number, branch_id?: number) => {
   return useQuery({
     queryKey: ['item_copies', item_id, branch_id],

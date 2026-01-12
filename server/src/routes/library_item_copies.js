@@ -440,7 +440,7 @@ router.get('/recently-reshelved', async (req, res) => {
     }
 
     const query = `
-      SELECT 
+      SELECT DISTINCT
         ic.*,
         li.title,
         li.item_type,
@@ -473,6 +473,72 @@ router.get('/recently-reshelved', async (req, res) => {
   } catch (error) {
     res.status(500).json({
       error: 'Failed to fetch recently reshelved item copies',
+      message: error.message,
+    });
+  }
+});
+
+// GET /api/v1/item-copies/available - Get all available item copies
+router.get('/available', async (req, res) => {
+  try {
+    const { branch_id, library_item_id, condition } = req.query;
+    const params = [];
+
+    // Initial filter on status - must be Available or Ready For Pickup
+    const filters = ["lic.status IN ('Available', 'Ready For Pickup')"];
+
+    if (library_item_id) {
+      filters.push('lic.library_item_id = ?');
+      params.push(library_item_id);
+    }
+    if (branch_id) {
+      filters.push('lic.current_branch_id = ?');
+      params.push(branch_id);
+    }
+    if (condition) {
+      filters.push('lic.condition = ?');
+      params.push(condition);
+    }
+
+    const conditions = ` WHERE ${filters.join(' AND ')}`;
+
+    const query = `
+      SELECT 
+        lic.*,
+        ci.title,
+        ci.item_type,
+        ci.publication_year,
+        ci.description,
+        b.id as current_branch_id,
+        b.branch_name as current_branch_name,
+        bb.id as owning_branch_id,
+        bb.branch_name as owning_branch_name,
+        ROW_NUMBER() OVER (PARTITION BY lic.library_item_id ORDER BY lic.id) as copy_number,
+        COUNT(*) OVER (PARTITION BY lic.library_item_id) as total_copies
+      FROM LIBRARY_ITEM_COPIES lic
+      JOIN LIBRARY_ITEMS ci ON lic.library_item_id = ci.id
+      LEFT JOIN BRANCHES b ON lic.current_branch_id = b.id
+      LEFT JOIN BRANCHES bb ON lic.owning_branch_id = bb.id
+      ${conditions}
+      ORDER BY ci.title, lic.id
+    `;
+
+    const item_copies = await db.execute_query(query, params);
+
+    // Add copy labels using pre-calculated numbers from SQL
+    const copies_with_labels = item_copies.map((copy) => ({
+      ...copy,
+      copy_label: `Copy ${copy.copy_number} of ${copy.total_copies}`,
+    }));
+
+    res.json({
+      success: true,
+      count: copies_with_labels.length,
+      data: copies_with_labels,
+    });
+  } catch (error) {
+    res.status(500).json({
+      error: 'Failed to fetch available item copies',
       message: error.message,
     });
   }

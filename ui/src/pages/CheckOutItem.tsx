@@ -23,7 +23,7 @@ import { useCopies } from '../hooks/useCopies';
 import { usePatronById } from '../hooks/usePatrons';
 import { useSnackbar } from '../hooks/useSnackbar';
 // Custom Hooks
-import { useCheckoutBook } from '../hooks/useTransactions';
+import { useCheckoutItem } from '../hooks/useTransactions';
 
 // TODO: Enable when implementing reservation filtering
 // import { useReservations } from '../hooks/useReservations';
@@ -65,7 +65,7 @@ const COPIES_GRID_COLUMNS: GridColDef[] = [
     field: 'copy_label',
     headerName: 'Label',
     width: 120,
-    renderCell: (params) => <Chip label={params.value} size="small" />,
+    renderCell: (params) => <Chip label={params.value} size='small' />,
   },
   { field: 'title', headerName: 'Title', width: 150, flex: 1 },
   {
@@ -73,7 +73,7 @@ const COPIES_GRID_COLUMNS: GridColDef[] = [
     headerName: 'Status',
     width: 120,
     renderCell: (params) => (
-      <ItemCopyStatusChip size="small" status={params.value} />
+      <ItemCopyStatusChip size='small' status={params.value} />
     ),
   },
   {
@@ -87,7 +87,7 @@ const COPIES_GRID_COLUMNS: GridColDef[] = [
     headerName: 'Condition',
     width: 120,
     renderCell: (params) => (
-      <ItemCopyConditionChip size="small" condition={params.value} />
+      <ItemCopyConditionChip size='small' condition={params.value} />
     ),
   },
   // { field: 'current_branch_name', headerName: 'Location', width: 150 },
@@ -148,7 +148,7 @@ const LibraryItemCopiesList: FC<{
 
   return (
     <Stack sx={{ height: 1, overflow: 'hidden' }}>
-      <Typography variant="h6" gutterBottom>
+      <Typography variant='h6' gutterBottom>
         Select a Copy
       </Typography>
 
@@ -214,7 +214,7 @@ export const CheckOutItem: FC = () => {
     isError,
     isPending: loading,
     reset,
-  } = useCheckoutBook();
+  } = useCheckoutItem();
 
   const { data: selected_patron } = usePatronById(form_data.patron_id || 0);
 
@@ -338,8 +338,8 @@ export const CheckOutItem: FC = () => {
 
   return (
     <LocalizationProvider dateAdapter={AdapterDateFns}>
-      <PageContainer width="xl">
-        <PageTitle title="Check Out Item" Icon_Component={LibraryAdd} />
+      <PageContainer width='xl'>
+        <PageTitle title='Check Out Item' Icon_Component={LibraryAdd} />
 
         <Stepper activeStep={active_step}>
           {STEPS.map((label) => (
@@ -401,7 +401,7 @@ export const CheckOutItem: FC = () => {
                 disabled={active_step === 0}
                 onClick={handle_back}
                 sx={{ mr: 1 }}
-                variant="outlined"
+                variant='outlined'
               >
                 Back
               </Button>

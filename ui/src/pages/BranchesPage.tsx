@@ -14,8 +14,8 @@ import type { Branch } from '../types';
 export function BranchesPage() {
   const { data: branches, isLoading: loading } = useBranches();
   return (
-    <PageContainer>
-      <PageTitle title="Branches" Icon_Component={LocationCity} />
+    <PageContainer scroll={true}>
+      <PageTitle title='Branches' Icon_Component={LocationCity} />
       <Grid container spacing={2}>
         {branches &&
           !loading &&
@@ -47,17 +47,17 @@ function BranchCard({ branch }: { branch: Branch }) {
     >
       <CardActionArea href={`/branch/${branch.id}`}>
         <CardMedia
-          component="img"
-          height="140"
+          component='img'
+          height='140'
           image={branch?.cover_image}
-          loading="lazy"
+          loading='lazy'
           alt={`Cover image of ${branch.branch_name}`}
         />
         <CardContent>
-          <Typography gutterBottom variant="h5" component="div">
+          <Typography gutterBottom variant='h5' component='div'>
             {branch.branch_name}
           </Typography>
-          <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+          <Typography variant='body2' sx={{ color: 'text.secondary' }}>
             {branch.address}
             <br />
             Phone: {branch.phone}

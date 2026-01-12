@@ -140,6 +140,30 @@ export type Create_Reservation_Data = {
   };
 };
 
+export interface Never_Checked_Out {
+  item_id: number;
+  title: string;
+  item_type: Library_Item_Type;
+  copy_id: number;
+  date_acquired: string;
+  days_in_collection: number;
+  branch_name: string;
+}
+
+export interface Overdue_Items {
+  copy_id: number;
+  title: string;
+  item_type: Library_Item_Type;
+  due_date: string;
+  days_overdue: number;
+  fine_amount: number;
+  branch_name: string;
+  branch_id: number;
+  first_name: string;
+  last_name: string;
+  patron_id: number;
+}
+
 export interface Fine {
   id: number;
   transaction_id: number;

@@ -14,6 +14,8 @@ import type {
   Library_Copy_Status,
   Library_Item,
   Loan_Duration,
+  Never_Checked_Out,
+  Overdue_Items,
   Patron,
   Reservation,
   ReshelveAllResult,
@@ -455,6 +457,21 @@ export const data_service = {
     return await api_request<Item_Copy_Result[]>(url);
   },
 
+  async get_available_copies(branch_id?: number): Promise<Item_Copy_Result[]> {
+    let url = '/item-copies/available';
+    if (branch_id) {
+      url += `?branch_id=${branch_id}`;
+    }
+    try {
+      return await api_request<Item_Copy_Result[]>(url);
+    } catch (error: unknown) {
+      if (error instanceof Error && error.message.includes('404')) {
+        return [];
+      }
+      throw error;
+    }
+  },
+
   async get_all_item_copies(): Promise<Item_Copy_Result[]> {
     return await api_request<Item_Copy_Result[]>('/item-copies');
   },
@@ -735,7 +752,7 @@ export const data_service = {
       overdue_count: number;
       total_fines: number;
     }>;
-    overdue_items: Array<any>;
+    overdue_items: Array<Overdue_Items>;
     trend: Array<{ week_label: string; overdue_count: number }>;
   }> {
     const params = new URLSearchParams();
@@ -752,7 +769,7 @@ export const data_service = {
       total_never_checked: number;
       oldest_item_days: number;
     };
-    never_checked_out: Array<any>;
+    never_checked_out: Array<Never_Checked_Out>;
     checkout_rate_by_type: Array<{
       item_type: string;
       total_copies: number;

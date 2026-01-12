@@ -1,30 +1,27 @@
-import { List, ListItem, Skeleton } from '@mui/material';
+import { ListItem, Skeleton } from '@mui/material';
 import { blueberryTwilightPalette } from '@mui/x-charts/colorPalettes';
-import { type FC } from 'react';
+import { useState, type FC } from 'react';
 import { useAllPatrons } from '../../hooks/usePatrons';
 import { ListViewCell } from '../common/ListViewCell';
+import Small_List from '../common/Small_List';
 
 const colors = blueberryTwilightPalette('dark'); // 6 colors available
 
 const PatronsList: FC = () => {
   const { data: patrons = [], isLoading: loading } = useAllPatrons();
+  const [desc_sort, set_desc_sort] = useState(false);
 
   if (loading) {
-    return <Skeleton variant="rectangular" height={'40vh'} />;
+    return <Skeleton variant='rectangular' height={'40vh'} />;
   }
 
   return (
-    <List
-      sx={{
-        border: '1px solid',
-        borderColor: 'divider',
-        borderRadius: 1,
-        py: 0,
-        maxHeight: '75vh',
-        overflow: 'auto',
-      }}
+    <Small_List
+      total={patrons.length}
+      desc_sort={desc_sort}
+      set_desc_sort={set_desc_sort}
     >
-      {patrons.map((patron, index) => (
+      {(desc_sort ? [...patrons].reverse() : patrons).map((patron, index) => (
         <ListItem
           key={patron.id}
           sx={(theme) => ({
@@ -43,7 +40,7 @@ const PatronsList: FC = () => {
           />
         </ListItem>
       ))}
-    </List>
+    </Small_List>
   );
 };
 export default PatronsList;

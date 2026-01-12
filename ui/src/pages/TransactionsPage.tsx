@@ -1,14 +1,10 @@
-import { ExpandMore, ReceiptLong } from '@mui/icons-material';
+import { ReceiptLong } from '@mui/icons-material';
 import {
-  AppBar,
-  IconButton,
   List,
   ListItem,
   ListItemText,
   Skeleton,
   Stack,
-  Toolbar,
-  Typography,
   useMediaQuery,
   useTheme,
 } from '@mui/material';
@@ -22,9 +18,9 @@ export const TransactionsPage = () => {
   const is_mobile = useMediaQuery(is_mobile_query);
 
   return (
-    <PageContainer width="xl" scroll={true}>
+    <PageContainer width='xl' scroll={true}>
       <PageTitle
-        title="Library Item Transactions"
+        title='Library Item Transactions'
         Icon_Component={ReceiptLong}
       />
       <Activity mode={is_mobile ? 'hidden' : 'visible'}>
@@ -41,6 +37,7 @@ export const TransactionsPage = () => {
 
 import { TransactionTypeChip } from '../components/transactions/TransactionTypeChip';
 import { useAllCopyTransactions } from '../hooks/useCopies';
+import Small_List from '../components/common/Small_List';
 
 function Transactions_List() {
   const { data, isLoading: loading } = useAllCopyTransactions();
@@ -54,7 +51,7 @@ function Transactions_List() {
     return (
       <List>
         {[1, 2, 3, 4, 5].map((s) => (
-          <Skeleton key={s} variant="rectangular" height={80} sx={{ mb: 2 }} />
+          <Skeleton key={s} variant='rectangular' height={80} sx={{ mb: 2 }} />
         ))}
       </List>
     );
@@ -82,7 +79,7 @@ function Transactions_List() {
         }}
       >
         <Stack
-          direction="row"
+          direction='row'
           spacing={2}
           justifyContent={'space-between'}
           sx={{ mt: 1, width: '100%' }}
@@ -95,17 +92,17 @@ function Transactions_List() {
           </ListItemText>
         </Stack>
         <Stack
-          direction="row"
+          direction='row'
           spacing={2}
           justifyContent={'space-between'}
           sx={{ mt: 1, width: '100%' }}
         >
-          <ListItemText secondary="Patron ID">{t.patron_id}</ListItemText>
-          <ListItemText sx={{ textAlign: 'right' }} secondary="Item ID">
+          <ListItemText secondary='Patron ID'>{t.patron_id}</ListItemText>
+          <ListItemText sx={{ textAlign: 'right' }} secondary='Item ID'>
             {t.item_copy_id}
           </ListItemText>
         </Stack>
-        {t.notes && <ListItemText secondary="Notes">{t.notes}</ListItemText>}
+        {t.notes && <ListItemText secondary='Notes'>{t.notes}</ListItemText>}
       </ListItem>
     );
   });
@@ -113,30 +110,12 @@ function Transactions_List() {
   if (desc_sort) list_items.reverse();
 
   return (
-    <>
-      <AppBar position="relative" sx={{ borderRadius: '8px 8px 0 0 ' }}>
-        <Toolbar>
-          <Typography
-            variant="body1"
-            component="div"
-            fontWeight={'bold'}
-            sx={{ flexGrow: 1 }}
-          >
-            Total: {data.length}
-          </Typography>
-          <IconButton onClick={() => set_desc_sort(!desc_sort)}>
-            <ExpandMore
-              sx={{
-                transform: desc_sort ? 'rotate(-180deg)' : 'rotate(0deg)',
-                transition: 'transform 0.25s ease-out',
-              }}
-            />
-          </IconButton>
-        </Toolbar>
-      </AppBar>
-      <List sx={{ overflow: 'auto', maxHeight: '100%', pt: 0 }}>
-        {list_items}
-      </List>
-    </>
+    <Small_List
+      total={data.length}
+      desc_sort={desc_sort}
+      set_desc_sort={set_desc_sort}
+    >
+      {list_items}
+    </Small_List>
   );
 }

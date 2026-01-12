@@ -74,6 +74,11 @@ export const Sidebar = ({
       path: '/check-out',
       icon: <Output sx={{ transform: 'rotate(180deg)' }} />,
     },
+    {
+      text: 'Check Out New',
+      path: '/check-out-new',
+      icon: <Output sx={{ transform: 'rotate(180deg)' }} />,
+    },
     { text: 'Reserve', path: '/reserve', icon: <BookmarkAdd /> },
     { text: 'Renew', path: '/renew', icon: <Autorenew /> },
     { text: 'Reshelve', path: '/available', icon: <CheckCircle /> },
@@ -220,12 +225,12 @@ export const Sidebar = ({
 
   return (
     <Box
-      component="nav"
+      component='nav'
       sx={{ width: { md: drawerWidth }, flexShrink: { md: 0 } }}
     >
       {/* Mobile drawer */}
       <Drawer
-        variant="temporary"
+        variant='temporary'
         open={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
         ModalProps={{
@@ -244,7 +249,7 @@ export const Sidebar = ({
       </Drawer>
       {/* Desktop permanent drawer */}
       <Drawer
-        variant="permanent"
+        variant='permanent'
         sx={{
           display: { xs: 'none', md: 'block' },
           '& .MuiDrawer-paper': {

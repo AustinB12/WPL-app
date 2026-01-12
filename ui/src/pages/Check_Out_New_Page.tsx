@@ -12,11 +12,11 @@ import { Activity, type SyntheticEvent, useCallback, useState } from 'react';
 import { PageContainer, PageTitle } from '../components/common/PageBuilders';
 import { ItemReservationCard } from '../components/reservations/ItemReservationCard';
 import { Patron_Reservation_Card } from '../components/reservations/PatronReservationCard';
-import { useCheckedOutCopies } from '../hooks/useCopies';
+import { useAvailableCopies } from '../hooks/useCopies';
 import { useAllPatrons } from '../hooks/usePatrons';
-import { useCreateReservation } from '../hooks/useReservations';
 import { useSnackbar } from '../hooks/useSnackbar';
 import type { Item_Copy_Result, Patron } from '../types';
+import { useCheckoutItem } from '../hooks/useTransactions';
 
 const AUTOCOMPLETE_SX: SxProps<Theme> = {
   flex: 1,
@@ -36,23 +36,23 @@ const FAB_SX: SxProps<Theme> = {
   right: 16,
 };
 
-export const ReserveItemPage = () => {
+export const Check_Out_New_Page = () => {
   return (
     <PageContainer
       width='xl'
       sx={{ maxHeight: 'calc(100dvh - 64px)' }}
       scroll={true}
     >
-      <PageTitle title='Reserve Item' Icon_Component={EventNote} />
-      <Reserve_Item_Content />
+      <PageTitle title='Check Out Item' Icon_Component={EventNote} />
+      <Check_Out_New_Page_Content />
     </PageContainer>
   );
 };
 
-const Reserve_Item_Content = () => {
+const Check_Out_New_Page_Content = () => {
   const { data: patrons, isLoading: patrons_loading } = useAllPatrons();
-  const { data: checked_out_copies, isLoading: copies_loading } =
-    useCheckedOutCopies();
+  const { data: available_copies, isLoading: copies_loading } =
+    useAvailableCopies();
   const { show_snackbar } = useSnackbar();
 
   const [selected_patron, set_selected_patron] = useState<Patron | null>(null);
@@ -64,7 +64,7 @@ const Reserve_Item_Content = () => {
   const [item_input_value, set_item_input_value] = useState('');
 
   const handle_success = useCallback(() => {
-    const message = 'Reservation created successfully';
+    const message = 'Item checked out successfully';
     show_snackbar({ message, severity: 'success' });
 
     // Reset form
@@ -77,15 +77,15 @@ const Reserve_Item_Content = () => {
   // Mutation error handler
   const handle_error = useCallback(
     (error: Error) => {
-      const error_message = error.message || 'Failed to create reservation';
+      const error_message = error.message || 'Failed to check out item';
       show_snackbar({ message: error_message, severity: 'error' });
     },
     [show_snackbar]
   );
 
   // Reservation mutation
-  const { mutate: create_reservation, isPending: creating_reservation } =
-    useCreateReservation();
+  const { mutate: check_out_item, isPending: check_out_loading } =
+    useCheckoutItem();
 
   // Patron autocomplete handlers
   const handle_patron_change = useCallback(
@@ -118,17 +118,20 @@ const Reserve_Item_Content = () => {
   );
 
   // Form submission handler
-  const handle_reserve_click = useCallback(() => {
+  const handle_check_out_click = useCallback(() => {
     if (selected_patron && selected_item) {
-      create_reservation(
+      check_out_item(
         {
           patron_id: selected_patron.id,
-          item_copy_id: selected_item.id,
+          copy_id: selected_item.id,
         },
-        { onSuccess: handle_success, onError: handle_error }
+        {
+          onSuccess: handle_success,
+          onError: handle_error,
+        }
       );
     }
-  }, [selected_patron, selected_item, create_reservation]);
+  }, [selected_patron, selected_item, check_out_item]);
 
   // Autocomplete formatters
   const format_patron_label = useCallback(
@@ -152,8 +155,7 @@ const Reserve_Item_Content = () => {
     []
   );
 
-  const is_form_valid =
-    selected_patron && selected_item && !creating_reservation;
+  const is_form_valid = selected_patron && selected_item && !check_out_loading;
 
   return (
     <Stack gap={2} sx={{ flex: 1, pt: 1 }}>
@@ -167,7 +169,7 @@ const Reserve_Item_Content = () => {
         {/* Patron Selection Column */}
         <Stack gap={2} sx={COLUMN_STACK_SX} alignItems='flex-end'>
           <Autocomplete
-            disabled={creating_reservation}
+            disabled={check_out_loading}
             value={selected_patron}
             onChange={handle_patron_change}
             inputValue={patron_input_value}
@@ -185,14 +187,14 @@ const Reserve_Item_Content = () => {
         {/* Item Selection Column */}
         <Stack gap={2} sx={COLUMN_STACK_SX} alignItems='flex-start'>
           <Autocomplete
-            disabled={creating_reservation}
+            disabled={check_out_loading}
             value={selected_item}
             onChange={handle_item_change}
             inputValue={item_input_value}
             onInputChange={handle_item_input_change}
             sx={AUTOCOMPLETE_SX}
             loading={copies_loading}
-            options={checked_out_copies || []}
+            options={available_copies || []}
             renderInput={(params) => <TextField {...params} label='Item' />}
             getOptionKey={get_option_id}
             getOptionLabel={format_item_label}
@@ -201,19 +203,19 @@ const Reserve_Item_Content = () => {
         </Stack>
       </Stack>
 
-      <Activity mode={creating_reservation ? 'visible' : 'hidden'}>
+      <Activity mode={check_out_loading ? 'visible' : 'hidden'}>
         <LinearProgress sx={{ width: '80%', alignSelf: 'center' }} />
       </Activity>
 
       <Fab
         disabled={!is_form_valid}
-        onClick={handle_reserve_click}
+        onClick={handle_check_out_click}
         variant='extended'
         color='primary'
         sx={FAB_SX}
       >
         <EventNote sx={{ mr: 1 }} />
-        Reserve
+        Check Out
       </Fab>
     </Stack>
   );

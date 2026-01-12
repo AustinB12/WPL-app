@@ -23,7 +23,7 @@ export const useActiveTransactions = () => {
   });
 };
 
-export const useCheckoutBook = () => {
+export const useCheckoutItem = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
