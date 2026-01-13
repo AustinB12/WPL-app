@@ -1,4 +1,5 @@
 import {
+  AutoAwesome,
   Autorenew,
   Book,
   BookmarkAdd,
@@ -65,6 +66,7 @@ export const Sidebar = ({
     },
     { text: 'Reservations', path: '/reservations', icon: <EventNote /> },
     { text: 'Branches', path: '/branches', icon: <LocationCity /> },
+    { text: 'Dev', path: '/dev', icon: <AutoAwesome /> },
   ];
 
   const action_items = [
@@ -74,14 +76,9 @@ export const Sidebar = ({
       path: '/check-out',
       icon: <Output sx={{ transform: 'rotate(180deg)' }} />,
     },
-    {
-      text: 'Check Out New',
-      path: '/check-out-new',
-      icon: <Output sx={{ transform: 'rotate(180deg)' }} />,
-    },
     { text: 'Reserve', path: '/reserve', icon: <BookmarkAdd /> },
     { text: 'Renew', path: '/renew', icon: <Autorenew /> },
-    { text: 'Reshelve', path: '/available', icon: <CheckCircle /> },
+    { text: 'Reshelve', path: '/reshelve', icon: <CheckCircle /> },
   ];
 
   const bottom_items = [
@@ -225,12 +222,12 @@ export const Sidebar = ({
 
   return (
     <Box
-      component="nav"
+      component='nav'
       sx={{ width: { md: drawerWidth }, flexShrink: { md: 0 } }}
     >
       {/* Mobile drawer */}
       <Drawer
-        variant="temporary"
+        variant='temporary'
         open={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
         ModalProps={{
@@ -249,7 +246,7 @@ export const Sidebar = ({
       </Drawer>
       {/* Desktop permanent drawer */}
       <Drawer
-        variant="permanent"
+        variant='permanent'
         sx={{
           display: { xs: 'none', md: 'block' },
           '& .MuiDrawer-paper': {

@@ -136,7 +136,7 @@ const ItemTypeChip = ({
         ...sx,
       }}
       label={label}
-      icon={icon}
+      icon={size !== 'small' ? icon : undefined}
     />
   );
 };

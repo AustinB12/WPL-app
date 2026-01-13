@@ -1,7 +1,7 @@
 import { blueberryTwilightPalette } from '@mui/x-charts/colorPalettes';
 import { Library_Item_Type } from '../types/item_types';
 
-type ChipColor =
+type Chip_Color =
   | 'default'
   | 'primary'
   | 'secondary'
@@ -23,32 +23,36 @@ const ITEM_TYPE_COLOR_MAP: Record<Library_Item_Type, string> = {
   [Library_Item_Type.Vinyl]: CHIP_COLORS[1],
 };
 
-const STATUS_COLOR_MAP: Record<string, ChipColor> = {
+const STATUS_COLOR_MAP: Record<string, Chip_Color> = {
   Available: 'success',
   'Checked Out': 'warning',
-  Maintenance: 'warning',
+  'Renewed Once': 'info',
+  'Renewed Twice': 'info',
   Reserved: 'info',
   Processing: 'secondary',
+  Unshelved: 'warning',
+  'Ready For Pickup': 'success',
   Damaged: 'error',
   Lost: 'error',
 };
 
-const CONDITION_COLOR_MAP: Record<string, ChipColor> = {
+const CONDITION_COLOR_MAP: Record<string, Chip_Color> = {
   New: 'success',
   Good: 'success',
   Excellent: 'success',
   Fair: 'primary',
   Poor: 'warning',
+  Digital: 'info',
 };
 
 export const get_color_for_item_type = (item_type: string): string => {
   return ITEM_TYPE_COLOR_MAP[item_type as Library_Item_Type] ?? 'default';
 };
 
-export const get_status_color = (status: string): ChipColor => {
+export const get_status_color = (status: string): Chip_Color => {
   return STATUS_COLOR_MAP[status] ?? 'default';
 };
 
-export const get_condition_color = (condition?: string): ChipColor => {
+export const get_condition_color = (condition?: string): Chip_Color => {
   return condition ? CONDITION_COLOR_MAP[condition] ?? 'default' : 'default';
 };

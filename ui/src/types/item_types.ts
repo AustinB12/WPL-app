@@ -99,7 +99,7 @@ export interface Library_Item {
   updated_at: string;
   author: string;
   publisher: string;
-  genres: Genre[];
+  genre: Genre[];
   number_of_pages: string;
   director: string;
   studio: string;

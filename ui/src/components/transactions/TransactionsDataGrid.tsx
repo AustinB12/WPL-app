@@ -69,7 +69,12 @@ export const TransactionsDataGrid = ({
   label?: string;
   hidden_columns?: string[];
 }) => {
-  const { data, isLoading: loading, refetch } = useAllCopyTransactions();
+  const {
+    data,
+    isLoading: loading,
+    refetch,
+    isRefetching: refetching,
+  } = useAllCopyTransactions();
 
   return (
     <BaseDataGrid
@@ -77,7 +82,7 @@ export const TransactionsDataGrid = ({
       refetch={refetch}
       columns={transaction_cols}
       label={label}
-      loading={loading}
+      loading={loading || refetching}
       hidden_columns={[
         ...hidden_columns,
         'id',

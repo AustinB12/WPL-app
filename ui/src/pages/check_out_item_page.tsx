@@ -37,7 +37,7 @@ const FAB_SX: SxProps<Theme> = {
   right: 16,
 };
 
-export const Check_Out_New_Page = () => {
+export const Check_Out_Item_Page = () => {
   return (
     <PageContainer
       width='xl'
@@ -45,12 +45,12 @@ export const Check_Out_New_Page = () => {
       scroll={true}
     >
       <PageTitle title='Check Out Item' Icon_Component={EventNote} />
-      <Check_Out_New_Page_Content />
+      <Check_Out_Item_Page_Content />
     </PageContainer>
   );
 };
 
-const Check_Out_New_Page_Content = () => {
+const Check_Out_Item_Page_Content = () => {
   const { data: patrons, isLoading: patrons_loading } = useAllPatrons();
   const { data: available_copies, isLoading: copies_loading } =
     useAvailableCopies();

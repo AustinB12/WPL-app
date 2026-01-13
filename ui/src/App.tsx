@@ -4,18 +4,18 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { lazy, Suspense } from 'react';
 import { Route, Routes } from 'react-router-dom';
-import { GlobalSnackbar } from './components/common/GlobalSnackbar';
+import { Global_Snackbar } from './components/common/GlobalSnackbar';
 import { Layout } from './components/common/Layout';
 import { SnackbarProvider } from './contexts/Snackbar_Context';
 import { Full_Page_Loading } from './pages/Full_Page_Loading/Full_Page_Loading';
 
-const HomePage = lazy(() =>
+const Home_Page = lazy(() =>
   import('./pages/home_page').then((module) => ({
     default: module.HomePage,
   }))
 );
 
-const LibraryItemsPage = lazy(() =>
+const Library_Items_Page = lazy(() =>
   import('./pages/library_items_page').then((module) => ({
     default: module.LibraryItemsPage,
   }))
@@ -39,101 +39,97 @@ const Patrons = lazy(() =>
   }))
 );
 
-const PatronPage = lazy(() =>
+const Patron_Page = lazy(() =>
   import('./pages/patron_page').then((module) => ({
     default: module.PatronPage,
   }))
 );
 
-const BranchPage = lazy(() =>
+const Branch_Page = lazy(() =>
   import('./pages/branch_page').then((module) => ({
     default: module.BranchPage,
   }))
 );
 
-const SearchPage = lazy(() =>
+const Search_Page = lazy(() =>
   import('./pages/search_page').then((module) => ({
     default: module.SearchPage,
   }))
 );
 
-const RenewItem = lazy(() =>
+const Renew_Item = lazy(() =>
   import('./pages/renew_item').then((module) => ({
     default: module.RenewItem,
   }))
 );
 
-const CheckInNew = lazy(() =>
+const Check_In_Item = lazy(() =>
   import('./pages/check_in_item').then((module) => ({
-    default: module.CheckInNew,
+    default: module.Check_In_Item,
   }))
 );
 
-const CheckOutItem = lazy(() =>
-  import('./pages/check_out_item').then((module) => ({
-    default: module.CheckOutItem,
+const Check_Out_Item_Page = lazy(() =>
+  import('./pages/check_out_item_page').then((module) => ({
+    default: module.Check_Out_Item_Page,
   }))
 );
 
-const ReserveItemPage = lazy(() =>
+const Reserve_Item_Page = lazy(() =>
   import('./pages/reserve_item_page').then((module) => ({
     default: module.ReserveItemPage,
   }))
 );
 
-const BranchesPage = lazy(() =>
+const Branches_Page = lazy(() =>
   import('./pages/branches_page').then((module) => ({
     default: module.BranchesPage,
   }))
 );
 
-const SettingsPage = lazy(() =>
+const Settings_Page = lazy(() =>
   import('./pages/settings_page').then((module) => ({
     default: module.SettingsPage,
   }))
 );
-const RenewalsPage = lazy(() =>
+const Renewals_Page = lazy(() =>
   import('./pages/renewals_page').then((module) => ({
     default: module.RenewalsPage,
   }))
 );
-const MarkAvailablePage = lazy(() =>
-  import('./pages/mark_available_page').then((module) => ({
-    default: module.MarkAvailablePage,
-  }))
-);
-const ReservationsPage = lazy(() =>
+const Reservations_Page = lazy(() =>
   import('./pages/reservations_page').then((module) => ({
     default: module.ReservationsPage,
   }))
 );
-const ReshelveItemsPageNew = lazy(() =>
-  import('./pages/reshelve_items_page').then((module) => ({
-    default: module.ReshelveItemsPageNew,
-  }))
-);
-const LibraryItemCopiesPage = lazy(() =>
+const Library_Item_Copies_Page = lazy(() =>
   import('./pages/library_item_copies_page').then((module) => ({
     default: module.LibraryItemCopiesPage,
   }))
 );
-const TransactionsPage = lazy(() =>
+const Transactions_Page = lazy(() =>
   import('./pages/transactions_page').then((module) => ({
     default: module.TransactionsPage,
   }))
 );
-const DashboardPage = lazy(() =>
+const Dashboard_Page = lazy(() =>
   import('./pages/dashboard_page').then((module) => ({
     default: module.DashboardPage,
   }))
 );
-const CheckOutNewPage = lazy(() =>
-  import('./pages/Check_Out_New_Page').then((module) => ({
-    default: module.Check_Out_New_Page,
+const Reshelve_Items_Page = lazy(() =>
+  import('./pages/reshelve_items_page').then((module) => ({
+    default: module.Reshelve_Items_Page,
   }))
 );
 
-const queryClient = new QueryClient({
+const Explore_Page = lazy(() =>
+  import('./pages/explore_page').then((module) => ({
+    default: module.Explore_Page,
+  }))
+);
+
+const query_client = new QueryClient({
   defaultOptions: {
     queries: {
       staleTime: 60 * 1000, // 1 minute
@@ -148,7 +144,7 @@ function App() {
   const t = useTheme();
   return (
     <Suspense fallback={<Full_Page_Loading />}>
-      <QueryClientProvider client={queryClient}>
+      <QueryClientProvider client={query_client}>
         <SnackbarProvider>
           <LocalizationProvider dateAdapter={AdapterDayjs}>
             <GlobalStyles
@@ -173,8 +169,8 @@ function App() {
             />
             <Routes>
               <Route path='/' element={<Layout />}>
-                <Route index element={<HomePage />} />
-                <Route path='library-items' element={<LibraryItemsPage />} />
+                <Route index element={<Home_Page />} />
+                <Route path='library-items' element={<Library_Items_Page />} />
                 <Route path='library-item'>
                   <Route
                     path=':library_item_id'
@@ -184,7 +180,7 @@ function App() {
                 </Route>
                 <Route
                   path='library-item-copies'
-                  element={<LibraryItemCopiesPage />}
+                  element={<Library_Item_Copies_Page />}
                 />
                 <Route path='library-item-copy'>
                   <Route
@@ -194,28 +190,27 @@ function App() {
                 </Route>
                 <Route path='patrons' element={<Patrons />} />
                 <Route path='patron'>
-                  <Route path=':patron_id' element={<PatronPage />} />
+                  <Route path=':patron_id' element={<Patron_Page />} />
                 </Route>
-                <Route path='transactions' element={<TransactionsPage />} />
-                <Route path='branches' element={<BranchesPage />} />
+                <Route path='transactions' element={<Transactions_Page />} />
+                <Route path='branches' element={<Branches_Page />} />
                 <Route path='branch'>
-                  <Route path=':branch_id' element={<BranchPage />} />
+                  <Route path=':branch_id' element={<Branch_Page />} />
                 </Route>
-                <Route path='reservations' element={<ReservationsPage />} />
-                <Route path='dashboard' element={<DashboardPage />} />
-                <Route path='search' element={<SearchPage />} />
-                <Route path='renew' element={<RenewItem />} />
-                <Route path='check-in' element={<CheckInNew />} />
-                <Route path='check-out' element={<CheckOutItem />} />
-                <Route path='check-out-new' element={<CheckOutNewPage />} />
-                <Route path='reshelve-new' element={<ReshelveItemsPageNew />} />
-                <Route path='renewals' element={<RenewalsPage />} />
-                <Route path='settings' element={<SettingsPage />} />
-                <Route path='available' element={<MarkAvailablePage />} />
-                <Route path='reserve' element={<ReserveItemPage />} />
+                <Route path='reservations' element={<Reservations_Page />} />
+                <Route path='dashboard' element={<Dashboard_Page />} />
+                <Route path='search' element={<Search_Page />} />
+                <Route path='renew' element={<Renew_Item />} />
+                <Route path='check-in' element={<Check_In_Item />} />
+                <Route path='check-out' element={<Check_Out_Item_Page />} />
+                <Route path='reshelve' element={<Reshelve_Items_Page />} />
+                <Route path='renewals' element={<Renewals_Page />} />
+                <Route path='settings' element={<Settings_Page />} />
+                <Route path='reserve' element={<Reserve_Item_Page />} />
+                <Route path='dev' element={<Explore_Page />} />
               </Route>
             </Routes>
-            <GlobalSnackbar />
+            <Global_Snackbar />
           </LocalizationProvider>
         </SnackbarProvider>
       </QueryClientProvider>

@@ -44,7 +44,7 @@ interface Recent_Check_In {
   fine_amount?: number;
 }
 
-export const CheckInNew: FC = () => {
+export const Check_In_Item: FC = () => {
   const [barcode_input, set_barcode_input] = useState('');
   const [copy_id_to_fetch, set_copy_id_to_fetch] = useState<number | null>(
     null

@@ -40,7 +40,7 @@ export const Library_Item_Copy_Page = () => {
 
   const page_loading = !library_item_copy_id || item_loading;
   return (
-    <PageContainer width="xl" sx={{ overflowY: 'auto' }}>
+    <PageContainer width='xl' sx={{ overflowY: 'auto' }}>
       <Stack spacing={2} onClick={() => console.log(item_copy, library_item)}>
         <Card sx={{ borderRadius: 3 }}>
           <CardHeader
@@ -50,7 +50,7 @@ export const Library_Item_Copy_Page = () => {
                   <MoreVert />
                 </IconButton>
                 <Menu
-                  id="basic-menu"
+                  id='basic-menu'
                   anchorEl={anchorEl}
                   open={open}
                   onClose={handleClose}
@@ -86,12 +86,12 @@ export const Library_Item_Copy_Page = () => {
             }
           />
 
-          <Typography sx={{ px: 2 }} variant="subtitle1" color="text.secondary">
+          <Typography sx={{ px: 2 }} variant='subtitle1' color='text.secondary'>
             {item_copy?.description}
           </Typography>
-          <Activity mode={library_item?.genres ? 'visible' : 'hidden'}>
+          <Activity mode={library_item?.genre ? 'visible' : 'hidden'}>
             <Stack sx={{ px: 2, py: 1 }} direction={'row'} gap={1}>
-              {library_item?.genres.map((b) => (
+              {library_item?.genre.map((b) => (
                 <GenreChip genre={b} />
               ))}
             </Stack>

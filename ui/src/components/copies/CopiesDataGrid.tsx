@@ -50,9 +50,12 @@ export const CopiesDataGrid = ({
 }) => {
   const { branches } = useBranchesContext();
   const { selected_branch } = useSelectedBranch();
-  const { data: copies, isLoading: loading } = useCopies(
-    selected_branch?.id || 1
-  );
+  const {
+    data: copies,
+    isLoading: loading,
+    refetch,
+    isRefetching: refetching,
+  } = useCopies(selected_branch?.id || 1);
   const nav = useNavigate();
   const { show_snackbar } = useSnackbar();
 
@@ -333,7 +336,7 @@ export const CopiesDataGrid = ({
       <BaseDataGrid
         rows={filtered_copies}
         columns={columns}
-        loading={loading}
+        loading={loading || refetching}
         hidden_columns={hidden_columns}
         initialState={{
           filter: {
@@ -366,6 +369,7 @@ export const CopiesDataGrid = ({
         onRowClick={(params: GridRowParams) => {
           nav(`/library-item-copy/${params.row.id}`);
         }}
+        refetch={refetch}
       />
       {/* Delete Copy Modal */}
       <DeleteCopyModal

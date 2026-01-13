@@ -1,6 +1,6 @@
 import { format, isAfter, parseISO } from 'date-fns';
 import dayjs from 'dayjs';
-import type { Library_Item_Type } from '../types/item_types';
+import { Library_Item_Type } from '../types/item_types';
 
 export function format_sql_datetime(date: string | Date): string {
   const date_obj = typeof date === 'string' ? new Date(date) : date;
@@ -9,44 +9,46 @@ export function format_sql_datetime(date: string | Date): string {
 }
 
 export const format_date = (date: string | Date): string => {
-  const dateObj = typeof date === 'string' ? parseISO(date) : date;
-  return format(dateObj, 'MMM dd, yyyy');
+  const date_obj = typeof date === 'string' ? parseISO(date) : date;
+  return format(date_obj, 'MMM dd, yyyy');
 };
 
 export const format_date_time = (date: string | Date): string => {
-  const dateObj = typeof date === 'string' ? parseISO(date) : date;
-  return format(dateObj, 'MMM dd, yyyy HH:mm');
+  const date_obj = typeof date === 'string' ? parseISO(date) : date;
+  return format(date_obj, 'MMM dd, yyyy HH:mm');
 };
 
-export const is_overdue = (due_date: Date): boolean => {
-  return isAfter(new Date(), due_date);
+export const is_overdue = (due_date: Date, now: Date = new Date()): boolean => {
+  return isAfter(now, due_date);
 };
 
-export const calculate_days_overdue = (due_date: Date): number => {
-  if (!is_overdue(due_date)) return 0;
+export const calculate_days_overdue = (
+  due_date: Date,
+  now: Date = new Date()
+): number => {
+  if (!is_overdue(due_date, now)) return 0;
 
-  const now = new Date();
-  const diffTime = Math.abs(now.getTime() - due_date.getTime());
-  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  const diff_time = now.getTime() - due_date.getTime();
+  const diff_days = Math.ceil(diff_time / (1000 * 60 * 60 * 24));
 
-  return diffDays;
+  return diff_days;
 };
 
 export const calculate_fine = (
   due_date: Date,
-  finePerDay: number = 1.0
+  fine_per_day: number = 1.0,
+  now: Date = new Date()
 ): number => {
-  const days_overdue = calculate_days_overdue(due_date);
-  return days_overdue * finePerDay;
+  const days_overdue = calculate_days_overdue(due_date, now);
+  return days_overdue * fine_per_day;
 };
-
-const now = new Date();
 
 export function calculate_due_date(
   item_type: Library_Item_Type,
   pub_year: number
 ): Date {
-  if (item_type === 'VIDEO') {
+  const now = new Date();
+  if (item_type === Library_Item_Type.Video) {
     if (now.getFullYear() === pub_year) {
       return dayjs().add(3, 'day').toDate(); // 3 days for new releases
     }

@@ -42,17 +42,19 @@ interface Page_Title_Props {
   title: string;
   Icon_Component: React.ElementType;
   sx?: SxProps<Theme>;
+  container_sx?: SxProps<Theme>;
   loading?: boolean;
 }
 
 export function PageTitle({
   title,
   Icon_Component,
+  container_sx,
   sx,
   loading,
 }: Page_Title_Props) {
   return (
-    <Stack direction='row' alignItems='center' spacing={2}>
+    <Stack direction='row' alignItems='center' spacing={2} sx={container_sx}>
       <Icon_Component color='primary' fontSize='large' />
 
       <Typography

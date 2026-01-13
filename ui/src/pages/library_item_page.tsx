@@ -38,7 +38,7 @@ const copy_columns: GridColDef[] = [
     headerName: 'Status',
     width: 150,
     renderCell: (params) => (
-      <ItemCopyStatusChip size="small" status={params.value} />
+      <ItemCopyStatusChip size='small' status={params.value} />
     ),
   },
   {
@@ -46,7 +46,7 @@ const copy_columns: GridColDef[] = [
     headerName: 'Condition',
     width: 120,
     renderCell: (params) => (
-      <ItemCopyConditionChip size="small" condition={params.value} />
+      <ItemCopyConditionChip size='small' condition={params.value} />
     ),
   },
   {
@@ -89,7 +89,7 @@ export const Library_Item_Page = () => {
 
   const page_loading = !library_item_id || item_loading;
   return (
-    <PageContainer width="xl" sx={{ overflowY: 'auto' }}>
+    <PageContainer width='xl' sx={{ overflowY: 'auto' }}>
       <Stack spacing={2} onClick={() => console.log(data)}>
         <Card sx={{ borderRadius: 3 }}>
           <CardHeader
@@ -99,7 +99,7 @@ export const Library_Item_Page = () => {
                   <MoreVert />
                 </IconButton>
                 <Menu
-                  id="basic-menu"
+                  id='basic-menu'
                   anchorEl={anchorEl}
                   open={open}
                   onClose={handleClose}
@@ -135,12 +135,12 @@ export const Library_Item_Page = () => {
             }
           />
 
-          <Typography sx={{ px: 2 }} variant="subtitle1" color="text.secondary">
+          <Typography sx={{ px: 2 }} variant='subtitle1' color='text.secondary'>
             {data?.description}
           </Typography>
-          <Activity mode={data?.genres ? 'visible' : 'hidden'}>
+          <Activity mode={data?.genre ? 'visible' : 'hidden'}>
             <Stack sx={{ px: 2, py: 1 }} direction={'row'} gap={1}>
-              {data?.genres.map((b) => (
+              {data?.genre.map((b) => (
                 <GenreChip genre={b} />
               ))}
             </Stack>
@@ -153,12 +153,12 @@ export const Library_Item_Page = () => {
               <LIP_Section>
                 <Stack spacing={2}>
                   <Stack direction={'row'} justifyContent={'space-between'}>
-                    <LIP_Field label="Title" value={data?.title || ''} />
-                    <LIP_Field label="Author" value={data?.author || ''} />
+                    <LIP_Field label='Title' value={data?.title || ''} />
+                    <LIP_Field label='Author' value={data?.author || ''} />
                   </Stack>
                   <Stack direction={'row'} justifyContent={'space-between'}>
                     <LIP_Field
-                      label="Publisher"
+                      label='Publisher'
                       value={
                         data?.publisher ||
                         data?.audiobook_publisher ||
@@ -172,36 +172,36 @@ export const Library_Item_Page = () => {
 											value={data?.book_genre || 'N/A'}
 										/> */}
                     <LIP_Field
-                      label="Number of Pages"
+                      label='Number of Pages'
                       value={data?.number_of_pages?.toString() || 'N/A'}
                     />
                     <LIP_Field
-                      label="Publication Year"
+                      label='Publication Year'
                       value={data?.publication_year?.toString() || 'N/A'}
                     />
                   </Stack>
                   <LIP_Field
-                    label="Description"
+                    label='Description'
                     value={data?.description || 'No description available'}
                   />
                   <Stack direction={'row'} justifyContent={'space-between'}>
                     <LIP_Field
-                      label="Total Copies"
+                      label='Total Copies'
                       value={data?.total_copies || 'N/A'}
                     />
                     <LIP_Field
-                      label="Available Copies"
+                      label='Available Copies'
                       value={data?.available_copies || 'N/A'}
                     />
                     <LIP_Field
-                      label="Checked Out Copies"
+                      label='Checked Out Copies'
                       value={data?.checked_out_copies?.toString() || 'N/A'}
                     />
                   </Stack>
                 </Stack>
               </LIP_Section>
               <LIP_Section sx={{ mt: 2 }}>
-                <Typography variant="h6" gutterBottom>
+                <Typography variant='h6' gutterBottom>
                   Available Copies ({copies?.length || 0})
                 </Typography>
                 <SimpleGrid
@@ -475,10 +475,10 @@ function LIP_Section({ children, sx }: PropsWithChildren<{ sx?: SxProps }>) {
 function LIP_Field({ label, value }: { label: string; value: string }) {
   return (
     <Stack spacing={1} sx={{ minWidth: 150, flex: 1 }}>
-      <Typography variant="subtitle2" color="text.secondary">
+      <Typography variant='subtitle2' color='text.secondary'>
         {label}:
       </Typography>
-      <Typography variant="body1">{value}</Typography>
+      <Typography variant='body1'>{value}</Typography>
     </Stack>
   );
 }

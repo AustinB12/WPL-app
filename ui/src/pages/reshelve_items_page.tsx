@@ -1,21 +1,19 @@
-import { Alert, Fab, Snackbar } from '@mui/material';
-import {
-  type GridColDef,
-  type GridRowId,
-  type GridRowSelectionModel,
-} from '@mui/x-data-grid';
-import { useState } from 'react';
+import { Fab } from '@mui/material';
+import { type GridColDef } from '@mui/x-data-grid';
 import { BaseDataGrid } from '../components/common/BaseDataGrid';
-import { PageContainer } from '../components/common/PageBuilders';
+import { PageContainer, PageTitle } from '../components/common/PageBuilders';
 import { ItemCopyConditionChip } from '../components/copies/ItemCopyConditionChip';
 import { ItemCopyStatusChip } from '../components/copies/ItemCopyStatusChip';
 import ItemTypeChip from '../components/library_items/ItemTypeChip';
 import { useBranchContext } from '../contexts/Branch_Context';
-import {
-  useCopiesUnshelved,
-  useReshelveCopies,
-  useReshelveCopy,
-} from '../hooks/use_copies';
+import { useReshelveItems } from '../hooks/use_reshelve_items';
+import { CheckCircle } from '@mui/icons-material';
+
+// Constants
+const HIDDEN_COLUMNS = ['owning_branch_id'];
+const RESHELVE_BUTTON_BOTTOM_OFFSET = 72;
+const RESHELVE_ALL_BUTTON_BOTTOM_OFFSET = 16;
+const BUTTON_RIGHT_OFFSET = 16;
 
 const columns: GridColDef[] = [
   {
@@ -60,128 +58,69 @@ const columns: GridColDef[] = [
   { field: 'notes', headerName: 'Notes', width: 250, editable: false },
 ];
 
-export const ReshelveItemsPageNew = () => {
+export const Reshelve_Items_Page = () => {
   const { selected_branch } = useBranchContext();
-  const { data = [], isLoading: copies_loading } = useCopiesUnshelved(
-    selected_branch?.id || 1
-  );
+  const {
+    data,
+    selected_row,
+    something_loading,
+    refetch,
+    handle_row_selection_change,
+    handle_reshelve_single,
+    handle_reshelve_all,
+  } = useReshelveItems(selected_branch?.id || 1);
 
-  const [selected_row, set_selected_row] = useState<GridRowSelectionModel>({
-    type: 'include',
-    ids: new Set<GridRowId>([]),
-  });
-
-  const [snackbar, set_snackbar] = useState<{
-    open: boolean;
-    message: string;
-    severity: 'success' | 'error';
-  }>({
-    open: false,
-    message: '',
-    severity: 'success',
-  });
-
-  const { mutate: reshelve_copies, isPending: is_reshelving_copies } =
-    useReshelveCopies({
-      onSuccess: () => {
-        set_snackbar({
-          open: true,
-          message: 'Items successfully reshelved!',
-          severity: 'success',
-        });
-      },
-    });
-
-  const { mutate: reshelve_copy, isPending: is_reshelving_copy } =
-    useReshelveCopy({
-      onSuccess: () => {
-        set_snackbar({
-          open: true,
-          message: 'Item successfully reshelved!',
-          severity: 'success',
-        });
-        // Clear selection after success
-        set_selected_row({
-          type: 'include',
-          ids: new Set<GridRowId>([]),
-        });
-      },
-      onError: (error: Error) => {
-        set_snackbar({
-          open: true,
-          message: `Failed to reshelve item: ${error.message}`,
-          severity: 'error',
-        });
-      },
-    });
-
-  const handle_reshelve_all = () => {
-    const all_ids = data.map((item) => item.id);
-    console.log(
-      '%cReshelving all IDs:',
-      'color: blue; font-size: 4rem;',
-      all_ids
-    );
-    reshelve_copies(all_ids);
-  };
-
-  const something_loading =
-    copies_loading || is_reshelving_copy || is_reshelving_copies;
+  const has_selected_item = selected_row.ids.size > 0;
+  const has_items = data.length > 0;
+  const can_reshelve_single = has_selected_item && !something_loading;
+  const can_reshelve_all = has_items && !something_loading;
+  const grid_label = `Unshelved Items at ${
+    selected_branch?.branch_name || 'Branch'
+  }`;
 
   return (
     <PageContainer>
+      <PageTitle title={'Reshelve Items'} Icon_Component={CheckCircle} />
       <BaseDataGrid
-        rows={data || []}
+        rows={data}
         getRowId={(row) => row.id}
         columns={columns}
-        hidden_columns={['owning_branch_id']}
+        hidden_columns={HIDDEN_COLUMNS}
         loading={something_loading}
-        onRowSelectionModelChange={(newRowSelectionModel) => {
-          set_selected_row(newRowSelectionModel);
-        }}
+        refetch={refetch}
+        onRowSelectionModelChange={handle_row_selection_change}
         rowSelectionModel={selected_row}
-        label={`Unshelved Items at ${selected_branch?.branch_name}`}
+        label={grid_label}
       />
+
       <Fab
-        color="primary"
-        aria-label="Add"
-        disabled={selected_row.ids.size === 0 || something_loading}
-        onClick={() =>
-          reshelve_copy({
-            copy_id: selected_row.ids.values().next().value as number,
-          })
-        }
-        variant="extended"
-        sx={{ position: 'absolute', bottom: 72, right: 16 }}
+        color='primary'
+        aria-label='Reshelve Selected Item'
+        disabled={!can_reshelve_single}
+        onClick={handle_reshelve_single}
+        variant='extended'
+        sx={{
+          position: 'absolute',
+          bottom: RESHELVE_BUTTON_BOTTOM_OFFSET,
+          right: BUTTON_RIGHT_OFFSET,
+        }}
       >
         RESHELVE
       </Fab>
       <Fab
-        color="secondary"
-        aria-label="Reshelve All Unshelved Items"
-        disabled={data.length === 0 || something_loading}
-        onClick={() => handle_reshelve_all()}
-        variant="extended"
-        sx={{ position: 'absolute', bottom: 16, right: 16 }}
+        color='secondary'
+        aria-label='Reshelve All Unshelved Items'
+        disabled={!can_reshelve_all}
+        onClick={handle_reshelve_all}
+        variant='extended'
+        sx={{
+          position: 'absolute',
+          bottom: RESHELVE_ALL_BUTTON_BOTTOM_OFFSET,
+          right: BUTTON_RIGHT_OFFSET,
+        }}
       >
         RESHELVE ALL
       </Fab>
-
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={4000}
-        onClose={() => set_snackbar((prev) => ({ ...prev, open: false }))}
-        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-      >
-        <Alert
-          onClose={() => set_snackbar((prev) => ({ ...prev, open: false }))}
-          severity={snackbar.severity}
-          variant="filled"
-          sx={{ width: '100%' }}
-        >
-          {snackbar.message}
-        </Alert>
-      </Snackbar>
     </PageContainer>
   );
 };

@@ -1,7 +1,7 @@
 import { Alert, AlertTitle, Snackbar } from '@mui/material';
 import { useSnackbar } from '../../hooks/use_snackbar';
 
-export const GlobalSnackbar = () => {
+export const Global_Snackbar = () => {
   const { snackbar_state, hide_snackbar } = useSnackbar();
 
   return (
@@ -18,7 +18,7 @@ export const GlobalSnackbar = () => {
         sx={{ width: '100%' }}
       >
         {snackbar_state.title && (
-          <AlertTitle color="inherit">{snackbar_state.title}</AlertTitle>
+          <AlertTitle color='inherit'>{snackbar_state.title}</AlertTitle>
         )}
         {snackbar_state.message}
       </Alert>

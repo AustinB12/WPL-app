@@ -314,7 +314,12 @@ export const PatronsDataGrid: FC<PatronsDataGridProps> = ({
   };
 
   // Get all patrons if not provided
-  const { data: all_patrons, isLoading: loading, refetch } = useAllPatrons();
+  const {
+    data: all_patrons,
+    isLoading: loading,
+    refetch,
+    isRefetching: refetching,
+  } = useAllPatrons();
 
   // Create columns with handlers
   const columns_with_actions = create_columns(
@@ -362,7 +367,7 @@ export const PatronsDataGrid: FC<PatronsDataGridProps> = ({
           label='Patrons'
           rows={filtered_patrons}
           columns={final_columns}
-          loading={loading}
+          loading={loading || refetching}
           onRowSelectionModelChange={(x) => {
             const selected_id =
               Array.from((x as GridRowSelectionModel).ids)[0]?.toString() || '';

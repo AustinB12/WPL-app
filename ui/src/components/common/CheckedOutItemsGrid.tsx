@@ -85,9 +85,12 @@ export const CheckedOutItemsGrid = ({
   filter?: string;
 }) => {
   const { selected_branch } = useSelectedBranch();
-  const { data: checked_out_copies, isLoading } = useCheckedOutCopies(
-    selected_branch?.id || 1
-  );
+  const {
+    data: checked_out_copies,
+    isLoading,
+    refetch,
+    isRefetching: refetching,
+  } = useCheckedOutCopies(selected_branch?.id || 1);
 
   const filtered_copies = useMemo(() => {
     if (!filter) return checked_out_copies;
@@ -101,12 +104,13 @@ export const CheckedOutItemsGrid = ({
     <BaseDataGrid
       rows={filtered_copies || []}
       columns={columns}
-      loading={isLoading}
+      loading={isLoading || refetching}
       initialState={{
         pagination: { paginationModel: { pageSize: 15 } },
       }}
       onRowClick={(params) => select_item_copy(params.row.id)}
       hidden_columns={hidden_columns}
+      refetch={refetch}
     />
   );
 };
