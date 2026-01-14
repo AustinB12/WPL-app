@@ -10,7 +10,7 @@ export function GenreChip({
   size?: ChipProps['size'];
 }): JSX.Element {
   // Map genres to colors
-  const getGenreColor = (
+  const get_genre_color = (
     genreValue: Genre | string
   ): ChipProps['color'] | undefined => {
     switch (genreValue) {
@@ -58,16 +58,20 @@ export function GenreChip({
       case Genre.Cooking:
       case Genre.Travel:
       case Genre.PsychThriller:
+      case Genre.Rock:
         return 'warning';
 
       // Creative - secondary
       case Genre.Art:
       case Genre.Poetry:
+      case Genre.Pop:
         return 'secondary';
 
       // Other
       case Genre.Business:
       case Genre.Children:
+      case Genre.Soundtrack:
+      case Genre.Musical_Theater:
         return 'info';
 
       default:
@@ -75,7 +79,7 @@ export function GenreChip({
     }
   };
 
-  const color = getGenreColor(genre);
+  const color = get_genre_color(genre);
 
   return (
     <Chip

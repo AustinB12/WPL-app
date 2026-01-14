@@ -66,7 +66,7 @@ export const Sidebar = ({
     },
     { text: 'Reservations', path: '/reservations', icon: <EventNote /> },
     { text: 'Branches', path: '/branches', icon: <LocationCity /> },
-    { text: 'Dev', path: '/dev', icon: <AutoAwesome /> },
+    { text: 'Explore', path: '/dev', icon: <AutoAwesome /> },
   ];
 
   const action_items = [
