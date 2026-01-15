@@ -1,154 +1,859 @@
 import {
   Avatar,
   Box,
+  Grid,
   Paper,
   SvgIcon,
   Tooltip,
   Typography,
+  keyframes,
 } from '@mui/material';
-import { useNavigate } from 'react-router-dom';
 import { PageContainer, PageTitle } from '../components/common/PageBuilders';
 import { Home } from '@mui/icons-material';
 
+// Keyframe animations
+const fadeInUp = keyframes`
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+`;
+
+const float = keyframes`
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+`;
+
+const pulse = keyframes`
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.3);
+  }
+`;
+const morph = keyframes`
+  0%, 10%, 100% {
+    border-radius: 18px;
+    corner-shape: round;
+  }
+    25%, 35% {
+      border-radius: 60px;
+      corner-shape: squircle;      
+  }
+    45%, 55% {
+      border-radius: 12px;
+      corner-shape: scoop;      
+  }
+    65%, 75% {
+      border-radius: 12px;
+      corner-shape: bevel;      
+  }
+`;
+
+const rotate = keyframes`
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+`;
+
+// Animated Card wrapper
+const AnimatedCard = ({
+  children,
+  delay = 0,
+  gradient,
+}: {
+  children: React.ReactNode;
+  delay?: number;
+  gradient?: string;
+}) => (
+  <Paper
+    sx={{
+      p: 3,
+      mt: 2,
+      borderRadius: 4,
+      position: 'relative',
+      overflow: 'hidden',
+      animation: `${fadeInUp} 0.6s ease-out ${delay}s both`,
+      transition: 'transform 0.3s ease, box-shadow 0.3s ease',
+      background: gradient || 'background.paper',
+      '&:hover': {
+        transform: 'translateY(-4px)',
+        boxShadow: '0 12px 40px rgba(0,0,0,0.15)',
+      },
+    }}
+  >
+    {children}
+  </Paper>
+);
+
+// Decorative SVG components
+const BookStackSvg = () => (
+  <Box
+    sx={{
+      position: 'absolute',
+      right: 20,
+      top: '50%',
+      transform: 'translateY(-50%)',
+      opacity: 0.1,
+      animation: `${float} 4s ease-in-out infinite`,
+    }}
+  >
+    <svg width='120' height='120' viewBox='0 0 24 24' fill='currentColor'>
+      <path d='M19 2H6c-1.206 0-3 .799-3 3v14c0 2.201 1.794 3 3 3h15v-2H6.012C5.55 19.988 5 19.806 5 19s.55-.988 1.012-1H21V4c0-1.103-.897-2-2-2zm0 14H5V5c0-.806.55-.988 1-1h13v12z' />
+      <path d='M9 6h2v2H9zm0 4h2v2H9zm0 4h2v2H9z' />
+    </svg>
+  </Box>
+);
+
+const CodeBracketsSvg = () => (
+  <Box
+    sx={{
+      position: 'absolute',
+      right: 30,
+      top: 30,
+      opacity: 0.08,
+      animation: `${pulse} 3s ease-in-out infinite`,
+    }}
+  >
+    <svg width='100' height='100' viewBox='0 0 24 24' fill='currentColor'>
+      <path d='M8.293 6.293L2.586 12l5.707 5.707 1.414-1.414L5.414 12l4.293-4.293zm7.414 0l-1.414 1.414L18.586 12l-4.293 4.293 1.414 1.414L21.414 12z' />
+    </svg>
+  </Box>
+);
+
+const DatabaseSvg = () => (
+  <Box
+    sx={{
+      position: 'absolute',
+      right: '10%',
+      bottom: '10%',
+      opacity: 0.08,
+      animation: `${float} 5s ease-in-out infinite 0.5s`,
+    }}
+  >
+    <svg width='80' height='80' viewBox='0 0 80 80' fill='currentColor'>
+      <path
+        d='M33.3333 0C14.9533 0 0 7.47667 0 16.6667V50C0 59.19 14.9533 66.6667 33.3333 66.6667C51.7133 66.6667 66.6667 59.19 66.6667 50V16.6667C66.6667 7.47667 51.7133 0 33.3333 0ZM33.3333 6.66667C48.0367 6.66667 60 12.6467 60 16.6667C60 20.6867 48.0367 26.6667 33.3333 26.6667C18.63 26.6667 6.66667 20.6867 6.66667 16.6667C6.66667 12.6467 18.63 6.66667 33.3333 6.66667ZM6.66667 50V36.01C7.33333 41.3333 30.3333 43.3333 33.3333 43.3333C36.3333 43.3333 58.3333 41.3333 60 36.01V50C60 54.02 48.0367 60 33.3333 60C18.63 60 6.66667 54.02 6.66667 50ZM6.66667 33.3333V22.6767C12.6933 26.7533 22.37 30 33.3333 30C44.2967 30 53.9733 26.7533 60 22.6767V33.3333C60 37.3333 42.3333 41.3333 33.3333 41.3333C24.3333 41.3333 6.66667 37.8333 6.66667 33.3333Z'
+        fill='black'
+      />
+    </svg>
+  </Box>
+);
+
+// Tech Stack Icon Component
+const TechIcon = ({
+  icon,
+  label,
+  color,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  color: string;
+}) => (
+  <Tooltip title={label} arrow>
+    <Box
+      sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        gap: 0.5,
+        p: 1.5,
+        borderRadius: 2,
+        transition: 'all 0.3s ease',
+        cursor: 'pointer',
+        '&:hover': {
+          transform: 'translateY(-5px) scale(1.1)',
+          bgcolor: `${color}15`,
+          '& svg': {
+            filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.2))',
+          },
+        },
+      }}
+    >
+      <Box sx={{ color, transition: 'filter 0.3s ease' }}>{icon}</Box>
+      <Typography variant='caption' sx={{ fontWeight: 500, opacity: 0.8 }}>
+        {label}
+      </Typography>
+    </Box>
+  </Tooltip>
+);
+
+// SVG Icons for Tech Stack
+const ReactIcon = () => (
+  <svg width='60px' height='60px' viewBox='0 0 128 128'>
+    <g fill='currentColor'>
+      <circle cx='64' cy='64' r='11.4'></circle>
+      <path d='M107.3 45.2c-2.2-.8-4.5-1.6-6.9-2.3.6-2.4 1.1-4.8 1.5-7.1 2.1-13.2-.2-22.5-6.6-26.1-1.9-1.1-4-1.6-6.4-1.6-7 0-15.9 5.2-24.9 13.9-9-8.7-17.9-13.9-24.9-13.9-2.4 0-4.5.5-6.4 1.6-6.4 3.7-8.7 13-6.6 26.1.4 2.3.9 4.7 1.5 7.1-2.4.7-4.7 1.4-6.9 2.3C8.2 50 1.4 56.6 1.4 64s6.9 14 19.3 18.8c2.2.8 4.5 1.6 6.9 2.3-.6 2.4-1.1 4.8-1.5 7.1-2.1 13.2.2 22.5 6.6 26.1 1.9 1.1 4 1.6 6.4 1.6 7.1 0 16-5.2 24.9-13.9 9 8.7 17.9 13.9 24.9 13.9 2.4 0 4.5-.5 6.4-1.6 6.4-3.7 8.7-13 6.6-26.1-.4-2.3-.9-4.7-1.5-7.1 2.4-.7 4.7-1.4 6.9-2.3 12.5-4.8 19.3-11.4 19.3-18.8s-6.8-14-19.3-18.8zM92.5 14.7c4.1 2.4 5.5 9.8 3.8 20.3-.3 2.1-.8 4.3-1.4 6.6-5.2-1.2-10.7-2-16.5-2.5-3.4-4.8-6.9-9.1-10.4-13 7.4-7.3 14.9-12.3 21-12.3 1.3 0 2.5.3 3.5.9zM81.3 74c-1.8 3.2-3.9 6.4-6.1 9.6-3.7.3-7.4.4-11.2.4-3.9 0-7.6-.1-11.2-.4-2.2-3.2-4.2-6.4-6-9.6-1.9-3.3-3.7-6.7-5.3-10 1.6-3.3 3.4-6.7 5.3-10 1.8-3.2 3.9-6.4 6.1-9.6 3.7-.3 7.4-.4 11.2-.4 3.9 0 7.6.1 11.2.4 2.2 3.2 4.2 6.4 6 9.6 1.9 3.3 3.7 6.7 5.3 10-1.7 3.3-3.4 6.6-5.3 10zm8.3-3.3c1.5 3.5 2.7 6.9 3.8 10.3-3.4.8-7 1.4-10.8 1.9 1.2-1.9 2.5-3.9 3.6-6 1.2-2.1 2.3-4.2 3.4-6.2zM64 97.8c-2.4-2.6-4.7-5.4-6.9-8.3 2.3.1 4.6.2 6.9.2 2.3 0 4.6-.1 6.9-.2-2.2 2.9-4.5 5.7-6.9 8.3zm-18.6-15c-3.8-.5-7.4-1.1-10.8-1.9 1.1-3.3 2.3-6.8 3.8-10.3 1.1 2 2.2 4.1 3.4 6.1 1.2 2.2 2.4 4.1 3.6 6.1zm-7-25.5c-1.5-3.5-2.7-6.9-3.8-10.3 3.4-.8 7-1.4 10.8-1.9-1.2 1.9-2.5 3.9-3.6 6-1.2 2.1-2.3 4.2-3.4 6.2zM64 30.2c2.4 2.6 4.7 5.4 6.9 8.3-2.3-.1-4.6-.2-6.9-.2-2.3 0-4.6.1-6.9.2 2.2-2.9 4.5-5.7 6.9-8.3zm22.2 21l-3.6-6c3.8.5 7.4 1.1 10.8 1.9-1.1 3.3-2.3 6.8-3.8 10.3-1.1-2.1-2.2-4.2-3.4-6.2zM31.7 35c-1.7-10.5-.3-17.9 3.8-20.3 1-.6 2.2-.9 3.5-.9 6 0 13.5 4.9 21 12.3-3.5 3.8-7 8.2-10.4 13-5.8.5-11.3 1.4-16.5 2.5-.6-2.3-1-4.5-1.4-6.6zM7 64c0-4.7 5.7-9.7 15.7-13.4 2-.8 4.2-1.5 6.4-2.1 1.6 5 3.6 10.3 6 15.6-2.4 5.3-4.5 10.5-6 15.5C15.3 75.6 7 69.6 7 64zm28.5 49.3c-4.1-2.4-5.5-9.8-3.8-20.3.3-2.1.8-4.3 1.4-6.6 5.2 1.2 10.7 2 16.5 2.5 3.4 4.8 6.9 9.1 10.4 13-7.4 7.3-14.9 12.3-21 12.3-1.3 0-2.5-.3-3.5-.9zM96.3 93c1.7 10.5.3 17.9-3.8 20.3-1 .6-2.2.9-3.5.9-6 0-13.5-4.9-21-12.3 3.5-3.8 7-8.2 10.4-13 5.8-.5 11.3-1.4 16.5-2.5.6 2.3 1 4.5 1.4 6.6zm9-15.6c-2 .8-4.2 1.5-6.4 2.1-1.6-5-3.6-10.3-6-15.6 2.4-5.3 4.5-10.5 6-15.5 13.8 4 22.1 10 22.1 15.6 0 4.7-5.8 9.7-15.7 13.4z'></path>
+    </g>
+  </svg>
+);
+
+const TypeScriptIcon = () => (
+  <svg width='60' height='60' viewBox='0 0 128 128'>
+    <path fill='#fff' d='M22.67 47h99.67v73.67H22.67z'></path>
+    <path
+      data-name='original'
+      fill='#007acc'
+      d='M1.5 63.91v62.5h125v-125H1.5zm100.73-5a15.56 15.56 0 017.82 4.5 20.58 20.58 0 013 4c0 .16-5.4 3.81-8.69 5.85-.12.08-.6-.44-1.13-1.23a7.09 7.09 0 00-5.87-3.53c-3.79-.26-6.23 1.73-6.21 5a4.58 4.58 0 00.54 2.34c.83 1.73 2.38 2.76 7.24 4.86 8.95 3.85 12.78 6.39 15.16 10 2.66 4 3.25 10.46 1.45 15.24-2 5.2-6.9 8.73-13.83 9.9a38.32 38.32 0 01-9.52-.1 23 23 0 01-12.72-6.63c-1.15-1.27-3.39-4.58-3.25-4.82a9.34 9.34 0 011.15-.73L82 101l3.59-2.08.75 1.11a16.78 16.78 0 004.74 4.54c4 2.1 9.46 1.81 12.16-.62a5.43 5.43 0 00.69-6.92c-1-1.39-3-2.56-8.59-5-6.45-2.78-9.23-4.5-11.77-7.24a16.48 16.48 0 01-3.43-6.25 25 25 0 01-.22-8c1.33-6.23 6-10.58 12.82-11.87a31.66 31.66 0 019.49.26zm-29.34 5.24v5.12H56.66v46.23H45.15V69.26H28.88v-5a49.19 49.19 0 01.12-5.17C29.08 59 39 59 51 59h21.83z'
+    ></path>
+  </svg>
+);
+
+const NodeIcon = () => (
+  <svg width='40' height='40' viewBox='0 0 128 128' fill='currentColor'>
+    <path
+      fill='url(#a)'
+      d='M66.958.825a6.07 6.07 0 0 0-6.035 0L11.103 29.76c-1.895 1.072-2.96 3.095-2.96 5.24v57.988c0 2.143 1.183 4.167 2.958 5.24l49.82 28.934a6.07 6.07 0 0 0 6.036 0l49.82-28.935c1.894-1.072 2.958-3.096 2.958-5.24V35c0-2.144-1.183-4.167-2.958-5.24z'
+    ></path>
+    <path
+      fill='url(#b)'
+      d='M116.897 29.76 66.841.825A8.161 8.161 0 0 0 65.302.23L9.21 96.798a6.251 6.251 0 0 0 1.657 1.43l50.057 28.934c1.42.833 3.076 1.072 4.615.595l52.66-96.925a3.702 3.702 0 0 0-1.302-1.072z'
+    ></path>
+    <path
+      fill='url(#c)'
+      d='M116.898 98.225c1.42-.833 2.485-2.262 2.958-3.81L65.066.108c-1.42-.238-2.959-.119-4.26.715L11.104 29.639l53.606 98.355c.71-.12 1.54-.358 2.25-.715z'
+    ></path>
+    <defs>
+      <linearGradient
+        id='a'
+        x1='34.513'
+        x2='27.157'
+        y1='15.535'
+        y2='30.448'
+        gradientTransform='translate(-129.242 -73.715) scale(6.18523)'
+        gradientUnits='userSpaceOnUse'
+      >
+        <stop stopColor='#3F873F'></stop>
+        <stop offset='.33' stopColor='#3F8B3D'></stop>
+        <stop offset='.637' stopColor='#3E9638'></stop>
+        <stop offset='.934' stopColor='#3DA92E'></stop>
+        <stop offset='1' stopColor='#3DAE2B'></stop>
+      </linearGradient>
+      <linearGradient
+        id='b'
+        x1='30.009'
+        x2='50.533'
+        y1='23.359'
+        y2='8.288'
+        gradientTransform='translate(-129.242 -73.715) scale(6.18523)'
+        gradientUnits='userSpaceOnUse'
+      >
+        <stop offset='.138' stopColor='#3F873F'></stop>
+        <stop offset='.402' stopColor='#52A044'></stop>
+        <stop offset='.713' stopColor='#64B749'></stop>
+        <stop offset='.908' stopColor='#6ABF4B'></stop>
+      </linearGradient>
+      <linearGradient
+        id='c'
+        x1='21.917'
+        x2='40.555'
+        y1='22.261'
+        y2='22.261'
+        gradientTransform='translate(-129.242 -73.715) scale(6.18523)'
+        gradientUnits='userSpaceOnUse'
+      >
+        <stop offset='.092' stopColor='#6ABF4B'></stop>
+        <stop offset='.287' stopColor='#64B749'></stop>
+        <stop offset='.598' stopColor='#52A044'></stop>
+        <stop offset='.862' stopColor='#3F873F'></stop>
+      </linearGradient>
+    </defs>
+  </svg>
+);
+
+const SqliteIcon = () => (
+  <svg width='40' height='40' fill='currentColor' viewBox='0 0 128 128'>
+    <defs>
+      <linearGradient
+        id='sqlite-original-a'
+        x1='-15.615'
+        x2='-6.741'
+        y1='-9.108'
+        y2='-9.108'
+        gradientTransform='rotate(90 -90.486 64.634) scale(9.2712)'
+        gradientUnits='userSpaceOnUse'
+      >
+        <stop stopColor='#95d7f4' offset='0'></stop>
+        <stop stopColor='#0f7fcc' offset='.92'></stop>
+        <stop stopColor='#0f7fcc' offset='1'></stop>
+      </linearGradient>
+    </defs>
+    <path
+      d='M69.5 99.176c-.059-.73-.094-1.2-.094-1.2S67.2 83.087 64.57 78.642c-.414-.707.043-3.594 1.207-7.88.68 1.169 3.54 6.192 4.118 7.81.648 1.824.78 2.347.78 2.347s-1.57-8.082-4.144-12.797a162.286 162.286 0 012.004-6.265c.973 1.71 3.313 5.859 3.828 7.3.102.293.192.543.27.774.023-.137.05-.274.074-.414-.59-2.504-1.75-6.86-3.336-10.082 3.52-18.328 15.531-42.824 27.84-53.754H16.9c-5.387 0-9.789 4.406-9.789 9.789v88.57c0 5.383 4.406 9.789 9.79 9.789h52.897a118.657 118.657 0 01-.297-14.652'
+      fill='#0b7fcc'
+    ></path>
+    <path
+      d='M65.777 70.762c.68 1.168 3.54 6.188 4.117 7.809.649 1.824.781 2.347.781 2.347s-1.57-8.082-4.144-12.797a164.535 164.535 0 012.004-6.27c.887 1.567 2.922 5.169 3.652 6.872l.082-.961c-.648-2.496-1.633-5.766-2.898-8.328 3.242-16.871 13.68-38.97 24.926-50.898H16.899a6.94 6.94 0 00-6.934 6.933v82.11c17.527-6.731 38.664-12.88 56.855-12.614-.672-2.605-1.441-4.96-2.25-6.324-.414-.707.043-3.597 1.207-7.879'
+      fill='url(#sqlite-original-a)'
+    ></path>
+    <path
+      d='M115.95 2.781c-5.5-4.906-12.164-2.933-18.734 2.899a44.347 44.347 0 00-2.914 2.859c-11.25 11.926-21.684 34.023-24.926 50.895 1.262 2.563 2.25 5.832 2.894 8.328.168.64.32 1.242.442 1.754.285 1.207.437 1.996.437 1.996s-.101-.383-.515-1.582c-.078-.23-.168-.484-.27-.773-.043-.125-.105-.274-.172-.434-.734-1.703-2.765-5.305-3.656-6.867-.762 2.25-1.437 4.36-2.004 6.265 2.578 4.715 4.149 12.797 4.149 12.797s-.137-.523-.782-2.347c-.578-1.621-3.441-6.64-4.117-7.809-1.164 4.281-1.625 7.172-1.207 7.88.809 1.362 1.574 3.722 2.25 6.323 1.524 5.867 2.586 13.012 2.586 13.012s.031.469.094 1.2a118.653 118.653 0 00.297 14.651c.504 6.11 1.453 11.363 2.664 14.172l.828-.449c-1.781-5.535-2.504-12.793-2.188-21.156.48-12.793 3.422-28.215 8.856-44.289 9.191-24.27 21.938-43.738 33.602-53.035-10.633 9.602-25.023 40.684-29.332 52.195-4.82 12.891-8.238 24.984-10.301 36.574 3.55-10.863 15.047-15.53 15.047-15.53s5.637-6.958 12.227-16.888c-3.95.903-10.43 2.442-12.598 3.352-3.2 1.344-4.067 1.8-4.067 1.8s10.371-6.312 19.27-9.171c12.234-19.27 25.562-46.648 12.141-58.621'
+      fill='#003956'
+    ></path>
+  </svg>
+);
+
+const MuiIcon = () => (
+  <svg width='40' height='40' viewBox='0 0 128 128' fill='currentColor'>
+    <path
+      fill='#1FA6CA'
+      d='M.2 68.6V13.4L48 41v18.4L16.1 41v36.8L.2 68.6z'
+    ></path>
+    <path
+      fill='#1C7FB6'
+      d='M48 41l47.9-27.6v55.3L64 87l-16-9.2 32-18.4V41L48 59.4V41z'
+    ></path>
+    <path fill='#1FA6CA' d='M48 77.8v18.4l32 18.4V96.2L48 77.8z'></path>
+    <path
+      fill='#1C7FB6'
+      d='M80 114.6L127.8 87V50.2l-16 9.2v18.4L80 96.2v18.4zM111.9 41V22.6l16-9.2v18.4l-16 9.2z'
+    ></path>
+  </svg>
+);
+
+const ExpressIcon = () => (
+  <svg width='40' height='40' viewBox='0 0 128 128' fill='currentColor'>
+    <path d='M126.67 98.44c-4.56 1.16-7.38.05-9.91-3.75-5.68-8.51-11.95-16.63-18-24.9-.78-1.07-1.59-2.12-2.6-3.45C89 76 81.85 85.2 75.14 94.77c-2.4 3.42-4.92 4.91-9.4 3.7l26.92-36.13L67.6 29.71c4.31-.84 7.29-.41 9.93 3.45 5.83 8.52 12.26 16.63 18.67 25.21 6.45-8.55 12.8-16.67 18.8-25.11 2.41-3.42 5-4.72 9.33-3.46-3.28 4.35-6.49 8.63-9.72 12.88-4.36 5.73-8.64 11.53-13.16 17.14-1.61 2-1.35 3.3.09 5.19C109.9 76 118.16 87.1 126.67 98.44zM1.33 61.74c.72-3.61 1.2-7.29 2.2-10.83 6-21.43 30.6-30.34 47.5-17.06C60.93 41.64 63.39 52.62 62.9 65H7.1c-.84 22.21 15.15 35.62 35.53 28.78 7.15-2.4 11.36-8 13.47-15 1.07-3.51 2.84-4.06 6.14-3.06-1.69 8.76-5.52 16.08-13.52 20.66-12 6.86-29.13 4.64-38.14-4.89C5.26 85.89 3 78.92 2 71.39c-.15-1.2-.46-2.38-.7-3.57q.03-3.04.03-6.08zm5.87-1.49h50.43c-.33-16.06-10.33-27.47-24-27.57-15-.12-25.78 11.02-26.43 27.57z'></path>
+  </svg>
+);
+
+// Animated Wave Background
+const WaveBackground = ({ color }: { color: string }) => (
+  <Box
+    sx={{
+      position: 'absolute',
+      bottom: 0,
+      left: 0,
+      right: 0,
+      height: 80,
+      overflow: 'hidden',
+      pointerEvents: 'none',
+    }}
+  >
+    <svg
+      viewBox='0 0 500 150'
+      preserveAspectRatio='none'
+      style={{ width: '100%', height: '100%' }}
+    >
+      <path fill={color}>
+        <animate
+          attributeName='d'
+          dur='4s'
+          repeatCount='indefinite'
+          calcMode='spline'
+          keySplines='0.42 0 0.58 1; 0.42 0 0.58 1'
+          values='
+            M0,64 C150,100 350,0 500,64 L500,150 L0,150 Z;
+            M0,64 C150,0 350,100 500,64 L500,150 L0,150 Z;
+            M0,64 C150,100 350,0 500,64 L500,150 L0,150 Z
+          '
+        />
+      </path>
+      <path fill={color}>
+        <animate
+          attributeName='d'
+          begin={'1s'}
+          dur='4s'
+          repeatCount='indefinite'
+          calcMode='spline'
+          keySplines='0.42 0 0.58 1; 0.42 0 0.58 1'
+          values='
+            M0,64 C150,100 350,0 500,64 L500,150 L0,150 Z;
+            M0,64 C150,0 350,100 500,64 L500,150 L0,150 Z;
+            M0,64 C150,100 350,0 500,64 L500,150 L0,150 Z
+          '
+        />
+      </path>
+      <path fill={color}>
+        <animate
+          attributeName='d'
+          begin={'2s'}
+          dur='4s'
+          repeatCount='indefinite'
+          calcMode='spline'
+          keySplines='0.42 0 0.58 1; 0.42 0 0.58 1'
+          values='
+            M0,64 C150,100 350,0 500,64 L500,150 L0,150 Z;
+            M0,64 C150,0 350,100 500,64 L500,150 L0,150 Z;
+            M0,64 C150,100 350,0 500,64 L500,150 L0,150 Z
+          '
+        />
+      </path>
+    </svg>
+  </Box>
+);
+
+// Floating Particles
+const FloatingParticle = ({
+  size,
+  delay,
+  duration,
+  left,
+  top,
+}: {
+  size: number;
+  delay: number;
+  duration: number;
+  left: string;
+  top: string;
+}) => (
+  <Box
+    sx={{
+      position: 'absolute',
+      width: size,
+      height: size,
+      borderRadius: '50%',
+      bgcolor: 'primary.main',
+      opacity: 0.1,
+      left,
+      top,
+      animation: `${float} ${duration}s ease-in-out infinite ${delay}s`,
+      pointerEvents: 'none',
+    }}
+  />
+);
+
 export const HomePage = () => {
   return (
-    <PageContainer width='lg' scroll={true}>
+    <PageContainer width='lg' scroll={true} sx={{ height: 'inherit' }}>
       <PageTitle title={'Welcome!'} Icon_Component={Home}></PageTitle>
-      <Paper sx={{ p: 3, mt: 2, borderRadius: 8, cornerShape: 'squircle' }}>
-        <Typography variant='h4' fontWeight={'bold'} gutterBottom>
-          {'What is this?'}
-        </Typography>
-        <Typography variant='body1'>{'Great question!'}</Typography>
-        <Typography variant='body1'>
-          {
-            "This is a personal project I've created. It is an admin system management interface for a fictional library: Wayback Public Library"
-          }
-        </Typography>
-      </Paper>
-      <Paper
-        sx={{
-          p: 3,
-          mt: 2,
-          borderRadius: 8,
-          cornerShape: 'squircle',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 2,
-        }}
-      >
-        <Typography variant='h4' fontWeight={'bold'} gutterBottom>
-          {'The Tech Stack'}
-        </Typography>
-        <Box>
-          <Typography variant='h5'>{'UI'}</Typography>
-          <Typography variant='body1'>
-            {
-              'The frontend is built with React and TypeScript, using MUI for the component library. React Query is used for data fetching and state management, while React Router handles routing. Day.js is used for date manipulation.'
-            }
-          </Typography>
-        </Box>
-        <Box>
-          <Typography variant='h5'>{'API'}</Typography>
-          <Typography variant='body1'>
-            {'The server is a NodeJS with Express App'}
-          </Typography>
-        </Box>
-        <Box>
-          <Typography variant='h5'>{'Database'}</Typography>
-          <Typography variant='body1'>
-            {
-              "The database I'm using SQLite for simplicity. If this were a production app, I'd likely use PostgreSQL or MongoDB."
-            }
-          </Typography>
-        </Box>
-        <Github_Icon />
-      </Paper>
-      <Paper
-        sx={{
-          p: 3,
-          mt: 2,
-          borderRadius: 8,
-          cornerShape: 'squircle',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 2,
-        }}
-      >
-        <Typography variant='h4' fontWeight={'bold'} gutterBottom>
-          {'Me'}
-        </Typography>
-        <Box
-          sx={{
-            display: 'flex',
-            gap: 3,
-            alignItems: 'flex-start',
-          }}
-        >
-          <Avatar
-            sx={{ width: 100, height: 100 }}
-            src='https://media.licdn.com/dms/image/v2/C4D03AQF2qs6pZiimMg/profile-displayphoto-shrink_800_800/profile-displayphoto-shrink_800_800/0/1576023146183?e=1769040000&v=beta&t=NytL_qq2fxvZXKa9aLKQ1R8cVRezocfPVHjt5TK_I58'
-          ></Avatar>
-          <Box>
-            <Typography variant='body1' gutterBottom>
-              {
-                "I'm a full-stack developer passionate about building useful applications that solve real problems. I enjoy working full-stack, from database design to user interface implementation."
-              }
-            </Typography>
-            <Typography variant='body1'>
-              {
-                "When I'm not coding, I enjoy gardening, weight-lifting, video games, and hanging out with my daughter."
-              }
+
+      {/* What is this section */}
+      <AnimatedCard delay={0.1}>
+        <BookStackSvg />
+        <Box sx={{ position: 'relative', zIndex: 1, pb: 8 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+            <Box
+              sx={{
+                p: 1.5,
+                borderRadius: 2,
+                bgcolor: 'primary.main',
+                color: 'white',
+                display: 'flex',
+              }}
+            >
+              <Typography
+                sx={{ animation: `${pulse} 1.5s ease-in-out infinite` }}
+                fontSize={'1.5rem'}
+              >
+                🤔
+              </Typography>
+            </Box>
+            <Typography variant='h4' fontWeight={'bold'}>
+              {'What is this?'}
             </Typography>
           </Box>
+          <Typography variant='body1' sx={{ mb: 1, fontSize: '1.1rem' }}>
+            {'Great question!'}
+          </Typography>
+          <Typography variant='body1' sx={{ lineHeight: 1.8 }}>
+            {
+              "This is a personal project I've created. It is an admin system management interface for a fictional library: "
+            }
+            <br />
+            <Box
+              component='span'
+              sx={{
+                fontWeight: 'bolder',
+                fontSize: '1.8rem',
+                background: 'linear-gradient(90deg, #667eea 0%, #764ba2 100%)',
+                backgroundClip: 'text',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+              }}
+            >
+              Wayback Public Library
+            </Box>
+          </Typography>
         </Box>
-      </Paper>
+        <WaveBackground color='#667eea20' />
+      </AnimatedCard>
+
+      {/* Tech Stack Section */}
+      <AnimatedCard delay={0.2}>
+        <CodeBracketsSvg />
+        <DatabaseSvg />
+        <FloatingParticle
+          size={20}
+          delay={0}
+          duration={4}
+          left='10%'
+          top='20%'
+        />
+        <FloatingParticle
+          size={12}
+          delay={1}
+          duration={5}
+          left='80%'
+          top='60%'
+        />
+        <FloatingParticle
+          size={16}
+          delay={2}
+          duration={4.5}
+          left='60%'
+          top='15%'
+        />
+
+        <Box sx={{ position: 'relative', zIndex: 1, pb: 8 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
+            <Box
+              sx={{
+                p: 1.5,
+                borderRadius: 2,
+                bgcolor: '#339933',
+                color: 'white',
+                display: 'flex',
+              }}
+            >
+              <svg
+                width='28'
+                height='28'
+                viewBox='0 0 24 24'
+                fill='currentColor'
+              >
+                <path d='M19.14 12.94c.04-.31.06-.63.06-.94 0-.31-.02-.63-.06-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.04.31-.06.63-.06.94s.02.63.06.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z'>
+                  <animateTransform
+                    attributeName='transform'
+                    type='rotate'
+                    from='0 12 12'
+                    to='360 12 12'
+                    dur='10s'
+                    repeatCount='indefinite'
+                  />
+                </path>
+              </svg>
+            </Box>
+            <Typography variant='h4' fontWeight={'bold'}>
+              {'Tech Stack'}
+            </Typography>
+          </Box>
+
+          {/* Tech Icons Row */}
+          <Box
+            sx={{
+              display: 'flex',
+              flexWrap: 'wrap',
+              justifyContent: 'space-around',
+              alignItems: 'center',
+              gap: 2,
+              mb: 4,
+              pt: 1,
+              borderRadius: 3,
+              bgcolor: 'action.hover',
+            }}
+          >
+            <TechIcon icon={<ReactIcon />} label='React' color='#61DAFB' />
+            <TechIcon
+              icon={<TypeScriptIcon />}
+              label='TypeScript'
+              color='#3178C6'
+            />
+            <TechIcon icon={<MuiIcon />} label='Material UI' color='#007FFF' />
+            <TechIcon icon={<NodeIcon />} label='Node.js' color='#339933' />
+            <TechIcon icon={<ExpressIcon />} label='Express' color='#339933' />
+            <TechIcon icon={<SqliteIcon />} label='SQLite' color='#a729ac' />
+          </Box>
+
+          <Grid container spacing={2}>
+            <Grid
+              size={{ xs: 12, sm: 4 }}
+              sx={{
+                p: 2,
+                borderRadius: 2,
+                borderLeft: '4px solid #61DAFB',
+                bgcolor: 'rgba(97, 218, 251, 0.05)',
+                transition: 'all 0.3s ease',
+                '&:hover': {
+                  bgcolor: 'rgba(97, 218, 251, 0.1)',
+                  transform: 'translateX(8px)',
+                },
+              }}
+            >
+              <Typography variant='h6' sx={{ color: '#61DAFB', mb: 0.5 }}>
+                {'🎨 UI'}
+              </Typography>
+              <Typography variant='body1'>
+                {
+                  'Built with React, TypeScript, React Query, and the MUI component library. '
+                }
+              </Typography>
+            </Grid>
+
+            <Grid
+              size={{ xs: 12, sm: 4 }}
+              sx={{
+                p: 2,
+                borderRadius: 2,
+                borderLeft: '4px solid #339933',
+                bgcolor: 'rgba(51, 153, 51, 0.05)',
+                transition: 'all 0.3s ease',
+                '&:hover': {
+                  bgcolor: 'rgba(51, 153, 51, 0.1)',
+                  transform: 'translateX(8px)',
+                },
+              }}
+            >
+              <Typography variant='h6' sx={{ color: '#339933', mb: 0.5 }}>
+                {'⚡ API'}
+              </Typography>
+              <Typography variant='body1'>
+                {'The server is a Node.js with Express App'}
+              </Typography>
+            </Grid>
+
+            <Grid
+              size={{ xs: 12, sm: 4 }}
+              sx={{
+                p: 2,
+                borderRadius: 2,
+                borderLeft: '4px solid #cb24d1',
+                bgcolor: 'rgba(203, 36, 209, 0.05)',
+                transition: 'all 0.3s ease',
+                '&:hover': {
+                  bgcolor: 'rgba(203, 36, 209, 0.1)',
+                  transform: 'translateX(8px)',
+                },
+              }}
+            >
+              <Typography variant='h6' sx={{ color: '#a729ac', mb: 0.5 }}>
+                {'DB'}
+              </Typography>
+              <Typography variant='body1'>
+                {'Using SQLite for simplicity'}
+              </Typography>
+            </Grid>
+          </Grid>
+
+          <Box sx={{ mt: 3 }}>
+            <Github_Icon />
+          </Box>
+        </Box>
+        <WaveBackground color='#33993320' />
+      </AnimatedCard>
+
+      {/* About Me Section */}
+      <AnimatedCard delay={0.3}>
+        <FloatingParticle
+          size={14}
+          delay={0.5}
+          duration={4}
+          left='85%'
+          top='25%'
+        />
+        <FloatingParticle
+          size={18}
+          delay={1.5}
+          duration={5}
+          left='5%'
+          top='70%'
+        />
+        <FloatingParticle
+          size={14}
+          delay={0.5}
+          duration={4}
+          left='44%'
+          top='67%'
+        />
+        <FloatingParticle
+          size={18}
+          delay={0.5}
+          duration={5}
+          left='89%'
+          top='58%'
+        />
+        <FloatingParticle
+          size={18}
+          delay={0.75}
+          duration={5}
+          left='94%'
+          top='73%'
+        />
+        <FloatingParticle
+          size={18}
+          delay={0.25}
+          duration={5}
+          left='87%'
+          top='80%'
+        />
+
+        <Box sx={{ position: 'relative', zIndex: 1, pb: 8 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
+            <Box
+              sx={{
+                p: 1.5,
+                bgcolor: '#764ba2',
+                color: 'white',
+                display: 'flex',
+                cornerShape: 'scoop',
+                borderRadius: '12px',
+                animation: `${morph} 3.5s ease-in-out infinite`,
+              }}
+            >
+              <svg
+                width='28'
+                height='28'
+                viewBox='0 0 24 24'
+                fill='currentColor'
+              >
+                <path d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z' />
+              </svg>
+            </Box>
+            <Typography variant='h4' fontWeight={'bold'}>
+              {'Austin Baird'}
+            </Typography>
+          </Box>
+
+          <Box
+            sx={{
+              display: 'flex',
+              gap: 3,
+              alignItems: 'flex-start',
+              flexWrap: { xs: 'wrap', md: 'nowrap' },
+            }}
+          >
+            <Box
+              sx={{
+                position: 'relative',
+                '&::before': {
+                  content: '""',
+                  position: 'absolute',
+                  inset: -6,
+                  borderRadius: '50%',
+                  background:
+                    'linear-gradient(135deg, #5d9cf6 0%, #4c1485 100%)',
+                  animation: `${rotate} 1.5s linear infinite`,
+                  zIndex: -1,
+                },
+              }}
+            >
+              <Avatar
+                sx={{
+                  width: 100,
+                  height: 100,
+                  border: '4px solid',
+                  borderColor: 'background.paper',
+                  transition: 'transform 0.3s ease',
+                  '&:hover': {
+                    transform: 'scale(1.1)',
+                  },
+                }}
+                src='https://media.licdn.com/dms/image/v2/C4D03AQF2qs6pZiimMg/profile-displayphoto-shrink_800_800/profile-displayphoto-shrink_800_800/0/1576023146183?e=1769040000&v=beta&t=NytL_qq2fxvZXKa9aLKQ1R8cVRezocfPVHjt5TK_I58'
+              />
+            </Box>
+            <Box>
+              <Typography variant='body1' gutterBottom sx={{ lineHeight: 1.8 }}>
+                {
+                  "I'm a full-stack developer passionate about building useful applications that solve real problems. I enjoy working full-stack, from database design to user interface implementation."
+                }
+              </Typography>
+              <Typography variant='body1' sx={{ lineHeight: 1.8 }}>
+                {
+                  "When I'm not coding, I enjoy gardening, weight-lifting, video games, and hanging out with my daughter."
+                }
+              </Typography>
+
+              {/* Interest badges */}
+              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mt: 2 }}>
+                {[
+                  '🌱 Gardening',
+                  '🏋️ Weight-lifting',
+                  '🎮 Video Games',
+                  '👨‍👧 Family Time',
+                ].map((interest, i) => (
+                  <Box
+                    key={interest}
+                    sx={{
+                      px: 2,
+                      py: 0.5,
+                      borderRadius: 5,
+                      bgcolor: 'action.hover',
+                      fontSize: '0.875rem',
+                      animation: `${fadeInUp} 0.4s ease-out ${
+                        0.5 + i * 0.1
+                      }s both`,
+                      transition: 'all 0.2s ease',
+                      cursor: 'default',
+                      '&:hover': {
+                        bgcolor: 'primary.main',
+                        color: 'white',
+                        transform: 'scale(1.05)',
+                      },
+                    }}
+                  >
+                    {interest}
+                  </Box>
+                ))}
+              </Box>
+            </Box>
+          </Box>
+        </Box>
+        <WaveBackground color='#764ba220' />
+      </AnimatedCard>
     </PageContainer>
   );
 };
 
 const Github_Icon = () => {
-  const nav = useNavigate();
+  const handleClick = () => {
+    window.open('https://github.com/AustinB12/WPL-app', '_blank');
+  };
+
   return (
-    <Tooltip title='Check out the code on GitHub'>
-      <SvgIcon
-        fontSize='large'
+    <Tooltip title='Check out the code on GitHub' arrow>
+      <Box
+        onClick={handleClick}
         sx={{
-          color: 'text.main',
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: 1.5,
+          px: 3,
+          py: 1.5,
+          borderRadius: 3,
+          bgcolor: 'action.hover',
           cursor: 'pointer',
-          transition: 'all 0.2s ease-out',
-          ['&:hover']: { color: 'primary.light', scale: 1.1 },
+          transition: 'all 0.3s ease',
+          '&:hover': {
+            bgcolor: '#24292e',
+            color: 'white',
+            transform: 'translateY(-3px)',
+            boxShadow: '0 6px 20px rgba(0,0,0,0.2)',
+            '& .github-icon': {
+              animation: `${pulse} 0.5s ease-in-out`,
+            },
+          },
         }}
-        onClick={() => nav('https://github.com/AustinB12/WPL-app')}
       >
-        <svg
-          width='800px'
-          height='800px'
-          viewBox='0 0 20 20'
-          version='1.1'
-          xmlns='http://www.w3.org/2000/svg'
+        <SvgIcon
+          className='github-icon'
+          sx={{
+            fontSize: 28,
+            transition: 'all 0.3s ease',
+          }}
         >
-          <g
-            id='Page-1'
-            stroke='none'
-            strokeWidth='1'
-            fill='none'
-            fillRule='evenodd'
-          >
-            <g
-              id='Dribbble-Light-Preview'
-              transform='translate(-140.000000, -7559.000000)'
-              fill='currentColor'
-            >
-              <g id='icons' transform='translate(56.000000, 160.000000)'>
-                <path
-                  d='M94,7399 C99.523,7399 104,7403.59 104,7409.253 C104,7413.782 101.138,7417.624 97.167,7418.981 C96.66,7419.082 96.48,7418.762 96.48,7418.489 C96.48,7418.151 96.492,7417.047 96.492,7415.675 C96.492,7414.719 96.172,7414.095 95.813,7413.777 C98.04,7413.523 100.38,7412.656 100.38,7408.718 C100.38,7407.598 99.992,7406.684 99.35,7405.966 C99.454,7405.707 99.797,7404.664 99.252,7403.252 C99.252,7403.252 98.414,7402.977 96.505,7404.303 C95.706,7404.076 94.85,7403.962 94,7403.958 C93.15,7403.962 92.295,7404.076 91.497,7404.303 C89.586,7402.977 88.746,7403.252 88.746,7403.252 C88.203,7404.664 88.546,7405.707 88.649,7405.966 C88.01,7406.684 87.619,7407.598 87.619,7408.718 C87.619,7412.646 89.954,7413.526 92.175,7413.785 C91.889,7414.041 91.63,7414.493 91.54,7415.156 C90.97,7415.418 89.522,7415.871 88.63,7414.304 C88.63,7414.304 88.101,7413.319 87.097,7413.247 C87.097,7413.247 86.122,7413.234 87.029,7413.87 C87.029,7413.87 87.684,7414.185 88.139,7415.37 C88.139,7415.37 88.726,7417.2 91.508,7416.58 C91.513,7417.437 91.522,7418.245 91.522,7418.489 C91.522,7418.76 91.338,7419.077 90.839,7418.982 C86.865,7417.627 84,7413.783 84,7409.253 C84,7403.59 88.478,7399 94,7399'
-                  id='github-[#142]'
-                ></path>
-              </g>
-            </g>
-          </g>
+          <svg viewBox='0 0 20 20' fill='currentColor'>
+            <path d='M10,0 C15.523,0 20,4.59 20,10.253 C20,14.782 17.138,18.624 13.167,19.981 C12.66,20.082 12.48,19.762 12.48,19.489 C12.48,19.151 12.492,18.047 12.492,16.675 C12.492,15.719 12.172,15.095 11.813,14.777 C14.04,14.523 16.38,13.656 16.38,9.718 C16.38,8.598 15.992,7.684 15.35,6.966 C15.454,6.707 15.797,5.664 15.252,4.252 C15.252,4.252 14.414,3.977 12.505,5.303 C11.706,5.076 10.85,4.962 10,4.958 C9.15,4.962 8.295,5.076 7.497,5.303 C5.586,3.977 4.746,4.252 4.746,4.252 C4.203,5.664 4.546,6.707 4.649,6.966 C4.01,7.684 3.619,8.598 3.619,9.718 C3.619,13.646 5.954,14.526 8.175,14.785 C7.889,15.041 7.63,15.493 7.54,16.156 C6.97,16.418 5.522,16.871 4.63,15.304 C4.63,15.304 4.101,14.319 3.097,14.247 C3.097,14.247 2.122,14.234 3.029,14.87 C3.029,14.87 3.684,15.185 4.139,16.37 C4.139,16.37 4.726,18.2 7.508,17.58 C7.513,18.437 7.522,19.245 7.522,19.489 C7.522,19.76 7.338,20.077 6.839,19.982 C2.865,18.627 0,14.783 0,10.253 C0,4.59 4.478,0 10,0' />
+          </svg>
+        </SvgIcon>
+        <Typography variant='body2' fontWeight={600}>
+          View on GitHub
+        </Typography>
+        <svg width='16' height='16' viewBox='0 0 24 24' fill='currentColor'>
+          <path d='M19 19H5V5h7V3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z' />
         </svg>
-      </SvgIcon>
+      </Box>
     </Tooltip>
   );
 };
