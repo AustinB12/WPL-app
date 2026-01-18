@@ -25,6 +25,7 @@ import type {
   ReshelveAllResult,
   Reservation,
   Create_Reservation_Data,
+  Renewal_Response,
 } from '../types/transaction_types';
 
 const is_dev = import.meta.env.MODE === 'development';
@@ -139,6 +140,33 @@ export const data_service = {
       '/transactions/checkout',
       {
         method: 'POST',
+        body: JSON.stringify(checkout_data),
+      }
+    );
+
+    return receipt;
+  },
+
+  async renew_item(copy_id: number): Promise<Renewal_Response> {
+    const receipt = await api_request<Renewal_Response>(
+      `/transactions/renew-item/${copy_id}`,
+      {
+        method: 'PUT',
+      }
+    );
+
+    return receipt;
+  },
+
+  async reserve_item(copy_id: number): Promise<Check_Out_Details> {
+    const checkout_data = {
+      copy_id,
+    };
+
+    const receipt = await api_request<Check_Out_Details>(
+      `/transactions/reserve-item/${copy_id}`,
+      {
+        method: 'PUT',
         body: JSON.stringify(checkout_data),
       }
     );

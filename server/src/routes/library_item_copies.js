@@ -259,6 +259,7 @@ router.get('/checked-out', async (req, res) => {
         p.id AS patron_id,
         p.first_name AS patron_first_name,
         p.last_name AS patron_last_name,
+        p.image_url AS patron_avatar_url,
         bk.cover_image_url as book_cover_image,
         ab.cover_img_url as audiobook_cover_image,
         v.cover_image_url as video_cover_image,
@@ -739,7 +740,7 @@ router.get('/:id', async (req, res) => {
     // Get all copies to calculate copy label
     const all_copies = await db.execute_query(
       'SELECT id FROM LIBRARY_ITEM_COPIES WHERE library_item_id = ? ORDER BY id',
-      [item_copy.library_item_id]
+      [item_copy.library_item_id],
     );
 
     const copy_index = all_copies.findIndex((c) => c.id === item_copy.id);
@@ -774,7 +775,7 @@ router.post(
       // Verify library item exists
       const library_item = await db.get_by_id(
         'LIBRARY_ITEMS',
-        req.body.library_item_id
+        req.body.library_item_id,
       );
       if (!library_item) {
         return res.status(400).json({
@@ -815,7 +816,7 @@ router.post(
         message: error.message,
       });
     }
-  }
+  },
 );
 
 // Validation for updates (more lenient - only validate fields that are being updated)
@@ -865,7 +866,7 @@ router.put(
     try {
       const existing_copy = await db.get_by_id(
         'LIBRARY_ITEM_COPIES',
-        req.params.id
+        req.params.id,
       );
 
       if (!existing_copy) {
@@ -882,7 +883,7 @@ router.put(
       const updated = await db.update_record(
         'LIBRARY_ITEM_COPIES',
         req.params.id,
-        update_data
+        update_data,
       );
 
       if (updated) {
@@ -901,7 +902,7 @@ router.put(
         message: error.message,
       });
     }
-  }
+  },
 );
 
 // DELETE /api/v1/item-copies/:id - Delete item copy
@@ -909,7 +910,7 @@ router.delete('/:id', async (req, res) => {
   try {
     const existing_copy = await db.get_by_id(
       'LIBRARY_ITEM_COPIES',
-      req.params.id
+      req.params.id,
     );
 
     if (!existing_copy) {
@@ -927,7 +928,7 @@ router.delete('/:id', async (req, res) => {
 
     const deleted = await db.delete_record(
       'LIBRARY_ITEM_COPIES',
-      req.params.id
+      req.params.id,
     );
 
     if (deleted) {

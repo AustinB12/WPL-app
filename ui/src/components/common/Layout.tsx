@@ -2,6 +2,7 @@ import { Box } from '@mui/material';
 import { useState } from 'react';
 import { Outlet } from 'react-router-dom';
 import { Branch_Provider } from '../../contexts/Branch_Context';
+import { ErrorBoundary } from './ErrorBoundary';
 import { Header } from './Header';
 import { Sidebar } from './Sidebar';
 
@@ -14,7 +15,7 @@ export const Layout = () => {
         <Header sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
         <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
         <Box
-          component="main"
+          component='main'
           sx={(theme) => ({
             flexGrow: 1,
             bgcolor: theme.palette.mode === 'dark' ? '#292929ff' : '#eeeeeeff',
@@ -23,7 +24,9 @@ export const Layout = () => {
             mt: '64px', // Height of the Header/AppBar
           })}
         >
-          <Outlet />
+          <ErrorBoundary>
+            <Outlet />
+          </ErrorBoundary>
         </Box>
       </Branch_Provider>
     </Box>

@@ -45,6 +45,37 @@ export const useCheckoutItem = () => {
   });
 };
 
+export const useRenewItem = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ copy_id }: { copy_id: number }) =>
+      data_service.renew_item(copy_id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['books'] });
+      queryClient.invalidateQueries({ queryKey: ['transactions'] });
+      queryClient.invalidateQueries({ queryKey: ['all_patrons'] });
+      queryClient.invalidateQueries({ queryKey: ['patron'] });
+      queryClient.invalidateQueries({ queryKey: ['checked_out_copies'] });
+    },
+  });
+};
+
+export const use_reserve_item = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ copy_id }: { copy_id: number }) =>
+      data_service.reserve_item(copy_id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['books'] });
+      queryClient.invalidateQueries({ queryKey: ['transactions'] });
+      queryClient.invalidateQueries({ queryKey: ['all_patrons'] });
+      queryClient.invalidateQueries({ queryKey: ['patron'] });
+    },
+  });
+};
+
 export const useReturnBook = () => {
   const queryClient = useQueryClient();
 
@@ -64,7 +95,7 @@ export const useReturnBook = () => {
         copy_id,
         new_location_id,
         new_condition,
-        notes
+        notes,
       ),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['books'] });

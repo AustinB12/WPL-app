@@ -13,6 +13,7 @@ import {
 } from '@mui/icons-material';
 import {
   Alert,
+  Autocomplete,
   Button,
   Chip,
   CircularProgress,
@@ -22,19 +23,35 @@ import {
   Stack,
   TextField,
   Typography,
+  type SxProps,
+  type Theme,
 } from '@mui/material';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-import { Activity, type FC, useEffect, useRef, useState } from 'react';
+import {
+  Activity,
+  type FC,
+  type SyntheticEvent,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
 import { QuickCheckInCard } from '../components/checkin/QuickCheckInCard';
 import { RecentCheckInsList } from '../components/checkin/RecentCheckInsList';
 import { PageContainer, PageTitle } from '../components/common/PageBuilders';
 import { useSelectedBranch } from '../hooks/use_branch_hooks';
-import { useCheckedOutCopiesSimple, useCopyById } from '../hooks/use_copies';
+import { useCheckedOutCopies, useCopyById } from '../hooks/use_copies';
 import { useSnackbar } from '../hooks/use_snackbar';
 import { useReturnBook } from '../hooks/use_transactions';
 import type { Checkin_Receipt } from '../types/transaction_types';
-import type { Item_Condition, Library_Item_Type } from '../types/item_types';
+import type {
+  Item_Condition,
+  Item_Copy_Result,
+  Library_Item_Type,
+} from '../types/item_types';
+import type { Patron } from '../types/patron_types';
+import { ItemReservationCard } from '../components/reservations/ItemReservationCard';
 
 interface Recent_Check_In {
   copy_id: number;
@@ -45,7 +62,6 @@ interface Recent_Check_In {
 }
 
 export const Check_In_Item: FC = () => {
-  const [barcode_input, set_barcode_input] = useState('');
   const [copy_id_to_fetch, set_copy_id_to_fetch] = useState<number | null>(
     null
   );
@@ -54,7 +70,11 @@ export const Check_In_Item: FC = () => {
   const [recent_check_ins, set_recent_check_ins] = useState<Recent_Check_In[]>(
     []
   );
-  const barcode_input_ref = useRef<HTMLInputElement>(null);
+
+  const [selected_item, set_selected_item] = useState<Item_Copy_Result | null>(
+    null
+  );
+  const [item_input_value, set_item_input_value] = useState('');
 
   const { selected_branch } = useSelectedBranch();
   const { show_snackbar } = useSnackbar();
@@ -68,12 +88,7 @@ export const Check_In_Item: FC = () => {
   const { mutate: return_book, isPending: is_returning } = useReturnBook();
 
   const { data: checked_out_copies, isLoading: loading_checked_out_copies } =
-    useCheckedOutCopiesSimple();
-
-  // Auto-focus barcode input on mount
-  useEffect(() => {
-    barcode_input_ref.current?.focus();
-  }, []);
+    useCheckedOutCopies();
 
   // Handle errors
   useEffect(() => {
@@ -84,19 +99,8 @@ export const Check_In_Item: FC = () => {
     }
   }, [item_error]);
 
-  const handle_barcode_submit = () => {
-    const copy_id = parseInt(barcode_input);
-    if (isNaN(copy_id) || copy_id <= 0) {
-      set_error_message('Please enter a valid Copy ID (Barcode)');
-      return;
-    }
-    set_error_message(null);
-    set_copy_id_to_fetch(copy_id);
-  };
-
   const handle_checked_out_clicked = (copy_id: number) => {
     set_error_message(null);
-    set_barcode_input(copy_id.toString());
     set_copy_id_to_fetch(copy_id);
   };
 
@@ -138,11 +142,8 @@ export const Check_In_Item: FC = () => {
             severity: 'success',
           });
 
-          // Clear form and refocus
-          set_barcode_input('');
           set_copy_id_to_fetch(null);
           set_error_message(null);
-          barcode_input_ref.current?.focus();
         },
         onError: (error: Error) => {
           show_snackbar({
@@ -156,183 +157,189 @@ export const Check_In_Item: FC = () => {
   };
 
   const handle_cancel = () => {
-    set_barcode_input('');
     set_copy_id_to_fetch(null);
     set_error_message(null);
-    barcode_input_ref.current?.focus();
   };
 
-  const has_valid_item =
-    item_info &&
-    ['CHECKED OUT', 'RESERVED'].includes(item_info.status.toUpperCase()) &&
-    !error_message;
+  const get_option_id = useCallback(
+    (option: Patron | Item_Copy_Result) =>
+      `${option.id}-${
+        Object.hasOwn(option, 'copy_number')
+          ? (option as Item_Copy_Result).copy_number
+          : (option as Patron).active_checkouts
+      }`,
+    []
+  );
 
-  const found_available_item =
-    item_info && item_info.status.toUpperCase() === 'AVAILABLE';
+  // Item autocomplete handlers
+  const handle_item_change = useCallback(
+    (_event: SyntheticEvent, new_value: Item_Copy_Result | null) => {
+      set_selected_item(new_value);
+    },
+    []
+  );
+
+  const handle_item_input_change = useCallback(
+    (_event: SyntheticEvent, new_input_value: string) => {
+      set_item_input_value(new_input_value);
+    },
+    []
+  );
+
+  const format_item_label = useCallback(
+    (option: Item_Copy_Result) =>
+      `${option.title} [${option.copy_number}/${option.total_copies}]`,
+    []
+  );
+
+  const some_loading =
+    loading_checked_out_copies || loading_item || loading_checked_out_copies;
 
   return (
     <LocalizationProvider dateAdapter={AdapterDateFns}>
       <PageContainer width='xl' scroll={true}>
         <PageTitle title='Check In Item' Icon_Component={Input} />
-        <Stack gap={2}>
-          {/* Barcode Input Section */}
-          <Paper
-            sx={{
-              px: 4,
-              py: 3,
-              borderRadius: 16,
-              cornerShape: 'squircle',
-            }}
+        <Stack height={'100%'} gap={2}>
+          <Autocomplete
+            disabled={some_loading}
+            value={selected_item}
+            onChange={handle_item_change}
+            inputValue={item_input_value}
+            onInputChange={handle_item_input_change}
+            sx={AUTOCOMPLETE_SX}
+            loading={some_loading}
+            options={checked_out_copies || []}
+            renderInput={(params) => (
+              <TextField {...params} label=' Select an item' />
+            )}
+            getOptionKey={get_option_id}
+            getOptionLabel={format_item_label}
+          />
+          {/* <Stack
+            spacing={2}
+            alignItems={'flex-start'}
+            justifyContent={'space-between'}
+            direction={'row'}
           >
-            <Typography variant='h6' gutterBottom fontWeight='bold'>
-              Scan or Enter Copy ID
-            </Typography>
-            <Typography variant='body2' color='text.secondary' sx={{ mb: 2 }}>
-              Scan the barcode or manually enter the Copy ID to check in an
-              item. {item_info?.status}
-            </Typography>
+            <ItemReservationCard item={selected_item} />
 
-            <Stack direction='row' spacing={2}>
-              <TextField
-                inputRef={barcode_input_ref}
-                label='Copy ID'
-                value={barcode_input}
-                onChange={(e) => set_barcode_input(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    handle_barcode_submit();
-                  } else if (e.key === 'Escape') {
-                    handle_cancel();
-                  }
-                }}
-                placeholder='Enter Copy ID'
-                type='number'
-                fullWidth
-                error={!!error_message}
-                disabled={loading_item || is_returning}
-                autoFocus
-              />
-              <Button
-                variant='contained'
-                onClick={handle_barcode_submit}
-                disabled={!barcode_input || loading_item || is_returning}
-                sx={{ minWidth: 120 }}
-                startIcon={loading_item ? <CircularProgress size={20} /> : null}
-              >
-                {loading_item ? 'Searching...' : 'Lookup'}
-              </Button>
-            </Stack>
-
-            <Activity
-              name='error-alert'
-              mode={error_message ? 'visible' : 'hidden'}
+            <Paper
+              sx={{
+                px: 4,
+                py: 3,
+                borderRadius: 16,
+                cornerShape: 'squircle',
+              }}
             >
-              <Alert
-                severity='error'
-                sx={{ mt: 2 }}
-                icon={<ErrorOutline />}
-                onClose={() => set_error_message(null)}
+              <Stack
+                sx={{ alignSelf: 'flex-start' }}
+                direction='row'
+                gap={2}
+                alignItems='center'
               >
-                {error_message}
-              </Alert>
-            </Activity>
-          </Paper>
-          <Paper
-            sx={{
-              px: 4,
-              py: 3,
-              borderRadius: 16,
-              cornerShape: 'squircle',
-            }}
-          >
-            <Stack
-              sx={{ alignSelf: 'flex-start' }}
-              direction='row'
-              gap={2}
-              alignItems='center'
-            >
-              <IconButton
-                onClick={() => set_show_checked_out(!show_checked_out)}
-              >
-                <ArrowUpward
-                  sx={{
-                    transform: show_checked_out
-                      ? 'rotate(180deg)'
-                      : 'rotate(0deg)',
-                    transitionProperty: 'transform',
-                    transitionDuration: '0.2s',
-                  }}
-                />
-              </IconButton>
-              <Typography variant='h6' fontWeight='bold'>
-                Checked Out Copies
-              </Typography>
-            </Stack>
-            <Collapse in={show_checked_out}>
-              {!loading_checked_out_copies &&
-              checked_out_copies &&
-              checked_out_copies.length > 0 ? (
-                <Stack direction='row' gap={2} flexWrap={'wrap'} sx={{ my: 2 }}>
-                  {checked_out_copies.map((copy) => (
-                    <Chip
-                      sx={{
-                        maxWidth: 200,
-                        ['&:hover']: {
-                          cursor: 'pointer',
-                          boxShadow: 3,
-                        },
-                      }}
-                      key={copy.id}
-                      label={copy.id + ': ' + copy.title}
-                      variant='outlined'
-                      icon={get_checked_out_copy_chip_icon(
-                        copy.item_type,
-                        copy.is_overdue
-                      )}
-                      onClick={() => handle_checked_out_clicked(copy.id)}
-                    />
-                  ))}
-                </Stack>
-              ) : (
-                <Typography
-                  variant='body2'
-                  color='text.secondary'
-                  sx={{ my: 2 }}
+                <IconButton
+                  onClick={() => set_show_checked_out(!show_checked_out)}
                 >
-                  No checked out copies found.
+                  <ArrowUpward
+                    sx={{
+                      transform: show_checked_out
+                        ? 'rotate(180deg)'
+                        : 'rotate(0deg)',
+                      transitionProperty: 'transform',
+                      transitionDuration: '0.2s',
+                    }}
+                  />
+                </IconButton>
+                <Typography variant='h6' fontWeight='bold'>
+                  Checked Out Copies
                 </Typography>
-              )}
-            </Collapse>
-          </Paper>
+              </Stack>
+              <Collapse in={show_checked_out}>
+                {!loading_checked_out_copies &&
+                checked_out_copies &&
+                checked_out_copies.length > 0 ? (
+                  <Stack
+                    direction='row'
+                    gap={2}
+                    flexWrap={'wrap'}
+                    sx={{ my: 2 }}
+                  >
+                    {checked_out_copies.map((copy) => (
+                      <Chip
+                        sx={{
+                          maxWidth: 200,
+                          ['&:hover']: {
+                            cursor: 'pointer',
+                            boxShadow: 3,
+                          },
+                        }}
+                        key={copy.id}
+                        label={copy.id + ': ' + copy.title}
+                        variant='outlined'
+                        icon={get_checked_out_copy_chip_icon(
+                          copy.item_type,
+                          new Date(copy?.due_date || '') < new Date()
+                        )}
+                        onClick={() => handle_checked_out_clicked(copy.id)}
+                      />
+                    ))}
+                  </Stack>
+                ) : (
+                  <Typography
+                    variant='body2'
+                    color='text.secondary'
+                    sx={{ my: 2 }}
+                  >
+                    No checked out copies found.
+                  </Typography>
+                )}
+              </Collapse>
+            </Paper>
+          </Stack> */}
 
-          {/* Item Preview Card */}
-          {has_valid_item && (
+          <Activity
+            name='error-alert'
+            mode={error_message ? 'visible' : 'hidden'}
+          >
+            <Alert
+              severity='error'
+              sx={{ mt: 2 }}
+              icon={<ErrorOutline />}
+              onClose={() => set_error_message(null)}
+            >
+              {error_message}
+            </Alert>
+          </Activity>
+
+          {selected_item && (
             <QuickCheckInCard
-              item_info={item_info}
+              item_info={selected_item}
               on_confirm={handle_confirm_checkin}
               on_cancel={handle_cancel}
               is_processing={is_returning}
             />
           )}
 
-          {found_available_item && (
-            <Alert
-              severity='info'
-              sx={{ mt: 2 }}
-              icon={<InfoOutline />}
-              onClose={() => {
-                set_barcode_input('');
-                set_copy_id_to_fetch(null);
-              }}
-            >
-              {'Item is not currently checked out.'}
-            </Alert>
-          )}
-
           {/* Recent Check-Ins */}
           {recent_check_ins.length > 0 && (
             <RecentCheckInsList check_ins={recent_check_ins} />
           )}
+          <Stack
+            sx={{ flex: 1, justifyContent: 'flex-end', alignItems: 'center' }}
+          >
+            <Button
+              size='large'
+              variant='contained'
+              // onClick={handle_confirm_checkin}
+              disabled={!selected_item || loading_item || is_returning}
+              sx={{ minWidth: 120, verticalAlign: 'middle' }}
+              startIcon={loading_item ? <CircularProgress size={20} /> : null}
+              loading={some_loading}
+              loadingIndicator={'Searching...'}
+            >
+              {'Check In'}
+            </Button>
+          </Stack>
         </Stack>
       </PageContainer>
     </LocalizationProvider>
@@ -365,3 +372,8 @@ function get_checked_out_copy_chip_icon(
       return <QuestionMark color={color} />;
   }
 }
+
+const AUTOCOMPLETE_SX: SxProps<Theme> = {
+  minWidth: { xs: 200, sm: 300 },
+  width: { xs: '100%', sm: '50%' },
+};

@@ -472,47 +472,6 @@ router.get('/patron/:patron_id', async (req, res) => {
   }
 });
 
-// GET /api/v1/transactions/:id - Get single transaction
-router.get('/:id', async (req, res) => {
-  try {
-    const query = `
-      SELECT 
-        t.*,
-        p.first_name,
-        p.last_name,
-        p.email,
-        ci.title,
-        ci.item_type,
-        b.branch_name
-      FROM ITEM_TRANSACTIONS t
-      JOIN PATRONS p ON t.patron_id = p.id
-      JOIN LIBRARY_ITEM_COPIES ic ON t.item_copy_id = ic.id
-      JOIN LIBRARY_ITEMS ci ON ic.library_item_id = ci.id
-      JOIN BRANCHES b ON ic.owning_branch_id = b.id
-      WHERE t.id = ?
-    `;
-
-    const results = await db.execute_query(query, [req.params.id]);
-    const transaction = results[0];
-
-    if (!transaction) {
-      return res.status(404).json({
-        error: 'Transaction not found',
-      });
-    }
-
-    res.json({
-      success: true,
-      data: transaction,
-    });
-  } catch (error) {
-    res.status(500).json({
-      error: 'Failed to fetch transaction',
-      message: error.message,
-    });
-  }
-});
-
 // POST /api/v1/transactions/checkout - Checkout item
 router.post(
   '/checkout',
@@ -1168,6 +1127,195 @@ router.post(
   }
 );
 
+// PUT /api/v1/transactions/renew-item/:item_id - Renew an item by copy ID
+router.put('/renew-item/:item_id', async (req, res) => {
+  try {
+    const copy_id = parseInt(req.params.item_id, 10);
+
+    if (Number.isNaN(copy_id)) {
+      return res.status(400).json({
+        error: 'Invalid copy ID',
+      });
+    }
+
+    // Get item copy
+    const item_copy = await db.get_by_id('LIBRARY_ITEM_COPIES', copy_id);
+    if (!item_copy) {
+      return res.status(404).json({
+        error: 'Item copy not found',
+      });
+    }
+
+    // Verify item is checked out
+    const status_upper = (item_copy.status || '').trim().toUpperCase();
+    const is_checked_out =
+      status_upper === 'CHECKED OUT' ||
+      status_upper === 'RENEWED ONCE' ||
+      status_upper === 'RENEWED TWICE';
+
+    if (!is_checked_out) {
+      return res.status(400).json({
+        error: 'Item is not checked out',
+        message: `Current status: ${item_copy.status}`,
+      });
+    }
+
+    // Check renewal status - prevent if already renewed twice
+    if (status_upper === 'RENEWED TWICE') {
+      return res.status(400).json({
+        error: 'Item has already been renewed twice',
+        message: 'Maximum renewal limit reached',
+      });
+    }
+
+    // Check if item is reserved - prevent renewal if there are active reservations
+    const reservations = await db.execute_query(
+      'SELECT COUNT(*) as count FROM RESERVATIONS WHERE item_copy_id = ? AND status IN ("waiting", "ready")',
+      [item_copy.library_item_id]
+    );
+
+    if (reservations[0].count > 0) {
+      return res.status(400).json({
+        error: 'Item has reservations',
+        message: 'This item has active reservations and cannot be renewed',
+      });
+    }
+
+    // Get patron information (who has it checked out)
+    const patron_id = item_copy.checked_out_by;
+    if (!patron_id) {
+      return res.status(400).json({
+        error: 'No patron associated with this checkout',
+      });
+    }
+
+    const patron = await db.get_by_id('PATRONS', patron_id);
+    if (!patron) {
+      return res.status(400).json({
+        error: 'Patron not found',
+      });
+    }
+
+    // Check if patron's card is expired
+    const now = new Date();
+    const card_expiration = new Date(patron.card_expiration_date);
+    if (card_expiration < now) {
+      return res.status(400).json({
+        error: "Patron's library card is expired",
+        message: `Card expired on ${patron.card_expiration_date}`,
+      });
+    }
+
+    // Check if patron has fines
+    if (patron.balance > 0) {
+      return res.status(400).json({
+        error: 'Patron has outstanding fines',
+        message: `Outstanding balance: $${patron.balance.toFixed(2)}`,
+      });
+    }
+
+    // Get library item details for calculating due date
+    const library_item = await db.get_by_id(
+      'LIBRARY_ITEMS',
+      item_copy.library_item_id
+    );
+    if (!library_item) {
+      return res.status(404).json({
+        error: 'Library item not found',
+      });
+    }
+
+    // Get video details if applicable
+    let is_new_release = false;
+    if (
+      library_item.item_type === 'VIDEO' ||
+      library_item.item_type === 'video'
+    ) {
+      const videos = await db.execute_query(
+        'SELECT is_new_release FROM VIDEOS WHERE library_item_id = ?',
+        [library_item.id]
+      );
+      if (videos[0]) {
+        is_new_release = videos[0].is_new_release === 1;
+      }
+    }
+
+    // Calculate new due date based on item type
+    const current_date = new Date();
+    let days_to_add = 28; // Default for books: 4 weeks
+
+    const item_type_upper = (library_item.item_type || '').toUpperCase();
+    if (item_type_upper === 'VIDEO') {
+      if (is_new_release) {
+        days_to_add = 3; // New release videos: 3 days
+      } else {
+        days_to_add = 7; // Regular videos: 1 week
+      }
+    }
+
+    const new_due_date = new Date(
+      current_date.getTime() + days_to_add * 24 * 60 * 60 * 1000
+    );
+    const formatted_due_date = format_sql_datetime(new_due_date);
+    const formatted_now = format_sql_datetime(now);
+
+    // Determine new renewal status
+    let new_status = 'Renewed Once';
+    if (status_upper === 'RENEWED ONCE') {
+      new_status = 'Renewed Twice';
+    }
+
+    await db.execute_transaction(async () => {
+      // Create a renewal transaction record
+      await db.create_record('ITEM_TRANSACTIONS', {
+        item_copy_id: copy_id,
+        patron_id: patron_id,
+        location_id: item_copy.current_branch_id,
+        transaction_type: 'RENEWAL',
+        date: formatted_now,
+        created_at: formatted_now,
+      });
+
+      // Update item copy with new due date and status
+      await db.update_record('LIBRARY_ITEM_COPIES', copy_id, {
+        due_date: formatted_due_date,
+        status: new_status,
+        updated_at: formatted_now,
+      });
+    });
+
+    // Get updated copy for response
+    const updated_copy = await db.get_by_id('LIBRARY_ITEM_COPIES', copy_id);
+
+    res.json({
+      success: true,
+      message: 'Item renewed successfully',
+      data: {
+        copy_id,
+        new_due_date: formatted_due_date,
+        renewal_status: new_status,
+        renewals_remaining: new_status === 'Renewed Once' ? 1 : 0,
+        item: {
+          id: library_item.id,
+          title: library_item.title,
+          item_type: library_item.item_type,
+        },
+        patron: {
+          id: patron.id,
+          first_name: patron.first_name,
+          last_name: patron.last_name,
+        },
+        updated_copy,
+      },
+    });
+  } catch (error) {
+    res.status(500).json({
+      error: 'Failed to renew item',
+      message: error.message,
+    });
+  }
+});
+
 // PUT /api/v1/transactions/:id/renew - Renew transaction
 router.put('/:id/renew', async (req, res) => {
   try {
@@ -1426,6 +1574,48 @@ router.get('/by-copy/:copy_id', async (req, res) => {
   } catch (error) {
     res.status(500).json({
       error: 'Failed to fetch transaction information',
+      message: error.message,
+    });
+  }
+});
+
+// GET /api/v1/transactions/:id - Get single transaction
+// NOTE: This route uses a catch-all parameter and MUST come after all other specific GET routes
+router.get('/:id', async (req, res) => {
+  try {
+    const query = `
+      SELECT 
+        t.*,
+        p.first_name,
+        p.last_name,
+        p.email,
+        ci.title,
+        ci.item_type,
+        b.branch_name
+      FROM ITEM_TRANSACTIONS t
+      JOIN PATRONS p ON t.patron_id = p.id
+      JOIN LIBRARY_ITEM_COPIES ic ON t.item_copy_id = ic.id
+      JOIN LIBRARY_ITEMS ci ON ic.library_item_id = ci.id
+      JOIN BRANCHES b ON ic.owning_branch_id = b.id
+      WHERE t.id = ?
+    `;
+
+    const results = await db.execute_query(query, [req.params.id]);
+    const transaction = results[0];
+
+    if (!transaction) {
+      return res.status(404).json({
+        error: 'Transaction not found',
+      });
+    }
+
+    res.json({
+      success: true,
+      data: transaction,
+    });
+  } catch (error) {
+    res.status(500).json({
+      error: 'Failed to fetch transaction',
       message: error.message,
     });
   }

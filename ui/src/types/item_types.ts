@@ -316,6 +316,7 @@ export interface Item_Copy_Result extends Item_Copy {
   total_copies: number;
   transaction_time?: string;
   cover_image?: string;
+  patron_avatar_url?: string;
 }
 
 export interface Checked_Out_Copy_Simple {

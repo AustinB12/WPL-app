@@ -84,7 +84,7 @@ const Check_Out_Item_Page_Content = () => {
     [show_snackbar]
   );
 
-  // Reservation mutation
+  // Checkout mutation
   const { mutate: check_out_item, isPending: check_out_loading } =
     useCheckoutItem();
 
@@ -164,6 +164,8 @@ const Check_Out_Item_Page_Content = () => {
 
   const is_form_valid = selected_patron && selected_item && !check_out_loading;
 
+  const some_loading = patrons_loading || copies_loading || check_out_loading;
+
   return (
     <Stack gap={2} sx={{ flex: 1, pt: 1 }}>
       {/* Selection Section */}
@@ -210,7 +212,7 @@ const Check_Out_Item_Page_Content = () => {
         </Stack>
       </Stack>
 
-      <Activity mode={check_out_loading ? 'visible' : 'hidden'}>
+      <Activity mode={some_loading ? 'visible' : 'hidden'}>
         <LinearProgress sx={{ width: '80%', alignSelf: 'center' }} />
       </Activity>
 

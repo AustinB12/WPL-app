@@ -66,12 +66,11 @@ export const QuickCheckInCard: FC<QuickCheckInCardProps> = ({
   return (
     <Card
       sx={{
-        borderRadius: 16,
-        cornerShape: 'squircle',
+        borderRadius: 3,
         boxShadow: 3,
       }}
     >
-      <CardContent>
+      <CardContent sx={{ pt: 0 }}>
         <Stack spacing={2} sx={{ position: 'relative' }}>
           <Activity
             name='success-alert'
@@ -83,7 +82,7 @@ export const QuickCheckInCard: FC<QuickCheckInCardProps> = ({
               sx={{
                 borderRadius: 2,
                 position: 'absolute',
-                top: 0,
+                top: 5,
                 right: 0,
               }}
               onClose={() => set_hide_alert(true)}
@@ -105,7 +104,7 @@ export const QuickCheckInCard: FC<QuickCheckInCardProps> = ({
               flexWrap='wrap'
             >
               <Typography variant='body2' color='text.secondary'>
-                Copy #{item_info.id}
+                Item ID <strong>#{item_info.id}</strong>
               </Typography>
               <Typography variant='body2' color='text.secondary'>
                 •
@@ -124,18 +123,33 @@ export const QuickCheckInCard: FC<QuickCheckInCardProps> = ({
             name='patron-info'
             mode={is_checked_out ? 'visible' : 'hidden'}
           >
-            <Box>
-              <Typography
-                variant='subtitle2'
-                color='text.secondary'
-                gutterBottom
-              >
-                Checked Out By:
-              </Typography>
-              <Typography variant='body1'>
-                {`${item_info.patron_first_name} ${item_info.patron_last_name} ID: ${item_info.checked_out_by}`}
-              </Typography>
-            </Box>
+            <Stack direction={'row'} gap={4}>
+              <Box>
+                <Typography
+                  variant='subtitle2'
+                  color='text.secondary'
+                  gutterBottom
+                >
+                  Checked Out By:
+                </Typography>
+                <Typography variant='body1'>
+                  {`${item_info.patron_first_name} ${item_info.patron_last_name} ID: ${item_info.checked_out_by}`}
+                </Typography>
+              </Box>
+              {/* Current Condition */}
+              <Box>
+                <Typography
+                  variant='subtitle2'
+                  color='text.secondary'
+                  gutterBottom
+                >
+                  Current Condition
+                </Typography>
+                <ItemCopyConditionChip
+                  condition={item_info?.condition || 'Good'}
+                />
+              </Box>
+            </Stack>
           </Activity>
 
           {/* Due Date & Overdue Status */}
@@ -191,14 +205,6 @@ export const QuickCheckInCard: FC<QuickCheckInCardProps> = ({
           )}
 
           <Divider />
-
-          {/* Current Condition */}
-          <Box>
-            <Typography variant='subtitle2' color='text.secondary' gutterBottom>
-              Current Condition
-            </Typography>
-            <ItemCopyConditionChip condition={item_info?.condition || 'Good'} />
-          </Box>
 
           {/* Expandable Condition & Notes Section */}
           <Box>

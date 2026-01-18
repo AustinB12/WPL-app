@@ -11,7 +11,7 @@ import { Full_Page_Loading } from './pages/Full_Page_Loading/Full_Page_Loading';
 
 const Home_Page = lazy(() =>
   import('./pages/home_page').then((module) => ({
-    default: module.HomePage,
+    default: module.Home_Page,
   }))
 );
 
@@ -57,9 +57,9 @@ const Search_Page = lazy(() =>
   }))
 );
 
-const Renew_Item = lazy(() =>
-  import('./pages/renew_item').then((module) => ({
-    default: module.RenewItem,
+const Renew_Item_Page = lazy(() =>
+  import('./pages/renew_item_page').then((module) => ({
+    default: module.Renew_Item_Page,
   }))
 );
 
@@ -176,7 +176,6 @@ function App() {
                     path=':library_item_id'
                     element={<Library_Item_Page />}
                   />
-                  change
                 </Route>
                 <Route
                   path='library-item-copies'
@@ -200,7 +199,7 @@ function App() {
                 <Route path='reservations' element={<Reservations_Page />} />
                 <Route path='dashboard' element={<Dashboard_Page />} />
                 <Route path='search' element={<Search_Page />} />
-                <Route path='renew' element={<Renew_Item />} />
+                <Route path='renew' element={<Renew_Item_Page />} />
                 <Route path='check-in' element={<Check_In_Item />} />
                 <Route path='check-out' element={<Check_Out_Item_Page />} />
                 <Route path='reshelve' element={<Reshelve_Items_Page />} />

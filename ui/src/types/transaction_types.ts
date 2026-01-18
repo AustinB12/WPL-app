@@ -220,6 +220,30 @@ export interface Check_In_Form_Data {
   notes?: string;
 }
 
+export type Renewal_Status = 'Checked Out' | 'Renewed Once' | 'Renewed Twice';
+
+export interface Renewal_Response {
+  copy_id: number;
+  new_due_date: string;
+  renewal_status: Renewal_Status;
+  renewals_remaining: number;
+  item: {
+    id: number;
+    title: string;
+    item_type: string;
+  };
+  patron: {
+    id: number;
+    first_name: string;
+    last_name: string;
+  };
+  updated_copy: {
+    id: number;
+    status: string;
+    due_date: string;
+  };
+}
+
 export type Check_Out_Details = Check_Out_Transaction &
   Patron &
   Check_Out_Copy &
