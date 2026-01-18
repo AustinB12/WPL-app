@@ -1,28 +1,9 @@
-import {
-  Album,
-  ArrowUpward,
-  ChromeReaderMode,
-  ErrorOutline,
-  InfoOutline,
-  Input,
-  MenuBook,
-  Mic,
-  Newspaper,
-  QuestionMark,
-  YouTube,
-} from '@mui/icons-material';
+import { ErrorOutline, Input } from '@mui/icons-material';
 import {
   Alert,
   Autocomplete,
-  Button,
-  Chip,
-  CircularProgress,
-  Collapse,
-  IconButton,
-  Paper,
   Stack,
   TextField,
-  Typography,
   type SxProps,
   type Theme,
 } from '@mui/material';
@@ -33,25 +14,18 @@ import {
   type FC,
   type SyntheticEvent,
   useCallback,
-  useEffect,
-  useRef,
   useState,
 } from 'react';
 import { QuickCheckInCard } from '../components/checkin/QuickCheckInCard';
 import { RecentCheckInsList } from '../components/checkin/RecentCheckInsList';
 import { PageContainer, PageTitle } from '../components/common/PageBuilders';
 import { useSelectedBranch } from '../hooks/use_branch_hooks';
-import { useCheckedOutCopies, useCopyById } from '../hooks/use_copies';
+import { useCheckedOutCopies } from '../hooks/use_copies';
 import { useSnackbar } from '../hooks/use_snackbar';
 import { useReturnBook } from '../hooks/use_transactions';
 import type { Checkin_Receipt } from '../types/transaction_types';
-import type {
-  Item_Condition,
-  Item_Copy_Result,
-  Library_Item_Type,
-} from '../types/item_types';
+import type { Item_Condition, Item_Copy_Result } from '../types/item_types';
 import type { Patron } from '../types/patron_types';
-import { ItemReservationCard } from '../components/reservations/ItemReservationCard';
 
 interface Recent_Check_In {
   copy_id: number;
@@ -62,59 +36,42 @@ interface Recent_Check_In {
 }
 
 export const Check_In_Item: FC = () => {
-  const [copy_id_to_fetch, set_copy_id_to_fetch] = useState<number | null>(
-    null
-  );
-  const [show_checked_out, set_show_checked_out] = useState(false);
   const [error_message, set_error_message] = useState<string | null>(null);
   const [recent_check_ins, set_recent_check_ins] = useState<Recent_Check_In[]>(
-    []
+    [],
   );
 
   const [selected_item, set_selected_item] = useState<Item_Copy_Result | null>(
-    null
+    null,
   );
   const [item_input_value, set_item_input_value] = useState('');
 
   const { selected_branch } = useSelectedBranch();
   const { show_snackbar } = useSnackbar();
 
-  const {
-    data: item_info,
-    isLoading: loading_item,
-    error: item_error,
-  } = useCopyById(copy_id_to_fetch);
-
   const { mutate: return_book, isPending: is_returning } = useReturnBook();
 
   const { data: checked_out_copies, isLoading: loading_checked_out_copies } =
     useCheckedOutCopies();
 
-  // Handle errors
-  useEffect(() => {
-    if (item_error) {
-      set_error_message(
-        'Copy not found. Please check the barcode and try again.'
-      );
-    }
-  }, [item_error]);
-
-  const handle_checked_out_clicked = (copy_id: number) => {
-    set_error_message(null);
-    set_copy_id_to_fetch(copy_id);
-  };
+  // const handle_checked_out_clicked = (copy_id: number) => {
+  //   set_error_message(null);
+  //   set_selected_item(
+  //     checked_out_copies?.find((copy) => copy.id === copy_id) || null,
+  //   );
+  // };
 
   const handle_confirm_checkin = (
     new_condition?: Item_Condition,
-    notes?: string
+    notes?: string,
   ) => {
-    if (!item_info) return;
+    if (!selected_item) return;
 
     return_book(
       {
-        copy_id: item_info.id,
-        new_condition: new_condition || item_info.condition,
-        new_location_id: selected_branch?.id || item_info.current_branch_id,
+        copy_id: selected_item.id,
+        new_condition: new_condition || selected_item.condition,
+        new_location_id: selected_branch?.id || selected_item.current_branch_id,
         notes: notes,
       },
       {
@@ -123,7 +80,7 @@ export const Check_In_Item: FC = () => {
           // Add to recent check-ins
           set_recent_check_ins((prev) => [
             {
-              copy_id: item_info.id,
+              copy_id: selected_item.id,
               title: data.title,
               timestamp: new Date(),
               had_fine: (data.fine_amount || 0) > 0,
@@ -142,7 +99,7 @@ export const Check_In_Item: FC = () => {
             severity: 'success',
           });
 
-          set_copy_id_to_fetch(null);
+          set_selected_item(null);
           set_error_message(null);
         },
         onError: (error: Error) => {
@@ -152,12 +109,12 @@ export const Check_In_Item: FC = () => {
           });
           set_error_message(`Failed to check in: ${error.message}`);
         },
-      }
+      },
     );
   };
 
   const handle_cancel = () => {
-    set_copy_id_to_fetch(null);
+    set_selected_item(null);
     set_error_message(null);
   };
 
@@ -168,7 +125,7 @@ export const Check_In_Item: FC = () => {
           ? (option as Item_Copy_Result).copy_number
           : (option as Patron).active_checkouts
       }`,
-    []
+    [],
   );
 
   // Item autocomplete handlers
@@ -176,24 +133,23 @@ export const Check_In_Item: FC = () => {
     (_event: SyntheticEvent, new_value: Item_Copy_Result | null) => {
       set_selected_item(new_value);
     },
-    []
+    [],
   );
 
   const handle_item_input_change = useCallback(
     (_event: SyntheticEvent, new_input_value: string) => {
       set_item_input_value(new_input_value);
     },
-    []
+    [],
   );
 
   const format_item_label = useCallback(
     (option: Item_Copy_Result) =>
       `${option.title} [${option.copy_number}/${option.total_copies}]`,
-    []
+    [],
   );
 
-  const some_loading =
-    loading_checked_out_copies || loading_item || loading_checked_out_copies;
+  const some_loading = loading_checked_out_copies || loading_checked_out_copies;
 
   return (
     <LocalizationProvider dateAdapter={AdapterDateFns}>
@@ -215,15 +171,15 @@ export const Check_In_Item: FC = () => {
             getOptionKey={get_option_id}
             getOptionLabel={format_item_label}
           />
-          {/* <Stack
+          <Stack
             spacing={2}
             alignItems={'flex-start'}
             justifyContent={'space-between'}
             direction={'row'}
           >
-            <ItemReservationCard item={selected_item} />
+            {/* <ItemReservationCard item={selected_item} /> */}
 
-            <Paper
+            {/* <Paper
               sx={{
                 px: 4,
                 py: 3,
@@ -278,7 +234,7 @@ export const Check_In_Item: FC = () => {
                         variant='outlined'
                         icon={get_checked_out_copy_chip_icon(
                           copy.item_type,
-                          new Date(copy?.due_date || '') < new Date()
+                          new Date(copy?.due_date || '') < new Date(),
                         )}
                         onClick={() => handle_checked_out_clicked(copy.id)}
                       />
@@ -294,8 +250,8 @@ export const Check_In_Item: FC = () => {
                   </Typography>
                 )}
               </Collapse>
-            </Paper>
-          </Stack> */}
+            </Paper> */}
+          </Stack>
 
           <Activity
             name='error-alert'
@@ -324,54 +280,38 @@ export const Check_In_Item: FC = () => {
           {recent_check_ins.length > 0 && (
             <RecentCheckInsList check_ins={recent_check_ins} />
           )}
-          <Stack
-            sx={{ flex: 1, justifyContent: 'flex-end', alignItems: 'center' }}
-          >
-            <Button
-              size='large'
-              variant='contained'
-              // onClick={handle_confirm_checkin}
-              disabled={!selected_item || loading_item || is_returning}
-              sx={{ minWidth: 120, verticalAlign: 'middle' }}
-              startIcon={loading_item ? <CircularProgress size={20} /> : null}
-              loading={some_loading}
-              loadingIndicator={'Searching...'}
-            >
-              {'Check In'}
-            </Button>
-          </Stack>
         </Stack>
       </PageContainer>
     </LocalizationProvider>
   );
 };
 
-function get_checked_out_copy_chip_icon(
-  item_type: Library_Item_Type,
-  is_overdue: boolean
-) {
-  const color = is_overdue ? 'error' : 'success';
-  switch (item_type) {
-    case 'BOOK':
-      return <ChromeReaderMode color={color} />;
-    case 'MAGAZINE':
-      return <MenuBook color={color} />;
-    case 'PERIODICAL':
-      return <Newspaper color={color} />;
-    case 'RECORDING':
-      return <Mic color={color} />;
-    case 'AUDIOBOOK':
-      return <ChromeReaderMode color={color} />;
-    case 'VIDEO':
-      return <YouTube color={color} />;
-    case 'CD':
-      return <Album color={color} />;
-    case 'VINYL':
-      return <Album color={color} />;
-    default:
-      return <QuestionMark color={color} />;
-  }
-}
+// function get_checked_out_copy_chip_icon(
+//   item_type: Library_Item_Type,
+//   is_overdue: boolean,
+// ) {
+//   const color = is_overdue ? 'error' : 'success';
+//   switch (item_type) {
+//     case 'BOOK':
+//       return <ChromeReaderMode color={color} />;
+//     case 'MAGAZINE':
+//       return <MenuBook color={color} />;
+//     case 'PERIODICAL':
+//       return <Newspaper color={color} />;
+//     case 'RECORDING':
+//       return <Mic color={color} />;
+//     case 'AUDIOBOOK':
+//       return <ChromeReaderMode color={color} />;
+//     case 'VIDEO':
+//       return <YouTube color={color} />;
+//     case 'CD':
+//       return <Album color={color} />;
+//     case 'VINYL':
+//       return <Album color={color} />;
+//     default:
+//       return <QuestionMark color={color} />;
+//   }
+// }
 
 const AUTOCOMPLETE_SX: SxProps<Theme> = {
   minWidth: { xs: 200, sm: 300 },
