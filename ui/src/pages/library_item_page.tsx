@@ -15,13 +15,19 @@ import {
 } from '@mui/material';
 import Paper from '@mui/material/Paper';
 import { type GridColDef } from '@mui/x-data-grid';
-import React, { Activity, type PropsWithChildren, Suspense } from 'react';
+import React, {
+  Activity,
+  type PropsWithChildren,
+  Suspense,
+  useState,
+} from 'react';
 import { useParams } from 'react-router-dom';
 import { GenreChip } from '../components/common/GenreChip';
 import { PageContainer, PageTitle } from '../components/common/PageBuilders';
 import SimpleGrid from '../components/common/SimpleGrid';
 import { ItemCopyConditionChip } from '../components/copies/ItemCopyConditionChip';
 import { ItemCopyStatusChip } from '../components/copies/ItemCopyStatusChip';
+import { Edit_Library_Item_Dialog } from '../components/library_items/Edit_Library_Item_Dialog';
 import { useCopiesOfLibraryItem } from '../hooks/use_copies';
 import { useLibraryItemById } from '../hooks/use_library_items';
 
@@ -70,15 +76,18 @@ const copy_columns: GridColDef[] = [
 
 export const Library_Item_Page = () => {
   const { library_item_id } = useParams();
-  const { data, isLoading: item_loading } = useLibraryItemById(
-    parseInt(library_item_id!)
-  );
+  const {
+    data,
+    isLoading: item_loading,
+    refetch,
+  } = useLibraryItemById(parseInt(library_item_id!));
 
   const { data: copies, isLoading: copies_loading } = useCopiesOfLibraryItem(
-    parseInt(library_item_id!)
+    parseInt(library_item_id!),
   );
 
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
+  const [edit_dialog_open, set_edit_dialog_open] = useState(false);
   const open = Boolean(anchorEl);
   const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     setAnchorEl(event.currentTarget);
@@ -87,9 +96,28 @@ export const Library_Item_Page = () => {
     setAnchorEl(null);
   };
 
+  const handle_edit_click = () => {
+    handleClose();
+    set_edit_dialog_open(true);
+  };
+
+  const handle_edit_dialog_close = () => {
+    set_edit_dialog_open(false);
+  };
+
+  const handle_edit_success = () => {
+    refetch();
+  };
+
   const page_loading = !library_item_id || item_loading;
   return (
     <PageContainer width='xl' sx={{ overflowY: 'auto' }}>
+      <Edit_Library_Item_Dialog
+        open={edit_dialog_open}
+        on_close={handle_edit_dialog_close}
+        library_item={data || null}
+        on_success={handle_edit_success}
+      />
       <Stack spacing={2} onClick={() => console.log(data)}>
         <Card sx={{ borderRadius: 3 }}>
           <CardHeader
@@ -110,7 +138,7 @@ export const Library_Item_Page = () => {
                   }}
                 >
                   <MenuList>
-                    <MenuItem onClick={handleClose}>
+                    <MenuItem onClick={handle_edit_click}>
                       <ListItemIcon>
                         <Edit />
                       </ListItemIcon>

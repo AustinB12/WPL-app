@@ -205,13 +205,43 @@ router.get('/', async (req, res) => {
         v.genre as video_genre
       FROM LIBRARY_ITEMS li
       JOIN VIDEOS v ON li.id = v.library_item_id AND li.item_type = 'VIDEO'
+    ),
+    magazines_table AS (
+      SELECT 
+        li.id,
+        li.title,
+        'MAGAZINE' as item_type,
+        li.description,
+        li.publication_year,
+        mag.subscription_cost,
+        mag.publisher,
+        mag.issue_number,
+        mag.publication_month,
+        mag.publication_year
+      FROM LIBRARY_ITEMS li
+      JOIN MAGAZINES mag ON li.id = mag.library_item_id AND li.item_type = 'MAGAZINE'
+    ),
+    periodicals_table AS (
+      SELECT 
+        li.id,
+        li.title,
+        'PERIODICAL' as item_type,
+        li.description,
+        li.publication_year,
+        per.pages,
+        per.issue_number,
+        per.publication_date
+      FROM LIBRARY_ITEMS li
+      JOIN PERIODICALS per ON li.id = per.library_item_id AND li.item_type = 'PERIODICAL'
     )
     SELECT
   (SELECT json_group_array(json_object('id', id, 'title', title, 'item_type', item_type, 'description', description, 'publication_year', publication_year, 'publisher', publisher, 'genre', genre, 'cover_image_url', cover_image_url, 'number_of_pages', number_of_pages, 'author', author)) FROM books_table) as books,
   (SELECT json_group_array(json_object('id', id, 'title', title, 'item_type', item_type, 'description', description, 'publication_year', publication_year, 'cover_image_url', cover_image_url, 'artist', artist, 'record_label', record_label, 'number_of_tracks', number_of_tracks, 'genre', genre, 'duration_seconds', duration_seconds)) FROM cds_table) as cds,
   (SELECT json_group_array(json_object('id', id, 'title', title, 'item_type', item_type, 'description', description, 'publication_year', publication_year, 'cover_image_url', cover_image_url, 'narrator', narrator, 'duration_in_seconds', duration_in_seconds, 'publisher', publisher, 'genre', genre, 'format', format, 'rating', rating)) FROM audiobooks_table) as audiobooks,
   (SELECT json_group_array(json_object('id', id, 'title', title, 'item_type', item_type, 'description', description, 'publication_year', publication_year, 'cover_image_url', cover_image_url, 'artist', artist, 'color', color, 'number_of_tracks', number_of_tracks, 'genre', genre, 'duration_seconds', duration_seconds, 'color', color)) FROM vinyls_table) as vinyls,
-  (SELECT json_group_array(json_object('id', id, 'title', title, 'item_type', item_type, 'description', description, 'publication_year', publication_year, 'director', director, 'studio', studio, 'video_format', video_format, 'duration_minutes', duration_minutes, 'video_rating', video_rating, 'video_genre', video_genre)) FROM videos_table) as videos
+  (SELECT json_group_array(json_object('id', id, 'title', title, 'item_type', item_type, 'description', description, 'publication_year', publication_year, 'director', director, 'studio', studio, 'video_format', video_format, 'duration_minutes', duration_minutes, 'video_rating', video_rating, 'video_genre', video_genre)) FROM videos_table) as videos,
+  (SELECT json_group_array(json_object('id', id, 'title', title, 'item_type', item_type, 'description', description, 'publication_year', publication_year, 'subscription_cost', subscription_cost, 'publisher', publisher, 'issue_number', issue_number, 'publication_month', publication_month, 'publication_year', publication_year)) FROM magazines_table) as magazines,
+  (SELECT json_group_array(json_object('id', id, 'title', title, 'item_type', item_type, 'description', description, 'publication_year', publication_year, 'pages', pages, 'issue_number', issue_number, 'publication_date', publication_date)) FROM periodicals_table) as periodicals
     `;
 
     const [result] = await db.execute_query(query, params);
@@ -222,8 +252,20 @@ router.get('/', async (req, res) => {
     const audiobooks = result.audiobooks ? JSON.parse(result.audiobooks) : [];
     const vinyls = result.vinyls ? JSON.parse(result.vinyls) : [];
     const videos = result.videos ? JSON.parse(result.videos) : [];
+    const magazines = result.magazines ? JSON.parse(result.magazines) : [];
+    const periodicals = result.periodicals
+      ? JSON.parse(result.periodicals)
+      : [];
     // Combine all items
-    const all_items = [...books, ...cds, ...audiobooks, ...vinyls, ...videos];
+    const all_items = [
+      ...books,
+      ...cds,
+      ...audiobooks,
+      ...vinyls,
+      ...videos,
+      ...magazines,
+      ...periodicals,
+    ];
 
     all_items.forEach((item) => {
       item.genre = item.genre ? JSON.parse(item.genre) : [];
