@@ -55,17 +55,15 @@ export interface Reservation {
   expiry_date: string;
   status: Reservation_Status;
   queue_position: number;
-  notification_sent: string;
   fulfillment_date: string;
-  created_at: string;
-  updated_at: string;
   first_name: string;
   last_name: string;
   email: string;
-  patron_image?: string;
+  patron_image: string | null;
   title: string;
   item_type: Library_Item_Type;
   description: string;
+  publication_year: number;
   copy_status: Library_Copy_Status;
   copy_condition: Item_Condition;
 }

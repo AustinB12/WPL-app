@@ -64,7 +64,7 @@ router.get('/', async (req, res) => {
 
     if (search) {
       conditions.push(
-        '(LOWER(title) LIKE LOWER(?) OR LOWER(description) LIKE LOWER(?))'
+        '(LOWER(title) LIKE LOWER(?) OR LOWER(description) LIKE LOWER(?))',
       );
       params.push(`%${search}%`, `%${search}%`);
     }
@@ -155,10 +155,63 @@ router.get('/', async (req, res) => {
         cds.duration_seconds
       FROM LIBRARY_ITEMS li
       JOIN CDS cds ON li.id = cds.library_item_id AND li.item_type = 'CD'
+    ),
+    audiobooks_table AS (
+      SELECT 
+        li.id,
+        li.title,
+        'AUDIOBOOK' as item_type,
+        li.description,
+        li.publication_year,
+        abks.cover_img_url as cover_image_url,
+        abks.narrator,
+        abks.duration_in_seconds,
+        abks.publisher,
+        abks.genre,
+        abks.format,
+        abks.rating
+      FROM LIBRARY_ITEMS li
+      JOIN AUDIOBOOKS abks ON li.id = abks.library_item_id AND li.item_type = 'AUDIOBOOK'
+    ),
+    vinyls_table AS (
+      SELECT 
+        li.id,
+        li.title,
+        'VINYL' as item_type,
+        li.description,
+        li.publication_year,
+        va.cover_image_url,
+        va.artist,
+        va.color,
+        va.number_of_tracks,
+        va.genre,
+        va.color,
+        va.duration_seconds
+      FROM LIBRARY_ITEMS li
+      JOIN VINYL_ALBUMS va ON li.id = va.library_item_id AND li.item_type = 'VINYL'
+    ),
+    videos_table AS (
+      SELECT 
+        li.id,
+        li.title,
+        'VIDEO' as item_type,
+        li.description,
+        li.publication_year,
+        v.director,
+        v.studio,
+        v.format as video_format,
+        v.duration_minutes,
+        v.rating as video_rating,
+        v.genre as video_genre
+      FROM LIBRARY_ITEMS li
+      JOIN VIDEOS v ON li.id = v.library_item_id AND li.item_type = 'VIDEO'
     )
     SELECT
   (SELECT json_group_array(json_object('id', id, 'title', title, 'item_type', item_type, 'description', description, 'publication_year', publication_year, 'publisher', publisher, 'genre', genre, 'cover_image_url', cover_image_url, 'number_of_pages', number_of_pages, 'author', author)) FROM books_table) as books,
-  (SELECT json_group_array(json_object('id', id, 'title', title, 'item_type', item_type, 'description', description, 'publication_year', publication_year, 'cover_image_url', cover_image_url, 'artist', artist, 'record_label', record_label, 'number_of_tracks', number_of_tracks, 'genre', genre, 'duration_seconds', duration_seconds)) FROM cds_table) as cds
+  (SELECT json_group_array(json_object('id', id, 'title', title, 'item_type', item_type, 'description', description, 'publication_year', publication_year, 'cover_image_url', cover_image_url, 'artist', artist, 'record_label', record_label, 'number_of_tracks', number_of_tracks, 'genre', genre, 'duration_seconds', duration_seconds)) FROM cds_table) as cds,
+  (SELECT json_group_array(json_object('id', id, 'title', title, 'item_type', item_type, 'description', description, 'publication_year', publication_year, 'cover_image_url', cover_image_url, 'narrator', narrator, 'duration_in_seconds', duration_in_seconds, 'publisher', publisher, 'genre', genre, 'format', format, 'rating', rating)) FROM audiobooks_table) as audiobooks,
+  (SELECT json_group_array(json_object('id', id, 'title', title, 'item_type', item_type, 'description', description, 'publication_year', publication_year, 'cover_image_url', cover_image_url, 'artist', artist, 'color', color, 'number_of_tracks', number_of_tracks, 'genre', genre, 'duration_seconds', duration_seconds, 'color', color)) FROM vinyls_table) as vinyls,
+  (SELECT json_group_array(json_object('id', id, 'title', title, 'item_type', item_type, 'description', description, 'publication_year', publication_year, 'director', director, 'studio', studio, 'video_format', video_format, 'duration_minutes', duration_minutes, 'video_rating', video_rating, 'video_genre', video_genre)) FROM videos_table) as videos
     `;
 
     const [result] = await db.execute_query(query, params);
@@ -166,9 +219,11 @@ router.get('/', async (req, res) => {
     // Parse JSON strings from SQLite json_group_array
     const books = result.books ? JSON.parse(result.books) : [];
     const cds = result.cds ? JSON.parse(result.cds) : [];
-
+    const audiobooks = result.audiobooks ? JSON.parse(result.audiobooks) : [];
+    const vinyls = result.vinyls ? JSON.parse(result.vinyls) : [];
+    const videos = result.videos ? JSON.parse(result.videos) : [];
     // Combine all items
-    const all_items = [...books, ...cds];
+    const all_items = [...books, ...cds, ...audiobooks, ...vinyls, ...videos];
 
     all_items.forEach((item) => {
       item.genre = item.genre ? JSON.parse(item.genre) : [];
@@ -238,7 +293,7 @@ router.get('/:id', async (req, res) => {
       LEFT JOIN LIBRARY_ITEM_COPIES ic ON li.id = ic.library_item_id
       WHERE li.id = ?
       GROUP BY li.id`,
-      [req.params.id]
+      [req.params.id],
     );
 
     if (!library_item) {
@@ -304,7 +359,7 @@ router.post(
 
       const item_id = await db.create_record(
         'LIBRARY_ITEMS',
-        library_item_data
+        library_item_data,
       );
 
       res.status(201).json({
@@ -318,7 +373,7 @@ router.post(
         message: error.message,
       });
     }
-  }
+  },
 );
 
 // PUT /api/v1/library-items/:id - Update library item
@@ -382,7 +437,7 @@ router.put(
         message: error.message,
       });
     }
-  }
+  },
 );
 
 // DELETE /api/v1/library-items/:id - Delete library item
@@ -404,7 +459,7 @@ router.delete('/:id', async (req, res) => {
         (SELECT COUNT(*) FROM RESERVATIONS WHERE library_item_id = ? AND status IN ('pending', 'ready')) as active_reservations
       FROM LIBRARY_ITEM_COPIES 
       WHERE library_item_id = ? AND status = 'Checked Out'`,
-      [req.params.id, req.params.id, req.params.id]
+      [req.params.id, req.params.id, req.params.id],
     );
 
     if (checked_out_info.checked_out_count > 0) {

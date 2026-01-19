@@ -1,8 +1,12 @@
 import { EventNote } from '@mui/icons-material';
 import {
   Autocomplete,
+  Avatar,
   Fab,
   LinearProgress,
+  ListItem,
+  ListItemAvatar,
+  ListItemText,
   Stack,
   type SxProps,
   TextField,
@@ -18,11 +22,12 @@ import { useSnackbar } from '../hooks/use_snackbar';
 import { useCheckoutItem } from '../hooks/use_transactions';
 import type { Item_Copy_Result } from '../types/item_types';
 import type { Patron } from '../types/patron_types';
+import ItemTypeChip from '../components/library_items/ItemTypeChip';
 
 const AUTOCOMPLETE_SX: SxProps<Theme> = {
   flex: 1,
-  minWidth: { xs: 200, sm: 300 },
-  width: { xs: '100%', sm: 'auto' },
+  minWidth: { xs: 200, sm: 300, md: 400 },
+  width: { xs: '100%', sm: '80%' },
 };
 
 const COLUMN_STACK_SX: SxProps<Theme> = {
@@ -60,7 +65,7 @@ const Check_Out_Item_Page_Content = () => {
   const [patron_input_value, set_patron_input_value] = useState('');
 
   const [selected_item, set_selected_item] = useState<Item_Copy_Result | null>(
-    null
+    null,
   );
   const [item_input_value, set_item_input_value] = useState('');
 
@@ -81,7 +86,7 @@ const Check_Out_Item_Page_Content = () => {
       const error_message = error.message || 'Failed to check out item';
       show_snackbar({ message: error_message, severity: 'error' });
     },
-    [show_snackbar]
+    [show_snackbar],
   );
 
   // Checkout mutation
@@ -93,14 +98,14 @@ const Check_Out_Item_Page_Content = () => {
     (_event: SyntheticEvent, new_value: Patron | null) => {
       set_selected_patron(new_value);
     },
-    []
+    [],
   );
 
   const handle_patron_input_change = useCallback(
     (_event: SyntheticEvent, new_input_value: string) => {
       set_patron_input_value(new_input_value);
     },
-    []
+    [],
   );
 
   // Item autocomplete handlers
@@ -108,14 +113,14 @@ const Check_Out_Item_Page_Content = () => {
     (_event: SyntheticEvent, new_value: Item_Copy_Result | null) => {
       set_selected_item(new_value);
     },
-    []
+    [],
   );
 
   const handle_item_input_change = useCallback(
     (_event: SyntheticEvent, new_input_value: string) => {
       set_item_input_value(new_input_value);
     },
-    []
+    [],
   );
 
   // Form submission handler
@@ -129,7 +134,7 @@ const Check_Out_Item_Page_Content = () => {
         {
           onSuccess: handle_success,
           onError: handle_error,
-        }
+        },
       );
     }
   }, [
@@ -143,13 +148,43 @@ const Check_Out_Item_Page_Content = () => {
   // Autocomplete formatters
   const format_patron_label = useCallback(
     (option: Patron) => `${option.first_name} ${option.last_name}`,
-    []
+    [],
+  );
+
+  const render_patron_option = useCallback(
+    (props: any, option: Patron) => (
+      <ListItem {...props} key={option.id}>
+        <ListItemAvatar>
+          <Avatar
+            alt={`${option.first_name} ${option.last_name}`}
+            src={option.image_url}
+          />
+        </ListItemAvatar>
+        <ListItemText
+          secondary={`ID: ${option.id}`}
+        >{`${option.first_name} ${option.last_name}`}</ListItemText>
+      </ListItem>
+    ),
+    [],
   );
 
   const format_item_label = useCallback(
     (option: Item_Copy_Result) =>
-      `${option.title} [${option.copy_number}/${option.total_copies}]`,
-    []
+      `${option.title} (${option.copy_number}/${option.total_copies})`,
+    [],
+  );
+
+  const render_item_option = useCallback(
+    (props: any, option: Item_Copy_Result) => (
+      <ListItem {...props} key={option.id}>
+        <ItemTypeChip item_type={option.item_type} size='small' />
+        <ListItemText
+          sx={{ ml: 1 }}
+          secondary={`ID: ${option.id}`}
+        >{`${option.title}`}</ListItemText>
+      </ListItem>
+    ),
+    [],
   );
 
   const get_option_id = useCallback(
@@ -159,7 +194,7 @@ const Check_Out_Item_Page_Content = () => {
           ? (option as Item_Copy_Result).copy_number
           : (option as Patron).active_checkouts
       }`,
-    []
+    [],
   );
 
   const is_form_valid = selected_patron && selected_item && !check_out_loading;
@@ -189,6 +224,7 @@ const Check_Out_Item_Page_Content = () => {
             renderInput={(params) => <TextField {...params} label='Patron' />}
             getOptionKey={get_option_id}
             getOptionLabel={format_patron_label}
+            renderOption={render_patron_option}
           />
           <Patron_Reservation_Card patron={selected_patron} />
         </Stack>
@@ -207,6 +243,7 @@ const Check_Out_Item_Page_Content = () => {
             renderInput={(params) => <TextField {...params} label='Item' />}
             getOptionKey={get_option_id}
             getOptionLabel={format_item_label}
+            renderOption={render_item_option}
           />
           <ItemReservationCard item={selected_item} />
         </Stack>

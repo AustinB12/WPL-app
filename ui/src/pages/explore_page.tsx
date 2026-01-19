@@ -40,7 +40,7 @@ export const Explore_Page: FC = () => {
   if (!selected_types.includes('all')) {
     filtered_items =
       library_items?.filter((item) =>
-        selected_types.includes(item.item_type)
+        selected_types.includes(item.item_type),
       ) || [];
   } else {
     filtered_items = library_items || [];
@@ -143,14 +143,7 @@ const Tall_Item_Card = ({ library_item }: { library_item: Library_Item }) => {
           title={<Typography variant='body2'>{library_item.title}</Typography>}
           subheader={
             <Typography variant='caption' color='text.secondary'>
-              {`by ${
-                [Library_Item_Type.Book, Library_Item_Type.Audiobook].includes(
-                  library_item.item_type
-                )
-                  ? library_item.author
-                  : library_item.artist
-              }
-              `}
+              {`by ${get_by_string(library_item)}`}
             </Typography>
           }
         />
@@ -170,4 +163,21 @@ const Tall_Item_Card = ({ library_item }: { library_item: Library_Item }) => {
       </CardActionArea>
     </Card>
   );
+};
+
+const get_by_string = (item: Library_Item) => {
+  switch (item.item_type) {
+    case Library_Item_Type.Book:
+      return item.author;
+    case Library_Item_Type.Audiobook:
+      return item.narrator;
+    case Library_Item_Type.CD:
+      return item.artist;
+    case Library_Item_Type.Vinyl:
+      return item.artist;
+    case Library_Item_Type.Video:
+      return item.director;
+    default:
+      return 'Unknown';
+  }
 };

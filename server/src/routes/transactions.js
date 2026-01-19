@@ -52,7 +52,7 @@ router.put('/reshelve', async (req, res) => {
         // Validate item is in Unshelved status before reshelving
         if (item_copy.status !== 'Unshelved') {
           throw new Error(
-            `Item copy with ID ${copy_id} cannot be reshelved. Current status: ${item_copy.status}`
+            `Item copy with ID ${copy_id} cannot be reshelved. Current status: ${item_copy.status}`,
           );
         }
 
@@ -138,11 +138,11 @@ router.get('/', async (req, res) => {
       transactions.map(async (transaction) => {
         const all_copies = await db.execute_query(
           'SELECT id FROM LIBRARY_ITEM_COPIES WHERE library_item_id = ? ORDER BY id',
-          [transaction.library_item_id]
+          [transaction.library_item_id],
         );
 
         const copy_index = all_copies.findIndex(
-          (c) => c.id === transaction.copy_id
+          (c) => c.id === transaction.copy_id,
         );
         const copy_number = copy_index + 1;
         const total_copies = all_copies.length;
@@ -154,7 +154,7 @@ router.get('/', async (req, res) => {
           copy_number,
           total_copies,
         };
-      })
+      }),
     );
 
     res.json({
@@ -208,7 +208,7 @@ router.get('/checkin-lookup/:copy_id', async (req, res) => {
       `SELECT * FROM ITEM_TRANSACTIONS 
        WHERE item_copy_id = ? AND UPPER(transaction_type) = 'CHECKOUT' 
        LIMIT 1`,
-      [copy_id]
+      [copy_id],
     );
 
     if (transaction.length === 0) {
@@ -222,7 +222,7 @@ router.get('/checkin-lookup/:copy_id', async (req, res) => {
     // Get patron info
     const patron = await db.get_by_id(
       'PATRONS',
-      checkout_transaction.patron_id
+      checkout_transaction.patron_id,
     );
     if (!patron) {
       return res.status(200).json({
@@ -233,7 +233,7 @@ router.get('/checkin-lookup/:copy_id', async (req, res) => {
     // Get library item details
     const library_item = await db.get_by_id(
       'LIBRARY_ITEMS',
-      copy.library_item_id
+      copy.library_item_id,
     );
     if (!library_item) {
       return res.status(200).json({
@@ -249,7 +249,7 @@ router.get('/checkin-lookup/:copy_id', async (req, res) => {
     ) {
       const books = await db.execute_query(
         'SELECT * FROM BOOKS WHERE library_item_id = ?',
-        [copy.library_item_id]
+        [copy.library_item_id],
       );
       item_type_info = books[0] || {};
     } else if (
@@ -258,7 +258,7 @@ router.get('/checkin-lookup/:copy_id', async (req, res) => {
     ) {
       const videos = await db.execute_query(
         'SELECT * FROM VIDEOS WHERE library_item_id = ?',
-        [copy.library_item_id]
+        [copy.library_item_id],
       );
       item_type_info = videos[0] || {};
     }
@@ -269,7 +269,7 @@ router.get('/checkin-lookup/:copy_id', async (req, res) => {
     const is_overdue = today > due_date;
     const days_overdue = is_overdue
       ? Math.ceil(
-          (today.getTime() - due_date.getTime()) / (1000 * 60 * 60 * 24)
+          (today.getTime() - due_date.getTime()) / (1000 * 60 * 60 * 24),
         )
       : 0;
     let fine_amount = days_overdue * 1.0; // $1.00 per day
@@ -281,7 +281,7 @@ router.get('/checkin-lookup/:copy_id', async (req, res) => {
     // Get total copies count for this item
     const all_copies = await db.execute_query(
       'SELECT * FROM LIBRARY_ITEM_COPIES WHERE library_item_id = ? ORDER BY id',
-      [copy.library_item_id]
+      [copy.library_item_id],
     );
     const copy_index = all_copies.findIndex((c) => c.id === copy_id);
     const copy_number = copy_index >= 0 ? copy_index + 1 : 1;
@@ -396,7 +396,7 @@ router.get('/checked-out', async (req, res) => {
 
     const copy_info = await db.execute_query(
       copy_counts_query,
-      library_item_ids
+      library_item_ids,
     );
 
     // Create a lookup map for O(1) access
@@ -487,7 +487,7 @@ router.post(
       // For now, we'll inline the expiry check
       const expired_reservations = await db.execute_query(
         'SELECT * FROM RESERVATIONS WHERE status = "ready" AND expiry_date < ?',
-        [now]
+        [now],
       );
 
       for (const reservation of expired_reservations) {
@@ -498,7 +498,7 @@ router.post(
 
         const copies = await db.execute_query(
           'SELECT * FROM LIBRARY_ITEM_COPIES WHERE library_item_id = ? AND status = "Reserved" LIMIT 1',
-          [reservation.library_item_id]
+          [reservation.library_item_id],
         );
 
         if (copies.length > 0) {
@@ -509,7 +509,7 @@ router.post(
 
           const next_in_queue = await db.execute_query(
             'SELECT * FROM RESERVATIONS WHERE item_copy_id = ? AND status = "waiting" ORDER BY queue_position LIMIT 1',
-            [reservation.library_item_id]
+            [reservation.library_item_id],
           );
 
           if (next_in_queue.length > 0) {
@@ -554,7 +554,7 @@ router.post(
       // First, check if THIS patron has a reservation
       const patron_reservation = await db.execute_query(
         'SELECT * FROM RESERVATIONS WHERE item_copy_id = ? AND patron_id = ? AND status IN ("waiting", "ready") ORDER BY queue_position LIMIT 1',
-        [item_copy.library_item_id, patron_id]
+        [item_copy.library_item_id, patron_id],
       );
 
       // If patron has no reservation, check if there are ANY other active reservations
@@ -565,14 +565,14 @@ router.post(
         // Patron has no reservation - block if there are ANY other reservations
         other_patron_reservations = await db.execute_query(
           'SELECT * FROM RESERVATIONS WHERE item_copy_id = ? AND status IN ("waiting", "ready") ORDER BY queue_position LIMIT 1',
-          [item_copy.library_item_id]
+          [item_copy.library_item_id],
         );
       } else {
         // Patron has a reservation - only block if someone else has a better queue position
         const patron_queue_pos = patron_reservation[0].queue_position;
         other_patron_reservations = await db.execute_query(
           'SELECT * FROM RESERVATIONS WHERE item_copy_id = ? AND patron_id != ? AND status IN ("waiting", "ready") AND queue_position < ? ORDER BY queue_position LIMIT 1',
-          [item_copy.library_item_id, patron_id, patron_queue_pos]
+          [item_copy.library_item_id, patron_id, patron_queue_pos],
         );
       }
 
@@ -588,7 +588,7 @@ router.post(
           JOIN PATRONS p ON r.patron_id = p.id
           WHERE r.library_item_id = ? AND r.status IN ("waiting", "ready")
           ORDER BY r.queue_position ASC`,
-          [item_copy.library_item_id]
+          [item_copy.library_item_id],
         );
 
         return res.status(400).json({
@@ -609,7 +609,7 @@ router.post(
       if (item_copy.status === 'Reserved' || item_copy.status === 'reserved') {
         const reservations = await db.execute_query(
           'SELECT * FROM RESERVATIONS WHERE item_copy_id = ? AND patron_id = ? AND status IN ("waiting", "ready") ORDER BY queue_position LIMIT 1',
-          [item_copy.library_item_id, patron_id]
+          [item_copy.library_item_id, patron_id],
         );
 
         if (reservations.length === 0) {
@@ -624,7 +624,7 @@ router.post(
             JOIN PATRONS p ON r.patron_id = p.id
             WHERE r.library_item_id = ? AND r.status IN ("waiting", "ready")
             ORDER BY r.queue_position ASC`,
-            [item_copy.library_item_id]
+            [item_copy.library_item_id],
           );
 
           return res.status(400).json({
@@ -675,7 +675,7 @@ router.post(
           // Clear the patron's balance (assumes fine was paid externally)
           await db.execute_query(
             'UPDATE PATRONS SET balance = 0 WHERE id = ?',
-            [patron_id]
+            [patron_id],
           );
           // Refresh patron data
           const updated_patron = await db.get_by_id('PATRONS', patron_id);
@@ -692,7 +692,7 @@ router.post(
       // Use UPPER() to handle case-insensitive comparison for both status and transaction_type
       const active_checkout_count = await db.execute_query(
         'SELECT COUNT(*) as count FROM ITEM_TRANSACTIONS WHERE patron_id = ? AND UPPER(transaction_type) = "CHECKOUT"',
-        [patron_id]
+        [patron_id],
       );
 
       const current_count = active_checkout_count[0]?.count || 0;
@@ -707,7 +707,7 @@ router.post(
 
       const library_item = await db.get_by_id(
         'LIBRARY_ITEMS',
-        item_copy.library_item_id
+        item_copy.library_item_id,
       );
 
       const this_year = new Date().getFullYear();
@@ -755,7 +755,7 @@ router.post(
         // Update queue positions for remaining reservations
         await db.execute_query(
           'UPDATE RESERVATIONS SET queue_position = queue_position - 1 WHERE library_item_id = ? AND queue_position > ? AND status IN ("waiting", "ready")',
-          [item_copy.library_item_id, reservation_to_fulfill.queue_position]
+          [item_copy.library_item_id, reservation_to_fulfill.queue_position],
         );
 
         // Log fulfillment transaction
@@ -817,7 +817,7 @@ router.post(
           {
             date: now,
             due_date: calculated_due_date,
-          }
+          },
         );
       } catch (email_error) {
         console.error('Failed to queue checkout email:', email_error);
@@ -844,7 +844,7 @@ router.post(
         message: error.message,
       });
     }
-  }
+  },
 );
 
 // POST /api/v1/transactions/checkin - Checkin item
@@ -886,7 +886,7 @@ router.post(
       // Find item copy (check status more flexibly)
       const item_copy_found = await db.execute_query(
         'SELECT * FROM LIBRARY_ITEM_COPIES WHERE id = ? LIMIT 1',
-        [copy_id]
+        [copy_id],
       );
 
       if (item_copy_found.length === 0) {
@@ -916,7 +916,7 @@ router.post(
       // Find the check out transaction (case-insensitive)
       const check_out_transaction = await db.execute_query(
         'SELECT * FROM ITEM_TRANSACTIONS WHERE item_copy_id = ? AND UPPER(transaction_type) = "CHECKOUT" LIMIT 1',
-        [copy_id]
+        [copy_id],
       );
 
       if (check_out_transaction.length === 0) {
@@ -935,7 +935,7 @@ router.post(
       let days_overdue = 0;
       if (return_date > due_date) {
         days_overdue = Math.ceil(
-          (return_date - due_date) / (1000 * 60 * 60 * 24)
+          (return_date - due_date) / (1000 * 60 * 60 * 24),
         );
         fine_amount = days_overdue * 1.0; // $1.00 per day
         // Cap fine at book cost
@@ -960,7 +960,7 @@ router.post(
 
         const trans_id = await db.create_record(
           'ITEM_TRANSACTIONS',
-          checkin_transaction_data
+          checkin_transaction_data,
         );
 
         // Update item copy - initially set to "Unshelved" (will be updated later if there's a reservation)
@@ -977,14 +977,14 @@ router.post(
         if (fine_amount > 0) {
           await db.execute_query(
             'UPDATE PATRONS SET balance = balance + ? WHERE id = ?',
-            [fine_amount, transaction.patron_id]
+            [fine_amount, transaction.patron_id],
           );
         }
 
         // Check if there are any "waiting" reservations for this library item
         const waiting_reservations = await db.execute_query(
           'SELECT * FROM RESERVATIONS WHERE item_copy_id = ? AND status = "waiting" ORDER BY queue_position ASC LIMIT 1',
-          [item_copy.library_item_id]
+          [item_copy.library_item_id],
         );
 
         let reservation_fulfilled = null;
@@ -1007,7 +1007,7 @@ router.post(
           // Update queue positions for remaining reservations
           await db.execute_query(
             'UPDATE RESERVATIONS SET queue_position = queue_position - 1 WHERE library_item_id = ? AND queue_position > ? AND status = "waiting"',
-            [item_copy.library_item_id, next_reservation.queue_position]
+            [item_copy.library_item_id, next_reservation.queue_position],
           );
 
           // Mark the copy as "Reserved" (ready for the reserved patron to pick up)
@@ -1057,7 +1057,7 @@ router.post(
         if (reservation_fulfilled) {
           const reserved_patron = await db.get_by_id(
             'PATRONS',
-            reservation_fulfilled.patron_id
+            reservation_fulfilled.patron_id,
           );
           if (reserved_patron) {
             reserved_patron_info = {
@@ -1071,14 +1071,14 @@ router.post(
         // Get updated item copy for response
         const updated_item_copy = await db.get_by_id(
           'LIBRARY_ITEM_COPIES',
-          copy_id
+          copy_id,
         );
 
         // Queue checkin receipt email
         try {
           const patron_for_email = await db.get_by_id(
             'PATRONS',
-            transaction.patron_id
+            transaction.patron_id,
           );
           if (patron_for_email?.email) {
             await queue_checkin_receipt(
@@ -1089,7 +1089,7 @@ router.post(
                 copy_id: copy_id,
               },
               { date: now },
-              fine_amount
+              fine_amount,
             );
           }
         } catch (email_error) {
@@ -1124,7 +1124,7 @@ router.post(
         message: error.message,
       });
     }
-  }
+  },
 );
 
 // PUT /api/v1/transactions/renew-item/:item_id - Renew an item by copy ID
@@ -1171,7 +1171,7 @@ router.put('/renew-item/:item_id', async (req, res) => {
     // Check if item is reserved - prevent renewal if there are active reservations
     const reservations = await db.execute_query(
       'SELECT COUNT(*) as count FROM RESERVATIONS WHERE item_copy_id = ? AND status IN ("waiting", "ready")',
-      [item_copy.library_item_id]
+      [item_copy.library_item_id],
     );
 
     if (reservations[0].count > 0) {
@@ -1217,7 +1217,7 @@ router.put('/renew-item/:item_id', async (req, res) => {
     // Get library item details for calculating due date
     const library_item = await db.get_by_id(
       'LIBRARY_ITEMS',
-      item_copy.library_item_id
+      item_copy.library_item_id,
     );
     if (!library_item) {
       return res.status(404).json({
@@ -1233,7 +1233,7 @@ router.put('/renew-item/:item_id', async (req, res) => {
     ) {
       const videos = await db.execute_query(
         'SELECT is_new_release FROM VIDEOS WHERE library_item_id = ?',
-        [library_item.id]
+        [library_item.id],
       );
       if (videos[0]) {
         is_new_release = videos[0].is_new_release === 1;
@@ -1254,7 +1254,7 @@ router.put('/renew-item/:item_id', async (req, res) => {
     }
 
     const new_due_date = new Date(
-      current_date.getTime() + days_to_add * 24 * 60 * 60 * 1000
+      current_date.getTime() + days_to_add * 24 * 60 * 60 * 1000,
     );
     const formatted_due_date = format_sql_datetime(new_due_date);
     const formatted_now = format_sql_datetime(now);
@@ -1337,7 +1337,7 @@ router.put('/:id/renew', async (req, res) => {
     // Get item copy
     const item_copy = await db.get_by_id(
       'LIBRARY_ITEM_COPIES',
-      transaction.copy_id
+      transaction.copy_id,
     );
     if (!item_copy) {
       return res.status(400).json({
@@ -1356,7 +1356,7 @@ router.put('/:id/renew', async (req, res) => {
     // Also check for active reservations on this library item
     const reservations = await db.execute_query(
       'SELECT COUNT(*) as count FROM RESERVATIONS WHERE library_item_id = ? AND status IN ("waiting", "ready")',
-      [item_copy.library_item_id]
+      [item_copy.library_item_id],
     );
 
     if (reservations[0].count > 0) {
@@ -1392,7 +1392,7 @@ router.put('/:id/renew', async (req, res) => {
     // Check if patron has too many books checked out
     const active_checkout_count = await db.execute_query(
       'SELECT COUNT(*) as count FROM ITEM_TRANSACTIONS WHERE patron_id = ? AND transaction_type IN ("checkout", "CHECKOUT")',
-      [transaction.patron_id]
+      [transaction.patron_id],
     );
 
     if (active_checkout_count[0].count >= 20) {
@@ -1404,7 +1404,7 @@ router.put('/:id/renew', async (req, res) => {
     // Get item details for calculating due date
     const library_item = await db.execute_query(
       'SELECT li.*, v.is_new_release FROM LIBRARY_ITEMS li LEFT JOIN VIDEOS v ON li.id = v.library_item_id WHERE li.id = ?',
-      [item_copy.library_item_id]
+      [item_copy.library_item_id],
     );
 
     // Calculate new due date based on current date (not adding leftover time)
@@ -1430,7 +1430,7 @@ router.put('/:id/renew', async (req, res) => {
     }
 
     const new_due_date = format_sql_datetime(
-      new Date(current_date_obj.getTime() + days_to_add * 24 * 60 * 60 * 1000)
+      new Date(current_date_obj.getTime() + days_to_add * 24 * 60 * 60 * 1000),
     );
 
     // Update renewal status
@@ -1481,7 +1481,7 @@ router.get('/by-copy/:copy_id', async (req, res) => {
     // Get the active transaction for this copy
     const transactions = await db.execute_query(
       'SELECT * FROM ITEM_TRANSACTIONS WHERE item_copy_id = ? AND transaction_type IN ("checkout", "CHECKOUT") ORDER BY created_at DESC LIMIT 1',
-      [copy_id]
+      [copy_id],
     );
 
     if (transactions.length === 0) {
@@ -1503,7 +1503,7 @@ router.get('/by-copy/:copy_id', async (req, res) => {
     // Get library item information
     const library_item = await db.get_by_id(
       'LIBRARY_ITEMS',
-      item_copy.library_item_id
+      item_copy.library_item_id,
     );
     if (!library_item) {
       return res.status(404).json({
@@ -1519,7 +1519,7 @@ router.get('/by-copy/:copy_id', async (req, res) => {
     ) {
       const books = await db.execute_query(
         'SELECT * FROM BOOKS WHERE library_item_id = ?',
-        [library_item.id]
+        [library_item.id],
       );
       item_details = books[0] || {};
     } else if (
@@ -1528,7 +1528,7 @@ router.get('/by-copy/:copy_id', async (req, res) => {
     ) {
       const videos = await db.execute_query(
         'SELECT * FROM VIDEOS WHERE library_item_id = ?',
-        [library_item.id]
+        [library_item.id],
       );
       item_details = videos[0] || {};
     }
@@ -1544,13 +1544,13 @@ router.get('/by-copy/:copy_id', async (req, res) => {
     // Get active checkout count for patron
     const active_checkout_count = await db.execute_query(
       'SELECT COUNT(*) as count FROM ITEM_TRANSACTIONS WHERE patron_id = ? AND transaction_type IN ("checkout", "CHECKOUT")',
-      [patron.id]
+      [patron.id],
     );
 
     // Check for reservations
     const reservations = await db.execute_query(
       'SELECT COUNT(*) as count FROM RESERVATIONS WHERE library_item_id = ? AND status IN ("waiting", "ready")',
-      [library_item.id]
+      [library_item.id],
     );
 
     res.json({
@@ -1652,7 +1652,7 @@ router.post(
       // Check if there are "waiting" reservations for this item
       const waiting_reservations = await db.execute_query(
         'SELECT * FROM RESERVATIONS WHERE item_copy_id = ? AND status = "waiting" ORDER BY queue_position LIMIT 1',
-        [item_copy.library_item_id]
+        [item_copy.library_item_id],
       );
 
       let final_status = 'Available';
@@ -1710,7 +1710,7 @@ router.post(
         message: error.message,
       });
     }
-  }
+  },
 );
 
 // POST /api/v1/transactions/reshelve-all - Mark multiple items as available (bulk reshelve process)
@@ -1766,7 +1766,7 @@ router.post(
             // Check if there are "waiting" reservations for this item
             const waiting_reservations = await db.execute_query(
               'SELECT * FROM RESERVATIONS WHERE item_copy_id = ? AND status = "waiting" ORDER BY queue_position LIMIT 1',
-              [item_copy.library_item_id]
+              [item_copy.library_item_id],
             );
 
             let final_status = 'Available';
@@ -1809,6 +1809,8 @@ router.post(
               transaction_type: was_reshelved
                 ? 'RESHELVE'
                 : 'RESERVATION PROMOTION',
+              date: now,
+              location_id: branch_id || item_copy.current_branch_id,
               created_at: now,
             });
 
@@ -1853,7 +1855,7 @@ router.post(
         message: error.message,
       });
     }
-  }
+  },
 );
 
 // POST /api/v1/transactions/reshelve/undo - Undo reshelve (change status back to "Unshelved")
@@ -1885,7 +1887,7 @@ router.post(
       // Check if there's an active reservation for this item
       const active_reservation = await db.execute_query(
         'SELECT id FROM RESERVATIONS WHERE item_copy_id = ? AND status IN ("ready", "waiting") ORDER BY queue_position LIMIT 1',
-        [item_copy.library_item_id]
+        [item_copy.library_item_id],
       );
 
       if (active_reservation.length > 0) {
@@ -1901,7 +1903,7 @@ router.post(
         `SELECT id FROM ITEM_TRANSACTIONS 
          WHERE item_copy_id = ? AND UPPER(transaction_type) IN ('RESHELVE', 'RESERVATION PROMOTION') 
          ORDER BY created_at DESC LIMIT 1`,
-        [copy_id]
+        [copy_id],
       );
 
       if (transaction_results.length === 0) {
@@ -1938,7 +1940,7 @@ router.post(
         message: error.message,
       });
     }
-  }
+  },
 );
 
 export default router;
