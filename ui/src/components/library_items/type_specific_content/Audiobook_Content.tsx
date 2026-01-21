@@ -5,5 +5,5 @@ export function Audiobook_Content({
 }: {
   library_item: Library_Item;
 }) {
-  return <div>Audiobook Content</div>;
+  return <div>Audiobook Content {library_item.title}</div>;
 }

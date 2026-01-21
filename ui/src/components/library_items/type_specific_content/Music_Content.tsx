@@ -5,5 +5,5 @@ export function Music_Content({
 }: {
   library_item: Library_Item;
 }) {
-  return <div>Music Content</div>;
+  return <div>Music Content {library_item.title}</div>;
 }

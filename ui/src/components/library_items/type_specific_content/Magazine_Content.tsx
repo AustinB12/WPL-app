@@ -5,5 +5,5 @@ export function Magazine_Content({
 }: {
   library_item: Library_Item;
 }) {
-  return <div>Magazine Content</div>;
+  return <div>Magazine Content {library_item.title}</div>;
 }

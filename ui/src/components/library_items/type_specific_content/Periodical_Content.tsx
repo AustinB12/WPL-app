@@ -5,5 +5,5 @@ export function Periodical_Content({
 }: {
   library_item: Library_Item;
 }) {
-  return <div>Periodical Content</div>;
+  return <div>Periodical Content {library_item.title}</div>;
 }

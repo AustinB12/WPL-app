@@ -5,5 +5,5 @@ export function Video_Content({
 }: {
   library_item: Library_Item;
 }) {
-  return <div>Video Content</div>;
+  return <div>Video Content {library_item.title}</div>;
 }
