@@ -5,5 +5,5 @@ export function Vinyl_Content({
 }: {
   library_item: Library_Item;
 }) {
-  return <div>Vinyl Content</div>;
+  return <div>Vinyl Content {library_item.title}</div>;
 }
