@@ -4,12 +4,10 @@ import {
   Grid,
   Paper,
   SvgIcon,
-  Tooltip,
   Typography,
   keyframes,
 } from '@mui/material';
-import { PageContainer, PageTitle } from '../components/common/PageBuilders';
-import { Home } from '@mui/icons-material';
+import { PageContainer } from '../components/common/PageBuilders';
 import {
   React_Icon,
   Type_Script_Icon,
@@ -46,6 +44,14 @@ const pulse = keyframes`
   }
   50% {
     transform: scale(1.3);
+  }
+`;
+const pulse_soft = keyframes`
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
   }
 `;
 const morph = keyframes`
@@ -89,17 +95,12 @@ const Animated_Card = ({
   <Paper
     sx={{
       p: 3,
-      mt: 2,
       borderRadius: 4,
       position: 'relative',
       overflow: 'hidden',
       animation: `${fadeInUp} 0.6s ease-out ${delay}s both`,
       transition: 'transform 0.3s ease, box-shadow 0.3s ease',
       background: gradient || 'background.paper',
-      '&:hover': {
-        transform: 'translateY(-4px)',
-        boxShadow: '0 6px 20px rgba(0,0,0,0.15)',
-      },
     }}
   >
     {children}
@@ -142,19 +143,17 @@ const Section_Header = ({
 // Tech Stack Card for the grid items
 const Tech_Stack_Card = ({
   title,
-  description,
   color,
   children,
 }: {
   title: string;
-  description: string;
   color: string;
   children: React.ReactNode;
 }) => (
   <Grid
     size={{ xs: 12, sm: 4 }}
     sx={{
-      p: 2,
+      p: 1,
       borderRadius: 2,
       borderLeft: `4px solid ${color}`,
       bgcolor: `${color}0D`,
@@ -164,17 +163,14 @@ const Tech_Stack_Card = ({
       },
     }}
   >
-    <Typography variant='h5' sx={{ color, mb: 0.5 }}>
+    <Typography variant='h5' fontWeight={'bold'} sx={{ color, mb: 0.5 }}>
       {title}
     </Typography>
-    <Typography variant='body1'>{description}</Typography>
     <Box
       sx={{
         display: 'flex',
         width: '100%',
-        alignItems: 'center',
-        justifyContent: 'space-evenly',
-        height: 'fill-available',
+        justifyContent: 'space-around',
       }}
     >
       {children}
@@ -240,38 +236,41 @@ const Database_Svg = () => (
 const Tech_Icon = ({
   icon,
   label,
-  color,
 }: {
   icon: React.ReactNode;
   label: string;
-  color: string;
 }) => (
-  <Tooltip title={label} arrow>
+  <Box
+    sx={{
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      gap: 0.5,
+      p: 1,
+      borderRadius: 2,
+      transition: 'all 0.3s ease',
+      cursor: 'pointer',
+      '&:hover': {
+        transform: 'translateY(-2px) scale(1.1)',
+        '& svg': {
+          filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.2))',
+        },
+      },
+    }}
+  >
     <Box
       sx={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        gap: 0.5,
-        p: 1.5,
-        borderRadius: 2,
-        transition: 'all 0.3s ease',
-        cursor: 'pointer',
-        '&:hover': {
-          transform: 'translateY(-5px) scale(1.1)',
-          bgcolor: `${color}15`,
-          '& svg': {
-            filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.2))',
-          },
-        },
+        transition: 'filter 0.3s ease',
+        width: { xs: '24px', sm: '32px' },
+        height: { xs: '24px', sm: '32px' },
       }}
     >
-      <Box sx={{ color, transition: 'filter 0.3s ease' }}>{icon}</Box>
-      <Typography variant='caption' sx={{ fontWeight: 500, opacity: 0.8 }}>
-        {label}
-      </Typography>
+      {icon}
     </Box>
-  </Tooltip>
+    <Typography variant='caption' sx={{ fontWeight: 500, opacity: 0.8 }}>
+      {label}
+    </Typography>
+  </Box>
 );
 
 // Animated Wave Background
@@ -436,138 +435,30 @@ const INTERESTS = [
 export const Home_Page = () => {
   return (
     <PageContainer width='lg' scroll={true} sx={{ height: 'inherit' }}>
-      <PageTitle title={'Welcome!'} Icon_Component={Home}></PageTitle>
-
-      {/* What is this section */}
-      <Animated_Card delay={0.1}>
-        <Book_Stack_Svg />
-        <Box sx={{ position: 'relative', zIndex: 1, pb: 8 }}>
-          <Section_Header
-            icon={
-              <Typography
-                sx={{ animation: `${pulse} 1.5s ease-in-out infinite` }}
-                fontSize={'1.5rem'}
-              >
-                🤔
-              </Typography>
-            }
-            title='What is this?'
-            bgcolor='primary.main'
-          />
-          <Typography variant='body1' sx={{ mb: 1, fontSize: '1.1rem' }}>
-            {'Great question!'}
-          </Typography>
-          <Typography variant='body1' sx={{ lineHeight: 1.8 }}>
-            {
-              "This is a personal project I've created. It is an admin system management interface for a fictional library: "
-            }
-            <br />
-            <Box
-              component='span'
-              sx={{
-                fontWeight: 'bolder',
-                fontSize: '1.8rem',
-                background: 'linear-gradient(90deg, #667eea 0%, #764ba2 100%)',
-                backgroundClip: 'text',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-              }}
-            >
-              Wayback Public Library
-            </Box>
-          </Typography>
-        </Box>
-        <Wave_Background color='#667eea20' />
-      </Animated_Card>
-
-      {/* Tech Stack Section */}
-      <Animated_Card delay={0.2}>
-        <Code_Brackets_Svg />
-        <Database_Svg />
-        <Particle_Group particles={TECH_STACK_PARTICLES} />
-
-        <Box sx={{ position: 'relative', zIndex: 1, pb: 8 }}>
-          <Section_Header
-            icon={
-              <svg
-                width='28'
-                height='28'
-                viewBox='0 0 24 24'
-                fill='currentColor'
-              >
-                <path d='M19.14 12.94c.04-.31.06-.63.06-.94 0-.31-.02-.63-.06-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.04.31-.06.63-.06.94s.02.63.06.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z'>
-                  <animateTransform
-                    attributeName='transform'
-                    type='rotate'
-                    from='0 12 12'
-                    to='360 12 12'
-                    dur='10s'
-                    repeatCount='indefinite'
-                  />
-                </path>
-              </svg>
-            }
-            title='Tech Stack'
-            bgcolor='#339933'
-            mb={3}
-          />
-          <Grid container spacing={2}>
-            <Tech_Stack_Card
-              title=' UI'
-              description='Built with React, TypeScript, React Query, and the MUI component library.'
-              color='#61DAFB'
-            >
-              <Tech_Icon icon={<React_Icon />} label='React' color='#61DAFB' />
-              <Tech_Icon
-                icon={<Type_Script_Icon />}
-                label='TypeScript'
-                color='#3178C6'
-              />
-              <Tech_Icon
-                icon={<Mui_Icon />}
-                label='Material UI'
-                color='#007FFF'
-              />
-            </Tech_Stack_Card>
-
-            <Tech_Stack_Card
-              title='API'
-              description='The server is a Node.js with Express App'
-              color='#339933'
-            >
-              <Tech_Icon icon={<Node_Icon />} label='Node.js' color='#339933' />
-              <Tech_Icon
-                icon={<Express_Icon />}
-                label='Express'
-                color='#339933'
-              />
-            </Tech_Stack_Card>
-
-            <Tech_Stack_Card
-              title='DB'
-              description='Using SQLite for simplicity'
-              color='#a729ac'
-            >
-              <Tech_Icon
-                icon={<Sqlite_Icon />}
-                label='SQLite'
-                color='#a729ac'
-              />
-            </Tech_Stack_Card>
-          </Grid>
-
-          <Box sx={{ mt: 3 }}>
-            <Github_Icon />
-          </Box>
-        </Box>
-        <Wave_Background color='#33993320' />
-      </Animated_Card>
+      <Box
+        sx={{
+          background: `background: #3A86FF;
+background: linear-gradient(90deg, rgba(58, 134, 255, 1) 0%, rgba(131, 56, 236, 1) 25%, rgba(255, 0, 110, 1) 50%, rgba(251, 86, 7, 1) 75%, rgba(255, 190, 11, 1) 100%);`,
+          textTransform: 'uppercase',
+          WebkitTextFillColor: 'transparent',
+          WebkitBackgroundClip: 'text',
+        }}
+      >
+        <Typography
+          variant='h4'
+          fontWeight={'800'}
+          fontFamily={'Arial, sans-serif'}
+          sx={{ fontSize: { xs: '1.5rem', sm: '2rem', md: '2.5rem' } }}
+        >
+          {'Wayback Public Library'}
+        </Typography>
+      </Box>
 
       {/* About Me Section */}
       <Animated_Card delay={0.3}>
         <Particle_Group particles={ABOUT_ME_PARTICLES} />
 
-        <Box sx={{ position: 'relative', zIndex: 1, pb: 8 }}>
+        <Box sx={{ position: 'relative', zIndex: 1, pb: 4 }}>
           <Section_Header
             icon={
               <svg
@@ -580,11 +471,13 @@ export const Home_Page = () => {
               </svg>
             }
             title='Austin Baird'
-            bgcolor='#764ba2'
+            bgcolor='#8338ec'
             iconSx={{
               cornerShape: 'scoop',
               borderRadius: '12px',
-              animation: `${morph} 3.5s ease-in-out infinite`,
+              '&:hover': {
+                animation: `${morph} 3.5s ease-in-out infinite`,
+              },
             }}
             mb={3}
           />
@@ -603,11 +496,11 @@ export const Home_Page = () => {
                 '&::before': {
                   content: '""',
                   position: 'absolute',
-                  inset: -6,
+                  inset: -5,
                   borderRadius: '50%',
-                  background:
-                    'linear-gradient(135deg, #5d9cf6 0%, #4c1485 100%)',
-                  animation: `${rotate} 1.5s linear infinite`,
+                  background: `background: #3A86FF;
+background: linear-gradient(90deg, rgba(58, 134, 255, 1) 0%, rgba(131, 56, 236, 1) 25%, rgba(255, 0, 110, 1) 50%, rgba(251, 86, 7, 1) 75%, rgba(255, 190, 11, 1) 100%);`,
+                  animation: `${rotate} 6s linear infinite`,
                   zIndex: -1,
                 },
               }}
@@ -616,12 +509,9 @@ export const Home_Page = () => {
                 sx={{
                   width: 100,
                   height: 100,
-                  border: '4px solid',
+                  border: '0px solid',
                   borderColor: 'background.paper',
                   transition: 'transform 0.3s ease',
-                  '&:hover': {
-                    transform: 'scale(1.1)',
-                  },
                 }}
                 src='https://media.licdn.com/dms/image/v2/C4D03AQF2qs6pZiimMg/profile-displayphoto-shrink_800_800/profile-displayphoto-shrink_800_800/0/1576023146183?e=1769040000&v=beta&t=NytL_qq2fxvZXKa9aLKQ1R8cVRezocfPVHjt5TK_I58'
               />
@@ -647,7 +537,94 @@ export const Home_Page = () => {
             </Box>
           </Box>
         </Box>
-        <Wave_Background color='#764ba220' />
+        <Wave_Background color='#8338ec20' />
+      </Animated_Card>
+
+      {/* What is this section */}
+      <Animated_Card delay={0.1}>
+        <Book_Stack_Svg />
+        <Box
+          sx={{
+            position: 'relative',
+            zIndex: 1,
+            pb: 4,
+          }}
+        >
+          <Section_Header
+            icon={<Typography fontSize={'1.5rem'}>🤔</Typography>}
+            title='What is this?'
+            bgcolor='#ff006e'
+            iconSx={{
+              '&:hover .MuiTypography-root': {
+                animation: `${pulse} 1.5s ease-in-out infinite`,
+              },
+            }}
+          />
+          <Typography variant='body1' sx={{ mb: 1, fontSize: '1.1rem' }}>
+            {'Great question!'}
+          </Typography>
+          <Typography variant='body1' sx={{ lineHeight: 1.8 }}>
+            This is a personal project I've created. It is an admin system
+            management interface for a fictional library:{' '}
+            <strong>Wayback Public Library</strong>
+          </Typography>
+        </Box>
+        <Wave_Background color='#ff006e20' />
+      </Animated_Card>
+
+      {/* Tech Stack Section */}
+      <Animated_Card delay={0.2}>
+        <Code_Brackets_Svg />
+        <Database_Svg />
+        <Particle_Group particles={TECH_STACK_PARTICLES} />
+
+        <Box sx={{ position: 'relative', zIndex: 1, pb: 4 }}>
+          <Section_Header
+            icon={
+              <svg
+                width='28'
+                height='28'
+                viewBox='0 0 24 24'
+                fill='currentColor'
+              >
+                <path d='M19.14 12.94c.04-.31.06-.63.06-.94 0-.31-.02-.63-.06-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.04.31-.06.63-.06.94s.02.63.06.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z'>
+                  <animateTransform
+                    attributeName='transform'
+                    type='rotate'
+                    from='0 12 12'
+                    to='360 12 12'
+                    dur='10s'
+                    repeatCount='indefinite'
+                  />
+                </path>
+              </svg>
+            }
+            title='Tech Stack'
+            bgcolor='#ffbe0b'
+            mb={3}
+          />
+          <Grid container spacing={2}>
+            <Tech_Stack_Card title=' UI' color='#ffbe0b'>
+              <Tech_Icon icon={<React_Icon />} label='React' />
+              <Tech_Icon icon={<Type_Script_Icon />} label='TypeScript' />
+              <Tech_Icon icon={<Mui_Icon />} label='Material UI' />
+            </Tech_Stack_Card>
+
+            <Tech_Stack_Card title='API' color='#ffbe0b'>
+              <Tech_Icon icon={<Node_Icon />} label='Node.js' />
+              <Tech_Icon icon={<Express_Icon />} label='Express' />
+            </Tech_Stack_Card>
+
+            <Tech_Stack_Card title='DB' color='#ffbe0b'>
+              <Tech_Icon icon={<Sqlite_Icon />} label='SQLite' />
+            </Tech_Stack_Card>
+          </Grid>
+
+          <Box sx={{ mt: 3 }}>
+            <Github_Icon />
+          </Box>
+        </Box>
+        <Wave_Background color='#ffbe0b20' />
       </Animated_Card>
     </PageContainer>
   );
@@ -659,48 +636,45 @@ const Github_Icon = () => {
   };
 
   return (
-    <Tooltip title='Check out the code on GitHub' arrow>
-      <Box
-        onClick={handleClick}
-        sx={{
-          display: 'inline-flex',
-          alignItems: 'center',
-          gap: 1.5,
-          px: 3,
-          py: 1.5,
-          borderRadius: 3,
-          bgcolor: 'action.hover',
-          cursor: 'pointer',
-          transition: 'all 0.3s ease',
-          '&:hover': {
-            bgcolor: '#24292e',
-            color: 'white',
-            transform: 'translateY(-3px)',
-            boxShadow: '0 6px 20px rgba(0,0,0,0.2)',
-            '& .github-icon': {
-              animation: `${pulse} 0.5s ease-in-out`,
-            },
+    <Box
+      onClick={handleClick}
+      sx={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: 1.5,
+        px: 3,
+        py: 1.5,
+        borderRadius: 3,
+        bgcolor: 'action.hover',
+        cursor: 'pointer',
+        transition: 'all 0.3s ease',
+        '&:hover': {
+          bgcolor: 'background.default',
+          transform: 'translateY(-1px)',
+          boxShadow: 2,
+          '& .github-icon': {
+            animation: `${pulse_soft} 1s ease-in-out infinite`,
           },
+        },
+      }}
+    >
+      <SvgIcon
+        className='github-icon'
+        sx={{
+          fontSize: 28,
+          transition: 'all 0.3s ease',
         }}
       >
-        <SvgIcon
-          className='github-icon'
-          sx={{
-            fontSize: 28,
-            transition: 'all 0.3s ease',
-          }}
-        >
-          <svg viewBox='0 0 20 20' fill='currentColor'>
-            <path d='M10,0 C15.523,0 20,4.59 20,10.253 C20,14.782 17.138,18.624 13.167,19.981 C12.66,20.082 12.48,19.762 12.48,19.489 C12.48,19.151 12.492,18.047 12.492,16.675 C12.492,15.719 12.172,15.095 11.813,14.777 C14.04,14.523 16.38,13.656 16.38,9.718 C16.38,8.598 15.992,7.684 15.35,6.966 C15.454,6.707 15.797,5.664 15.252,4.252 C15.252,4.252 14.414,3.977 12.505,5.303 C11.706,5.076 10.85,4.962 10,4.958 C9.15,4.962 8.295,5.076 7.497,5.303 C5.586,3.977 4.746,4.252 4.746,4.252 C4.203,5.664 4.546,6.707 4.649,6.966 C4.01,7.684 3.619,8.598 3.619,9.718 C3.619,13.646 5.954,14.526 8.175,14.785 C7.889,15.041 7.63,15.493 7.54,16.156 C6.97,16.418 5.522,16.871 4.63,15.304 C4.63,15.304 4.101,14.319 3.097,14.247 C3.097,14.247 2.122,14.234 3.029,14.87 C3.029,14.87 3.684,15.185 4.139,16.37 C4.139,16.37 4.726,18.2 7.508,17.58 C7.513,18.437 7.522,19.245 7.522,19.489 C7.522,19.76 7.338,20.077 6.839,19.982 C2.865,18.627 0,14.783 0,10.253 C0,4.59 4.478,0 10,0' />
-          </svg>
-        </SvgIcon>
-        <Typography variant='body2' fontWeight={600}>
-          View on GitHub
-        </Typography>
-        <svg width='16' height='16' viewBox='0 0 24 24' fill='currentColor'>
-          <path d='M19 19H5V5h7V3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z' />
+        <svg viewBox='0 0 20 20' fill='currentColor'>
+          <path d='M10,0 C15.523,0 20,4.59 20,10.253 C20,14.782 17.138,18.624 13.167,19.981 C12.66,20.082 12.48,19.762 12.48,19.489 C12.48,19.151 12.492,18.047 12.492,16.675 C12.492,15.719 12.172,15.095 11.813,14.777 C14.04,14.523 16.38,13.656 16.38,9.718 C16.38,8.598 15.992,7.684 15.35,6.966 C15.454,6.707 15.797,5.664 15.252,4.252 C15.252,4.252 14.414,3.977 12.505,5.303 C11.706,5.076 10.85,4.962 10,4.958 C9.15,4.962 8.295,5.076 7.497,5.303 C5.586,3.977 4.746,4.252 4.746,4.252 C4.203,5.664 4.546,6.707 4.649,6.966 C4.01,7.684 3.619,8.598 3.619,9.718 C3.619,13.646 5.954,14.526 8.175,14.785 C7.889,15.041 7.63,15.493 7.54,16.156 C6.97,16.418 5.522,16.871 4.63,15.304 C4.63,15.304 4.101,14.319 3.097,14.247 C3.097,14.247 2.122,14.234 3.029,14.87 C3.029,14.87 3.684,15.185 4.139,16.37 C4.139,16.37 4.726,18.2 7.508,17.58 C7.513,18.437 7.522,19.245 7.522,19.489 C7.522,19.76 7.338,20.077 6.839,19.982 C2.865,18.627 0,14.783 0,10.253 C0,4.59 4.478,0 10,0' />
         </svg>
-      </Box>
-    </Tooltip>
+      </SvgIcon>
+      <Typography variant='body2' fontWeight={600}>
+        View on GitHub
+      </Typography>
+      <svg width='16' height='16' viewBox='0 0 24 24' fill='currentColor'>
+        <path d='M19 19H5V5h7V3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z' />
+      </svg>
+    </Box>
   );
 };

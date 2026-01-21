@@ -9,7 +9,7 @@ import {
   type Theme,
 } from '@mui/material';
 import { Activity, type SyntheticEvent, useCallback, useState } from 'react';
-import { PageContainer, PageTitle } from '../components/common/PageBuilders';
+import { PageContainer, Page_Title } from '../components/common/PageBuilders';
 import { ItemReservationCard } from '../components/reservations/ItemReservationCard';
 import { Patron_Reservation_Card } from '../components/reservations/PatronReservationCard';
 import { useCheckedOutCopies } from '../hooks/use_copies';
@@ -44,7 +44,7 @@ export const ReserveItemPage = () => {
       sx={{ maxHeight: 'calc(100dvh - 64px)' }}
       scroll={true}
     >
-      <PageTitle title='Reserve Item' Icon_Component={EventNote} />
+      <Page_Title title='Reserve Item' Icon_Component={EventNote} />
       <Reserve_Item_Content />
     </PageContainer>
   );
@@ -60,7 +60,7 @@ const Reserve_Item_Content = () => {
   const [patron_input_value, set_patron_input_value] = useState('');
 
   const [selected_item, set_selected_item] = useState<Item_Copy_Result | null>(
-    null
+    null,
   );
   const [item_input_value, set_item_input_value] = useState('');
 
@@ -81,7 +81,7 @@ const Reserve_Item_Content = () => {
       const error_message = error.message || 'Failed to create reservation';
       show_snackbar({ message: error_message, severity: 'error' });
     },
-    [show_snackbar]
+    [show_snackbar],
   );
 
   // Reservation mutation
@@ -93,14 +93,14 @@ const Reserve_Item_Content = () => {
     (_event: SyntheticEvent, new_value: Patron | null) => {
       set_selected_patron(new_value);
     },
-    []
+    [],
   );
 
   const handle_patron_input_change = useCallback(
     (_event: SyntheticEvent, new_input_value: string) => {
       set_patron_input_value(new_input_value);
     },
-    []
+    [],
   );
 
   // Item autocomplete handlers
@@ -108,14 +108,14 @@ const Reserve_Item_Content = () => {
     (_event: SyntheticEvent, new_value: Item_Copy_Result | null) => {
       set_selected_item(new_value);
     },
-    []
+    [],
   );
 
   const handle_item_input_change = useCallback(
     (_event: SyntheticEvent, new_input_value: string) => {
       set_item_input_value(new_input_value);
     },
-    []
+    [],
   );
 
   // Form submission handler
@@ -126,7 +126,7 @@ const Reserve_Item_Content = () => {
           patron_id: selected_patron.id,
           item_copy_id: selected_item.id,
         },
-        { onSuccess: handle_success, onError: handle_error }
+        { onSuccess: handle_success, onError: handle_error },
       );
     }
   }, [
@@ -140,13 +140,13 @@ const Reserve_Item_Content = () => {
   // Autocomplete formatters
   const format_patron_label = useCallback(
     (option: Patron) => `${option.first_name} ${option.last_name}`,
-    []
+    [],
   );
 
   const format_item_label = useCallback(
     (option: Item_Copy_Result) =>
       `${option.title} [${option.copy_number}/${option.total_copies}]`,
-    []
+    [],
   );
 
   const get_option_id = useCallback(
@@ -156,7 +156,7 @@ const Reserve_Item_Content = () => {
           ? (option as Item_Copy_Result).copy_number
           : (option as Patron).active_checkouts
       }`,
-    []
+    [],
   );
 
   const is_form_valid =

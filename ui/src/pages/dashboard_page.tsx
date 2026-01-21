@@ -25,7 +25,7 @@ import {
   PatronActivityChart,
   PopularItemsChart,
 } from '../components/analytics';
-import { PageContainer, PageTitle } from '../components/common/PageBuilders';
+import { PageContainer, Page_Title } from '../components/common/PageBuilders';
 import { useAnalyticsSummary } from '../hooks/use_analytics';
 import { useSelectedBranch } from '../hooks/use_branch_hooks';
 
@@ -34,17 +34,17 @@ export const DashboardPage: FC = () => {
   const queryClient = useQueryClient();
 
   // Date range state
-  const [dateRange, setDateRange] = useState<'7d' | '30d' | '90d' | '1y'>(
-    '30d'
+  const [date_range, set_date_range] = useState<'7d' | '30d' | '90d' | '1y'>(
+    '30d',
   );
-  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [is_refreshing, set_is_refreshing] = useState(false);
 
   // Calculate date range for circulation chart
-  const getDateRange = () => {
+  const get_date_range = () => {
     const end_date = new Date();
     const start_date = new Date();
 
-    switch (dateRange) {
+    switch (date_range) {
       case '7d':
         start_date.setDate(end_date.getDate() - 7);
         break;
@@ -70,61 +70,49 @@ export const DashboardPage: FC = () => {
 
   // Manual refresh all analytics data
   const handleRefresh = async () => {
-    setIsRefreshing(true);
+    set_is_refreshing(true);
     await queryClient.invalidateQueries({ queryKey: ['analytics'] });
-    setTimeout(() => setIsRefreshing(false), 1000);
+    setTimeout(() => set_is_refreshing(false), 1000);
   };
 
-  const { start_date, end_date } = getDateRange();
+  const { start_date, end_date } = get_date_range();
 
   return (
     <PageContainer scroll={true}>
-      <PageTitle title="Library Dashboard" Icon_Component={Dashboard} />
+      <Page_Title title='Library Dashboard' Icon_Component={Dashboard} />
 
       {/* Summary Metrics */}
       <Grid container spacing={2} mb={2}>
-        <Grid
-          size={{ xs: 12, sm: 6, md: 3 }}
-          sx={{ borderRadius: 3, overflow: 'clip' }}
-        >
+        <Grid size={{ xs: 12, sm: 6, md: 3 }} sx={GRID_ITEM_SX}>
           <MetricCard
-            title="Total Collection"
+            title='Total Collection'
             value={summary?.collection_size ?? 0}
             icon={<LibraryBooks />}
-            subtitle="Items in collection"
+            subtitle='Items in collection'
           />
         </Grid>
-        <Grid
-          size={{ xs: 12, sm: 6, md: 3 }}
-          sx={{ borderRadius: 3, overflow: 'clip' }}
-        >
+        <Grid size={{ xs: 12, sm: 6, md: 3 }} sx={GRID_ITEM_SX}>
           <MetricCard
-            title="Active Patrons"
+            title='Active Patrons'
             value={summary?.active_patrons ?? 0}
             icon={<People />}
-            subtitle="Active members"
+            subtitle='Active Members'
           />
         </Grid>
-        <Grid
-          size={{ xs: 12, sm: 6, md: 3 }}
-          sx={{ borderRadius: 3, overflow: 'clip' }}
-        >
+        <Grid size={{ xs: 12, sm: 6, md: 3 }} sx={GRID_ITEM_SX}>
           <MetricCard
-            title="Checkouts Today"
+            title='Checkouts Today'
             value={summary?.current_checkouts ?? 0}
             icon={<LocalLibrary />}
-            subtitle="Items checked out"
+            subtitle='Items Checked Out'
           />
         </Grid>
-        <Grid
-          size={{ xs: 12, sm: 6, md: 3 }}
-          sx={{ borderRadius: 3, overflow: 'clip' }}
-        >
+        <Grid size={{ xs: 12, sm: 6, md: 3 }} sx={GRID_ITEM_SX}>
           <MetricCard
-            title="Overdue Items"
+            title='Overdue Items'
             value={summary?.overdue_items ?? 0}
             icon={<Warning />}
-            subtitle="Items overdue"
+            subtitle='Items overdue'
           />
         </Grid>
       </Grid>
@@ -132,33 +120,33 @@ export const DashboardPage: FC = () => {
       {/* Filters Section */}
       <Paper sx={{ p: 2, mb: 2, borderRadius: 3, overflow: 'clip' }}>
         <Stack
-          direction="row"
-          justifyContent="space-between"
-          alignItems="center"
-          flexWrap="wrap"
+          direction='row'
+          justifyContent='space-between'
+          alignItems='center'
+          flexWrap='wrap'
           gap={2}
         >
-          <Stack direction="row" spacing={2} alignItems="center">
+          <Stack direction='row' spacing={2} alignItems='center'>
             <ToggleButtonGroup
-              value={dateRange}
+              value={date_range}
               exclusive
-              onChange={(_, newRange) => newRange && setDateRange(newRange)}
-              size="small"
+              onChange={(_, newRange) => newRange && set_date_range(newRange)}
+              size='small'
             >
-              <ToggleButton value="7d">7 Days</ToggleButton>
-              <ToggleButton value="30d">30 Days</ToggleButton>
-              <ToggleButton value="90d">90 Days</ToggleButton>
-              <ToggleButton value="1y">1 Year</ToggleButton>
+              <ToggleButton value='7d'>7 Days</ToggleButton>
+              <ToggleButton value='30d'>30 Days</ToggleButton>
+              <ToggleButton value='90d'>90 Days</ToggleButton>
+              <ToggleButton value='1y'>1 Year</ToggleButton>
             </ToggleButtonGroup>
           </Stack>
 
           <Button
-            variant="outlined"
+            variant='outlined'
             startIcon={
-              isRefreshing ? <CircularProgress size={16} /> : <Refresh />
+              is_refreshing ? <CircularProgress size={16} /> : <Refresh />
             }
             onClick={handleRefresh}
-            disabled={isRefreshing}
+            disabled={is_refreshing}
           >
             Refresh Data
           </Button>
@@ -168,7 +156,7 @@ export const DashboardPage: FC = () => {
       {/* Charts Section */}
       <Grid container spacing={3}>
         {/* Circulation Trends - Full Width */}
-        <Grid size={{ xs: 12 }}>
+        <Grid size={{ xs: 12 }} sx={GRID_ITEM_SX}>
           <CirculationChart
             branch_id={selected_branch?.id}
             start_date={start_date}
@@ -177,25 +165,27 @@ export const DashboardPage: FC = () => {
         </Grid>
 
         {/* Popular Items & Genres */}
-        <Grid size={{ xs: 12, md: 6 }}>
+        <Grid size={{ xs: 12, md: 6 }} sx={GRID_ITEM_SX}>
           <PopularItemsChart branch_id={selected_branch?.id} />
         </Grid>
 
         {/* Patron Activity */}
-        <Grid size={{ xs: 12, md: 6 }}>
+        <Grid size={{ xs: 12, md: 6 }} sx={GRID_ITEM_SX}>
           <PatronActivityChart branch_id={selected_branch?.id} />
         </Grid>
 
         {/* Overdue Tracking */}
-        <Grid size={{ xs: 12, md: 6 }}>
+        <Grid size={{ xs: 12, md: 6 }} sx={GRID_ITEM_SX}>
           <OverdueByBranchChart branch_id={selected_branch?.id} />
         </Grid>
 
         {/* Collection Utilization */}
-        <Grid size={{ xs: 12, md: 6 }}>
+        <Grid size={{ xs: 12, md: 6 }} sx={GRID_ITEM_SX}>
           <CollectionUtilizationChart branch_id={selected_branch?.id} />
         </Grid>
       </Grid>
     </PageContainer>
   );
 };
+
+const GRID_ITEM_SX = { borderRadius: 3, overflow: 'clip' };

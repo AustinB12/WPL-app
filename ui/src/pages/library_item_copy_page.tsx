@@ -12,17 +12,17 @@ import {
   Stack,
   Typography,
 } from '@mui/material';
-import React, { Activity, Suspense } from 'react';
+import React, { Suspense } from 'react';
 import { useParams } from 'react-router-dom';
-import { GenreChip } from '../components/common/GenreChip';
-import { PageContainer, PageTitle } from '../components/common/PageBuilders';
+import { Genre_Chip } from '../components/common/GenreChip';
+import { PageContainer, Page_Title } from '../components/common/PageBuilders';
 import { useCopyById } from '../hooks/use_copies';
 import { useLibraryItemById } from '../hooks/use_library_items';
 
 export const Library_Item_Copy_Page = () => {
   const { library_item_copy_id } = useParams();
   const { data: item_copy, isLoading: item_loading } = useCopyById(
-    parseInt(library_item_copy_id!)
+    parseInt(library_item_copy_id!),
   );
 
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
@@ -35,7 +35,7 @@ export const Library_Item_Copy_Page = () => {
   };
 
   const { data: library_item } = useLibraryItemById(
-    item_copy?.library_item_id || 0
+    item_copy?.library_item_id || 0,
   );
 
   const page_loading = !library_item_copy_id || item_loading;
@@ -78,24 +78,22 @@ export const Library_Item_Copy_Page = () => {
               </>
             }
             title={
-              <PageTitle
+              <Page_Title
                 loading={page_loading}
                 title={page_loading ? 'Library Item' : `${item_copy?.title}`}
                 Icon_Component={BookIcon}
-              ></PageTitle>
+              ></Page_Title>
             }
           />
 
           <Typography sx={{ px: 2 }} variant='subtitle1' color='text.secondary'>
             {item_copy?.description}
           </Typography>
-          <Activity mode={library_item?.genre ? 'visible' : 'hidden'}>
-            <Stack sx={{ px: 2, py: 1 }} direction={'row'} gap={1}>
-              {library_item?.genre.map((b) => (
-                <GenreChip genre={b} />
-              ))}
-            </Stack>
-          </Activity>
+          <Stack sx={{ px: 2, py: 1 }} direction={'row'} gap={1}>
+            {library_item &&
+              library_item.genres.length >= 0 &&
+              library_item?.genres.map((b) => <Genre_Chip genre={b} />)}
+          </Stack>
         </Card>
 
         <Grid container spacing={2}>

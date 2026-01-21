@@ -1,7 +1,7 @@
 import { Add, Groups2 } from '@mui/icons-material';
 import { Fab, Stack, useMediaQuery, useTheme } from '@mui/material';
 import { useState } from 'react';
-import { PageContainer, PageTitle } from '../components/common/PageBuilders';
+import { PageContainer, Page_Title } from '../components/common/PageBuilders';
 import New_Patron_Modal from '../components/patrons/NewPatronModal';
 import { PatronsDataGrid } from '../components/patrons/PatronsDataGrid';
 import PatronsList from '../components/patrons/PatronsList';
@@ -40,7 +40,7 @@ export const Patrons = () => {
 
   return (
     <PageContainer width='xl'>
-      <PageTitle title='Patrons' Icon_Component={Groups2} sx={{ mb: 0 }} />
+      <Page_Title title='Patrons' Icon_Component={Groups2} sx={{ mb: 0 }} />
       <Stack sx={{ flex: 1, overflow: 'hidden' }}>
         {xsUp ? (
           <PatronsDataGrid

@@ -14,12 +14,12 @@ import {
   Typography,
 } from '@mui/material';
 import { useState, type FC } from 'react';
-import { PageTitle } from '../components/common/PageBuilders';
+import { Page_Title } from '../components/common/PageBuilders';
 import { Explore, Refresh } from '@mui/icons-material';
 import { Library_Item_Type, type Library_Item } from '../types/item_types';
 import { useLibraryItems } from '../hooks/use_library_items';
 import ItemTypeChip from '../components/library_items/ItemTypeChip';
-import { GenreChip } from '../components/common/GenreChip';
+import { Genre_Chip } from '../components/common/GenreChip';
 import Masonry from '@mui/lab/Masonry';
 import { useNavigate } from 'react-router-dom';
 
@@ -48,7 +48,7 @@ export const Explore_Page: FC = () => {
 
   return (
     <Stack gap={2} sx={{ p: 2 }}>
-      <PageTitle
+      <Page_Title
         title='Explore'
         Icon_Component={Explore}
         container_sx={{ mb: 4 }}
@@ -87,7 +87,7 @@ export const Explore_Page: FC = () => {
             <MenuItem value='all'>All</MenuItem>
             {Object.values(Library_Item_Type).map((type) => (
               <MenuItem key={type} value={type}>
-                {type}
+                <ItemTypeChip item_type={type} />
               </MenuItem>
             ))}
           </Select>
@@ -155,9 +155,10 @@ const Tall_Item_Card = ({ library_item }: { library_item: Library_Item }) => {
           />
           <br />
           <Stack direction='row' flexWrap='wrap' gap={1}>
-            {library_item.genre.map((g) => (
-              <GenreChip key={g} genre={g} size={'small'} />
-            ))}
+            {library_item?.genres &&
+              library_item.genres.map((g) => (
+                <Genre_Chip key={g} genre={g} size={'small'} />
+              ))}
           </Stack>
         </CardContent>
       </CardActionArea>

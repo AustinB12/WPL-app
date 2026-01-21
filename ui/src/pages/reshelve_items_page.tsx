@@ -1,7 +1,7 @@
 import { Fab } from '@mui/material';
 import { type GridColDef } from '@mui/x-data-grid';
 import { BaseDataGrid } from '../components/common/BaseDataGrid';
-import { PageContainer, PageTitle } from '../components/common/PageBuilders';
+import { PageContainer, Page_Title } from '../components/common/PageBuilders';
 import { ItemCopyConditionChip } from '../components/copies/ItemCopyConditionChip';
 import { ItemCopyStatusChip } from '../components/copies/ItemCopyStatusChip';
 import ItemTypeChip from '../components/library_items/ItemTypeChip';
@@ -80,7 +80,7 @@ export const Reshelve_Items_Page = () => {
 
   return (
     <PageContainer>
-      <PageTitle title={'Reshelve Items'} Icon_Component={CheckCircle} />
+      <Page_Title title={'Reshelve Items'} Icon_Component={CheckCircle} />
       <BaseDataGrid
         rows={data}
         getRowId={(row) => row.id}

@@ -11,7 +11,7 @@ import {
 } from '@mui/material';
 import dayjs from 'dayjs';
 import { type SyntheticEvent, useCallback, useState } from 'react';
-import { PageContainer, PageTitle } from '../components/common/PageBuilders';
+import { PageContainer, Page_Title } from '../components/common/PageBuilders';
 import ItemTypeChip from '../components/library_items/ItemTypeChip';
 import {
   Recent_Renewals_List,
@@ -129,7 +129,7 @@ export function Renew_Item_Page() {
 
   return (
     <PageContainer width='xl' scroll={true}>
-      <PageTitle title='Renew Item' Icon_Component={Autorenew} />
+      <Page_Title title='Renew Item' Icon_Component={Autorenew} />
       <Stack spacing={3}>
         <Stack direction='row' alignItems='center' spacing={1}>
           {/* Item Selection Autocomplete */}

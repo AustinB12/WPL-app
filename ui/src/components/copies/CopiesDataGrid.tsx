@@ -20,7 +20,7 @@ import {
 import { useSnackbar } from '../../hooks/use_snackbar';
 import type { Item_Copy, Item_Copy_Result } from '../../types/item_types';
 import { BaseDataGrid } from '../common/BaseDataGrid';
-import { GenreChip } from '../common/GenreChip';
+import { Genre_Chip } from '../common/GenreChip';
 import ItemTypeChip from '../library_items/ItemTypeChip';
 import { DeleteCopyModal } from './DeleteCopyModal';
 import { type Edit_Copy_Form_Data, EditCopyModal } from './EditCopyModal';
@@ -108,7 +108,7 @@ export const CopiesDataGrid = ({
   // Edit dialog state
   const [edit_dialog_open, set_edit_dialog_open] = useState(false);
   const [copy_to_edit, set_copy_to_edit] = useState<Item_Copy_Result | null>(
-    null
+    null,
   );
 
   const columns: GridColDef[] = [
@@ -186,7 +186,7 @@ export const CopiesDataGrid = ({
               height='100%'
             >
               {x.map((genre: string) => (
-                <GenreChip key={genre} genre={genre} />
+                <Genre_Chip key={genre} genre={genre} />
               ))}
             </Stack>
           );
@@ -327,8 +327,8 @@ export const CopiesDataGrid = ({
     if (!filter) return copies;
     return copies?.filter((copy) =>
       Object.values(copy).some((value) =>
-        String(value).toLowerCase().includes(filter.toLowerCase())
-      )
+        String(value).toLowerCase().includes(filter.toLowerCase()),
+      ),
     );
   }, [copies, filter]);
   return (
@@ -362,7 +362,7 @@ export const CopiesDataGrid = ({
           const selected_copy = Array.from(newSelection.ids)[0] || 0;
           if (selected_copy && copies && on_copy_selected) {
             on_copy_selected(
-              copies.find((c) => c.id === selected_copy) as Item_Copy
+              copies.find((c) => c.id === selected_copy) as Item_Copy,
             );
           }
         }}

@@ -71,9 +71,6 @@ router.get('/', async (req, res) => {
 
     const where_clause =
       conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
-    const group_by = 'GROUP BY li.id';
-    const order_by = 'ORDER BY li.title';
-
     // const query = `
     //   SELECT
     //     li.*,
@@ -235,11 +232,11 @@ router.get('/', async (req, res) => {
       JOIN PERIODICALS per ON li.id = per.library_item_id AND li.item_type = 'PERIODICAL'
     )
     SELECT
-  (SELECT json_group_array(json_object('id', id, 'title', title, 'item_type', item_type, 'description', description, 'publication_year', publication_year, 'publisher', publisher, 'genre', genre, 'cover_image_url', cover_image_url, 'number_of_pages', number_of_pages, 'author', author)) FROM books_table) as books,
-  (SELECT json_group_array(json_object('id', id, 'title', title, 'item_type', item_type, 'description', description, 'publication_year', publication_year, 'cover_image_url', cover_image_url, 'artist', artist, 'record_label', record_label, 'number_of_tracks', number_of_tracks, 'genre', genre, 'duration_seconds', duration_seconds)) FROM cds_table) as cds,
-  (SELECT json_group_array(json_object('id', id, 'title', title, 'item_type', item_type, 'description', description, 'publication_year', publication_year, 'cover_image_url', cover_image_url, 'narrator', narrator, 'duration_in_seconds', duration_in_seconds, 'publisher', publisher, 'genre', genre, 'format', format, 'rating', rating)) FROM audiobooks_table) as audiobooks,
-  (SELECT json_group_array(json_object('id', id, 'title', title, 'item_type', item_type, 'description', description, 'publication_year', publication_year, 'cover_image_url', cover_image_url, 'artist', artist, 'color', color, 'number_of_tracks', number_of_tracks, 'genre', genre, 'duration_seconds', duration_seconds, 'color', color)) FROM vinyls_table) as vinyls,
-  (SELECT json_group_array(json_object('id', id, 'title', title, 'item_type', item_type, 'description', description, 'publication_year', publication_year, 'director', director, 'studio', studio, 'video_format', video_format, 'duration_minutes', duration_minutes, 'video_rating', video_rating, 'video_genre', video_genre)) FROM videos_table) as videos,
+  (SELECT json_group_array(json_object('id', id, 'title', title, 'item_type', item_type, 'description', description, 'publication_year', publication_year, 'publisher', publisher, 'genres', genre, 'cover_image_url', cover_image_url, 'number_of_pages', number_of_pages, 'author', author)) FROM books_table) as books,
+  (SELECT json_group_array(json_object('id', id, 'title', title, 'item_type', item_type, 'description', description, 'publication_year', publication_year, 'cover_image_url', cover_image_url, 'artist', artist, 'record_label', record_label, 'number_of_tracks', number_of_tracks, 'genres', genre, 'duration_seconds', duration_seconds)) FROM cds_table) as cds,
+  (SELECT json_group_array(json_object('id', id, 'title', title, 'item_type', item_type, 'description', description, 'publication_year', publication_year, 'cover_image_url', cover_image_url, 'narrator', narrator, 'duration_in_seconds', duration_in_seconds, 'publisher', publisher, 'genres', genre, 'format', format, 'rating', rating)) FROM audiobooks_table) as audiobooks,
+  (SELECT json_group_array(json_object('id', id, 'title', title, 'item_type', item_type, 'description', description, 'publication_year', publication_year, 'cover_image_url', cover_image_url, 'artist', artist, 'color', color, 'number_of_tracks', number_of_tracks, 'genres', genre, 'duration_seconds', duration_seconds, 'color', color)) FROM vinyls_table) as vinyls,
+  (SELECT json_group_array(json_object('id', id, 'title', title, 'item_type', item_type, 'description', description, 'publication_year', publication_year, 'director', director, 'studio', studio, 'video_format', video_format, 'duration_minutes', duration_minutes, 'video_rating', video_rating, 'genres', video_genre)) FROM videos_table) as videos,
   (SELECT json_group_array(json_object('id', id, 'title', title, 'item_type', item_type, 'description', description, 'publication_year', publication_year, 'subscription_cost', subscription_cost, 'publisher', publisher, 'issue_number', issue_number, 'publication_month', publication_month, 'publication_year', publication_year)) FROM magazines_table) as magazines,
   (SELECT json_group_array(json_object('id', id, 'title', title, 'item_type', item_type, 'description', description, 'publication_year', publication_year, 'pages', pages, 'issue_number', issue_number, 'publication_date', publication_date)) FROM periodicals_table) as periodicals
     `;
@@ -268,7 +265,7 @@ router.get('/', async (req, res) => {
     ];
 
     all_items.forEach((item) => {
-      item.genre = item.genre ? JSON.parse(item.genre) : [];
+      item.genres = item.genres !== undefined ? JSON.parse(item.genres) : [];
     });
 
     res.json({
@@ -310,14 +307,17 @@ router.get('/:id', async (req, res) => {
         va.artist,
         va.color as vinyl_color,
         va.number_of_tracks as vinyl_tracks,
+        va.cover_image_url as vinyl_cover_image,
+        va.genre as vinyl_genre,
+        cd.genre as cd_genre,
         cd.artist as cd_artist,
         cd.record_label,
         cd.number_of_tracks as cd_tracks,
         m.subscription_cost,
         m.publisher as magazine_publisher,
         m.issue_number,
-        m.publication_month,
-        m.publication_year,
+        m.publication_month AS magazine_publication_month,
+        m.publication_year AS magazine_publication_year,
         p.pages,
         p.issue_number as periodical_issue_number,
         p.publication_date,
@@ -367,6 +367,12 @@ router.get('/:id', async (req, res) => {
       genres = JSON.parse(library_item.periodical_genre);
     }
     library_item.genres = genres;
+
+    library_item.cover_image_url =
+      library_item?.vinyl_cover_image ||
+      library_item?.audiobook_cover_image ||
+      library_item?.book_cover_image_url ||
+      null;
 
     res.json({
       success: true,
@@ -455,15 +461,152 @@ router.put(
           req.body.publication_year !== undefined
             ? req.body.publication_year
             : existing_item.publication_year,
-        cost: req.body.cost !== undefined ? req.body.cost : existing_item.cost,
-        image_url:
-          req.body.image_url !== undefined
-            ? req.body.image_url
-            : existing_item.image_url,
+
         updated_at: format_sql_datetime(new Date()),
       };
 
       await db.update_record('LIBRARY_ITEMS', req.params.id, update_data);
+
+      // Also update type-specific tables if needed
+      switch (existing_item.item_type) {
+        case 'BOOK':
+          await db.execute_query(
+            `UPDATE BOOKS SET
+              publisher = ?,
+              author = ?,
+              genre = ?,
+              cover_image_url = ?,
+              number_of_pages = ?
+            WHERE library_item_id = ?`,
+            [
+              req.body.publisher,
+              req.body.author,
+              JSON.stringify(req.body.genres || []),
+              req.body.cover_image_url,
+              req.body.number_of_pages,
+              req.params.id,
+            ],
+          );
+          break;
+        case 'AUDIOBOOK':
+          await db.execute_query(
+            `UPDATE AUDIOBOOKS SET
+                narrator = ?,
+                duration_in_seconds = ?,
+                publisher = ?,
+                genre = ?,
+                cover_img_url = ?,
+                format = ?,
+                rating = ?
+              WHERE library_item_id = ?`,
+            [
+              req.body.narrator,
+              req.body.duration_in_seconds,
+              req.body.publisher,
+              JSON.stringify(req.body.genres || []),
+              req.body.cover_img_url,
+              req.body.format,
+              req.body.rating,
+              req.params.id,
+            ],
+          );
+          break;
+        case 'CD':
+          await db.execute_query(
+            `UPDATE CDS SET
+              artist = ?,
+              record_label = ?,
+              number_of_tracks = ?,
+              genre = ?,
+              duration_seconds = ?
+            WHERE library_item_id = ?`,
+            [
+              req.body.artist,
+              req.body.record_label,
+              req.body.number_of_tracks,
+              JSON.stringify(req.body.genres || []),
+              req.body.duration_seconds,
+              req.params.id,
+            ],
+          );
+          break;
+        case 'VINYL':
+          await db.execute_query(
+            `UPDATE VINYL_ALBUMS SET
+              artist = ?,
+              color = ?,
+              number_of_tracks = ?,
+              genre = ?,
+              duration_seconds = ?
+            WHERE library_item_id = ?`,
+            [
+              req.body.artist,
+              req.body.color,
+              req.body.number_of_tracks,
+              JSON.stringify(req.body.genres || []),
+              req.body.duration_seconds,
+              req.params.id,
+            ],
+          );
+          break;
+        case 'VIDEO':
+          await db.execute_query(
+            `UPDATE VIDEOS SET
+              director = ?,
+              studio = ?,
+              format = ?,
+              duration_minutes = ?,
+              rating = ?,
+              genre = ?
+            WHERE library_item_id = ?`,
+            [
+              req.body.director,
+              req.body.studio,
+              req.body.format,
+              req.body.duration_minutes,
+              req.body.rating,
+              JSON.stringify(req.body.genres || []),
+              req.params.id,
+            ],
+          );
+          break;
+        case 'MAGAZINE':
+          await db.execute_query(
+            `UPDATE MAGAZINES SET
+                subscription_cost = ?,
+                publisher = ?,
+                issue_number = ?,
+                publication_month = ?,
+                publication_year = ?
+              WHERE library_item_id = ?`,
+            [
+              req.body.subscription_cost,
+              req.body.publisher,
+              req.body.issue_number,
+              req.body.publication_month,
+              req.body.publication_year,
+              req.params.id,
+            ],
+          );
+          break;
+        case 'PERIODICAL':
+          await db.execute_query(
+            `UPDATE PERIODICALS SET
+                pages = ?,
+                issue_number = ?,
+                publication_date = ?
+              WHERE library_item_id = ?`,
+            [
+              req.body.pages,
+              req.body.issue_number,
+              req.body.publication_date,
+              req.params.id,
+            ],
+          );
+          break;
+        default:
+          break;
+      }
 
       // Return updated data
       const updated_item = await db.get_by_id('LIBRARY_ITEMS', req.params.id);

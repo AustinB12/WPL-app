@@ -3,7 +3,6 @@ import {
   Autocomplete,
   Box,
   Button,
-  Chip,
   Dialog,
   DialogActions,
   DialogContent,
@@ -16,6 +15,7 @@ import { useEffect, useState } from 'react';
 import { useUpdateLibraryItem } from '../../hooks/use_library_items';
 import { useSnackbar } from '../../hooks/use_snackbar';
 import { Genre, type Library_Item } from '../../types/item_types';
+import { Genre_Chip } from '../common/GenreChip';
 
 interface Edit_Library_Item_Dialog_Props {
   open: boolean;
@@ -39,7 +39,7 @@ export function Edit_Library_Item_Dialog({
   const [publication_year, set_publication_year] = useState<number | ''>('');
   const [author, set_author] = useState('');
   const [publisher, set_publisher] = useState('');
-  const [genre, set_genre] = useState<Genre[]>([]);
+  const [genres, set_genres] = useState<Genre[]>([]);
   const [cover_image_url, set_cover_image_url] = useState('');
   const [number_of_pages, set_number_of_pages] = useState<number | ''>('');
 
@@ -83,7 +83,7 @@ export function Edit_Library_Item_Dialog({
       set_publisher(
         library_item.publisher || library_item.audiobook_publisher || '',
       );
-      set_genre(library_item.genre || []);
+      set_genres(library_item.genres || []);
       set_cover_image_url(
         library_item.cover_image_url ||
           library_item.audiobook_cover_image ||
@@ -129,7 +129,7 @@ export function Edit_Library_Item_Dialog({
       Object.assign(update_data, {
         author,
         publisher,
-        genre,
+        genres: genres,
         cover_image_url,
         number_of_pages: number_of_pages || undefined,
       });
@@ -162,6 +162,41 @@ export function Edit_Library_Item_Dialog({
     if (!isPending) {
       on_close();
     }
+    if (library_item) {
+      set_title(library_item.title || '');
+      set_description(library_item.description || '');
+      set_publication_year(library_item.publication_year || '');
+      set_author(library_item.author || '');
+      set_publisher(
+        library_item.publisher || library_item.audiobook_publisher || '',
+      );
+      set_genres(library_item.genres || []);
+      set_cover_image_url(
+        library_item.cover_image_url ||
+          library_item.audiobook_cover_image ||
+          '',
+      );
+      set_number_of_pages(
+        library_item.number_of_pages
+          ? parseInt(library_item.number_of_pages)
+          : '',
+      );
+      set_director(library_item.director || '');
+      set_studio(library_item.studio || '');
+      set_video_format(library_item.video_format || '');
+      set_duration_minutes(
+        library_item.duration_minutes
+          ? parseInt(library_item.duration_minutes)
+          : '',
+      );
+      set_video_rating(library_item.video_rating || '');
+      set_narrator(library_item.narrator || '');
+      set_audiobook_duration(
+        library_item.audiobook_duration
+          ? parseInt(library_item.audiobook_duration)
+          : '',
+      );
+    }
   };
 
   const is_book = library_item?.item_type === 'BOOK';
@@ -174,7 +209,7 @@ export function Edit_Library_Item_Dialog({
       onClose={handle_close}
       maxWidth='sm'
       fullWidth
-      PaperProps={{ sx: { borderRadius: 3 } }}
+      slotProps={{ paper: { sx: { borderRadius: 3 } } }}
     >
       <DialogTitle>
         <Stack
@@ -259,20 +294,24 @@ export function Edit_Library_Item_Dialog({
               <Autocomplete
                 multiple
                 options={GENRE_OPTIONS}
-                value={genre}
-                onChange={(_, new_value) => set_genre(new_value)}
+                value={genres}
+                onChange={(_, new_value) => set_genres(new_value)}
                 disabled={isPending}
                 renderInput={(params) => (
                   <TextField {...params} label='Genre' />
                 )}
-                renderTags={(value, getTagProps) =>
-                  value.map((option, index) => (
-                    <Chip
-                      label={option}
-                      size='small'
-                      {...getTagProps({ index })}
-                      key={option}
-                    />
+                renderOption={(props, option, { selected }) => {
+                  const { key, ...optionProps } = props;
+                  return (
+                    <li key={key} {...optionProps}>
+                      {selected && '✅'}
+                      <Genre_Chip size='small' key={option} genre={option} />
+                    </li>
+                  );
+                }}
+                renderValue={(values) =>
+                  values.map((genre) => (
+                    <Genre_Chip key={genre} genre={genre} sx={{ mr: 1 }} />
                   ))
                 }
               />

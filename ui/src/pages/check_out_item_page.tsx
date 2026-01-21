@@ -13,7 +13,7 @@ import {
   type Theme,
 } from '@mui/material';
 import { Activity, type SyntheticEvent, useCallback, useState } from 'react';
-import { PageContainer, PageTitle } from '../components/common/PageBuilders';
+import { PageContainer, Page_Title } from '../components/common/PageBuilders';
 import { ItemReservationCard } from '../components/reservations/ItemReservationCard';
 import { Patron_Reservation_Card } from '../components/reservations/PatronReservationCard';
 import { useAvailableCopies } from '../hooks/use_copies';
@@ -49,7 +49,7 @@ export const Check_Out_Item_Page = () => {
       sx={{ maxHeight: 'calc(100dvh - 64px)' }}
       scroll={true}
     >
-      <PageTitle title='Check Out Item' Icon_Component={EventNote} />
+      <Page_Title title='Check Out Item' Icon_Component={EventNote} />
       <Check_Out_Item_Page_Content />
     </PageContainer>
   );

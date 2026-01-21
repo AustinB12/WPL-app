@@ -1,20 +1,20 @@
 import { LocalLibrary } from '@mui/icons-material';
 import { Typography } from '@mui/material';
 import { useState } from 'react';
-import { PageContainer, PageTitle } from '../components/common/PageBuilders';
+import { PageContainer, Page_Title } from '../components/common/PageBuilders';
 import { SearchWithNameOrId } from '../components/common/SearchWithNameOrId';
 import { CopiesDataGrid } from '../components/copies/CopiesDataGrid';
 
 export function SearchPage() {
   const [search_term, set_search_term] = useState<string>('');
   return (
-    <PageContainer width="xl">
-      <PageTitle
-        title="Welcome to Wayback Public Library System"
+    <PageContainer width='xl'>
+      <Page_Title
+        title='Welcome to Wayback Public Library System'
         Icon_Component={LocalLibrary}
       />
       <Typography
-        variant="body1"
+        variant='body1'
         sx={{
           color: 'text.secondary',
           fontWeight: 400,

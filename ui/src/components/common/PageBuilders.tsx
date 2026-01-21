@@ -24,12 +24,12 @@ export const PageContainer = ({
     <Container
       maxWidth={width}
       sx={{
-        py: 3,
+        py: { xs: 1, sm: 3 },
         height: 1,
         overflow: scroll ? 'auto' : 'hidden',
         display: 'flex',
         flexDirection: 'column',
-        gap: 2,
+        gap: { xs: 1, sm: 2 },
         ...sx,
       }}
     >
@@ -40,13 +40,13 @@ export const PageContainer = ({
 
 interface Page_Title_Props {
   title: string;
-  Icon_Component: React.ElementType;
+  Icon_Component?: React.ElementType;
   sx?: SxProps<Theme>;
   container_sx?: SxProps<Theme>;
   loading?: boolean;
 }
 
-export function PageTitle({
+export function Page_Title({
   title,
   Icon_Component,
   container_sx,
@@ -55,7 +55,7 @@ export function PageTitle({
 }: Page_Title_Props) {
   return (
     <Stack direction='row' alignItems='center' spacing={2} sx={container_sx}>
-      <Icon_Component color='primary' fontSize='large' />
+      {!!Icon_Component && <Icon_Component color='primary' fontSize='large' />}
 
       <Typography
         variant='h1'

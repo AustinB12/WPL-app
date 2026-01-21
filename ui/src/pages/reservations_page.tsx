@@ -1,6 +1,6 @@
 import { EventNote } from '@mui/icons-material';
 import { BaseDataGrid } from '../components/common/BaseDataGrid';
-import { PageContainer, PageTitle } from '../components/common/PageBuilders';
+import { PageContainer, Page_Title } from '../components/common/PageBuilders';
 import ItemTypeChip from '../components/library_items/ItemTypeChip';
 import { ReservationStatusChip } from '../components/reservations/ReservationStatusChip';
 import { useReservations } from '../hooks/use_reservations';
@@ -11,7 +11,7 @@ export const ReservationsPage = () => {
 
   return (
     <PageContainer width='xl'>
-      <PageTitle title='Reservations' Icon_Component={EventNote} />
+      <Page_Title title='Reservations' Icon_Component={EventNote} />
       <BaseDataGrid
         label='Reservations'
         rows={reservations}

@@ -1,9 +1,9 @@
 import { Add, Book } from '@mui/icons-material';
 import { Box, Fab } from '@mui/material';
 import { useState } from 'react';
-import { PageContainer, PageTitle } from '../components/common/PageBuilders';
+import { PageContainer, Page_Title } from '../components/common/PageBuilders';
 import { CreateLibraryItemDialog } from '../components/library_items/CreateLibraryItemDialog';
-import { LibraryItemDataGrid } from '../components/library_items/LibraryItemGrid';
+import { Library_Item_Data_Grid } from '../components/library_items/LibraryItemGrid';
 
 export const LibraryItemsPage = () => {
   const [dialog_open, set_dialog_open] = useState(false);
@@ -17,7 +17,7 @@ export const LibraryItemsPage = () => {
   };
   return (
     <PageContainer>
-      <PageTitle title="Library Items" Icon_Component={Book} />
+      <Page_Title title='Library Items' Icon_Component={Book} />
       <Box
         sx={{
           flex: 1,
@@ -25,15 +25,15 @@ export const LibraryItemsPage = () => {
           flexDirection: 'column',
           overflow: 'hidden',
           minHeight: 0,
-          mb: 8,
+          mb: 2,
         }}
       >
-        <LibraryItemDataGrid />
+        <Library_Item_Data_Grid />
         <Fab
-          color="primary"
+          color='primary'
           onClick={handle_create_library_item}
-          aria-label="Add library item"
-          title="Add library item"
+          aria-label='Add library item'
+          title='Add library item'
           sx={{
             position: 'fixed',
             bottom: '3vh',

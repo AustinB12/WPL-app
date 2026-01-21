@@ -1,5 +1,5 @@
 import { Delete, Edit, ReadMore } from '@mui/icons-material';
-import { Box } from '@mui/material';
+import { Box, useMediaQuery, useTheme } from '@mui/material';
 import {
   GridActionsCellItem,
   type GridColDef,
@@ -22,17 +22,20 @@ import { DeleteLibraryItem } from './DeleteLibraryItem';
 import { EditLibraryItem } from './EditLibraryItem';
 import ItemTypeChip from './ItemTypeChip';
 import { LibraryItemDetails } from './LibraryItemDetails';
+import { Library_Item_Mobile_List } from './LibraryItemMobileList';
 
-export const LibraryItemDataGrid = () => {
+export const Library_Item_Data_Grid = () => {
+  const theme = useTheme();
+  const is_mobile = useMediaQuery(theme.breakpoints.down('sm'));
   const { show_snackbar } = useSnackbar();
   const [details_open, set_details_open] = useState(false);
   const [delete_dialog_open, set_delete_dialog_open] = useState(false);
   const [edit_dialog_open, set_edit_dialog_open] = useState(false);
   const [selected_item, set_selected_item] = useState<Library_Item | null>(
-    null
+    null,
   );
   const [item_to_delete, set_item_to_delete] = useState<Library_Item | null>(
-    null
+    null,
   );
   const [item_to_edit, set_item_to_edit] = useState<Library_Item | null>(null);
   const { data: rows, isLoading: loading, error } = useLibraryItems();
@@ -94,7 +97,7 @@ export const LibraryItemDataGrid = () => {
         set_details_open(true);
       }
     },
-    [rows]
+    [rows],
   );
 
   const handle_delete_click = useCallback(
@@ -105,7 +108,7 @@ export const LibraryItemDataGrid = () => {
         set_delete_dialog_open(true);
       }
     },
-    [rows]
+    [rows],
   );
 
   const handle_edit_click = useCallback(
@@ -116,21 +119,44 @@ export const LibraryItemDataGrid = () => {
         set_edit_dialog_open(true);
       }
     },
-    [rows]
+    [rows],
   );
 
   const handle_delete_confirm = useCallback(
     (item_id: number) => {
       delete_mutation.mutate(item_id);
     },
-    [delete_mutation]
+    [delete_mutation],
   );
 
   const handle_edit_confirm = useCallback(
     (item_id: number, data: Create_Library_Item_Form_Data) => {
       update_mutation.mutate({ item_id, data });
     },
-    [update_mutation]
+    [update_mutation],
+  );
+
+  // Mobile-friendly handlers that accept the full item
+  const handle_details_click_mobile = useCallback((item: Library_Item) => {
+    set_selected_item(item);
+    set_details_open(true);
+  }, []);
+
+  const handle_edit_click_mobile = useCallback((item: Library_Item) => {
+    set_item_to_edit(item);
+    set_edit_dialog_open(true);
+  }, []);
+
+  const handle_delete_click_mobile = useCallback((item: Library_Item) => {
+    set_item_to_delete(item);
+    set_delete_dialog_open(true);
+  }, []);
+
+  const handle_item_navigate = useCallback(
+    (item: Library_Item) => {
+      navigate(`/library-item/${item.id}`);
+    },
+    [navigate],
   );
 
   const columns: GridColDef[] = useMemo(
@@ -140,6 +166,27 @@ export const LibraryItemDataGrid = () => {
         headerName: 'ID',
         width: 90,
         valueGetter: (value) => Number(value),
+      },
+      {
+        field: 'cover_image_url',
+        headerName: 'Image',
+        width: 75,
+        editable: false,
+        renderCell: (params) => {
+          return (
+            <Box
+              component='img'
+              src={params.value}
+              alt='Library Item'
+              sx={{
+                width: 36,
+                height: 64,
+                objectFit: 'cover',
+                borderRadius: 1,
+              }}
+            />
+          );
+        },
       },
       {
         field: 'title',
@@ -197,24 +244,37 @@ export const LibraryItemDataGrid = () => {
         ],
       },
     ],
-    [handle_delete_click, handle_edit_click, handle_item_selected]
+    [handle_delete_click, handle_edit_click, handle_item_selected],
   );
 
   return (
     <>
-      <Box sx={{ overflow: 'hidden', maxHeight: 1 }}>
-        <BaseDataGrid
-          label='Library Items'
-          sx={{ height: 1 }}
-          rows={rows}
-          columns={columns}
-          loading={loading}
-          pageSizeOptions={[10, 25, 50, 100]}
-          onRowDoubleClick={(params) => {
-            navigate(`/library-item/${params.id}`);
-          }}
-        />
-      </Box>
+      {is_mobile ? (
+        <Box sx={{ height: '100%', overflow: 'auto' }}>
+          <Library_Item_Mobile_List
+            items={rows}
+            loading={loading}
+            on_details_click={handle_details_click_mobile}
+            on_edit_click={handle_edit_click_mobile}
+            on_delete_click={handle_delete_click_mobile}
+            on_item_double_click={handle_item_navigate}
+          />
+        </Box>
+      ) : (
+        <Box sx={{ overflow: 'hidden', maxHeight: 1 }}>
+          <BaseDataGrid
+            label='Library Items'
+            sx={{ height: 1 }}
+            rows={rows}
+            columns={columns}
+            loading={loading}
+            pageSizeOptions={[10, 25, 50, 100]}
+            onRowDoubleClick={(params) => {
+              navigate(`/library-item/${params.id}`);
+            }}
+          />
+        </Box>
+      )}
       <LibraryItemDetails
         is_open={details_open}
         item={selected_item}

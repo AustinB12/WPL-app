@@ -1,7 +1,8 @@
-import { Book as BookIcon, Delete, Edit, MoreVert } from '@mui/icons-material';
+import { Delete, Edit, MoreVert } from '@mui/icons-material';
 import {
   Card,
   CardHeader,
+  CircularProgress,
   Grid,
   IconButton,
   ListItemIcon,
@@ -10,28 +11,30 @@ import {
   MenuItem,
   MenuList,
   Stack,
-  type SxProps,
   Typography,
+  useMediaQuery,
+  useTheme,
 } from '@mui/material';
-import Paper from '@mui/material/Paper';
 import { type GridColDef } from '@mui/x-data-grid';
-import React, {
-  Activity,
-  type PropsWithChildren,
-  Suspense,
-  useState,
-} from 'react';
+import React, { useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { GenreChip } from '../components/common/GenreChip';
-import { PageContainer, PageTitle } from '../components/common/PageBuilders';
+import { Genre_Chip } from '../components/common/GenreChip';
+import { PageContainer } from '../components/common/PageBuilders';
 import SimpleGrid from '../components/common/SimpleGrid';
 import { ItemCopyConditionChip } from '../components/copies/ItemCopyConditionChip';
 import { ItemCopyStatusChip } from '../components/copies/ItemCopyStatusChip';
 import { Edit_Library_Item_Dialog } from '../components/library_items/Edit_Library_Item_Dialog';
 import { useCopiesOfLibraryItem } from '../hooks/use_copies';
 import { useLibraryItemById } from '../hooks/use_library_items';
-
-// import { useSnackbar } from '../hooks/use_snackbar';
+import { Library_Item_Type } from '../types/item_types';
+import { Book_Content } from '../components/library_items/type_specific_content/Book_Content';
+import { Audiobook_Content } from '../components/library_items/type_specific_content/Audiobook_Content';
+import { Magazine_Content } from '../components/library_items/type_specific_content/Magazine_Content';
+import { Periodical_Content } from '../components/library_items/type_specific_content/Periodical_Content';
+import { LIP_Section } from '../components/library_items/common';
+import { Video_Content } from '../components/library_items/type_specific_content/Video_Content';
+import { Vinyl_Content } from '../components/library_items/type_specific_content/Vinyl_Content';
+import { Cd_Content } from '../components/library_items/type_specific_content/cd_content';
 
 const copy_columns: GridColDef[] = [
   {
@@ -74,7 +77,37 @@ const copy_columns: GridColDef[] = [
   },
 ];
 
+// Simplified columns for mobile view
+const mobile_copy_columns: GridColDef[] = [
+  {
+    field: 'copy_number',
+    headerName: 'Copy',
+    width: 70,
+    valueFormatter: (value) => `#${value}`,
+  },
+  {
+    field: 'status',
+    headerName: 'Status',
+    width: 120,
+    flex: 1,
+    renderCell: (params) => (
+      <ItemCopyStatusChip size='small' status={params.value} />
+    ),
+  },
+  {
+    field: 'condition',
+    headerName: 'Condition',
+    width: 100,
+    flex: 1,
+    renderCell: (params) => (
+      <ItemCopyConditionChip size='small' condition={params.value} />
+    ),
+  },
+];
+
 export const Library_Item_Page = () => {
+  const theme = useTheme();
+  const is_mobile = useMediaQuery(theme.breakpoints.down('md'));
   const { library_item_id } = useParams();
   const {
     data,
@@ -109,6 +142,53 @@ export const Library_Item_Page = () => {
     refetch();
   };
 
+  const get_copies_grid = () => {
+    return (
+      <LIP_Section sx={{ mt: 2, width: '100%' }}>
+        <Typography variant='h6' gutterBottom>
+          Item Copies
+        </Typography>
+        <SimpleGrid
+          rows={copies || []}
+          cols={is_mobile ? mobile_copy_columns : copy_columns}
+          loading={copies_loading}
+        />
+      </LIP_Section>
+    );
+  };
+
+  const render_main_content = (item_type: Library_Item_Type | undefined) => {
+    if (!data)
+      return (
+        <Grid size={{ xs: 12 }}>
+          <CircularProgress
+            sx={{
+              width: { xs: 40, sm: 60, md: 80 },
+              height: { xs: 40, sm: 60, md: 80 },
+            }}
+          />
+        </Grid>
+      );
+    switch (item_type) {
+      case Library_Item_Type.Book:
+        return <Book_Content library_item={data}></Book_Content>;
+      case Library_Item_Type.Video:
+        return <Video_Content library_item={data} />;
+      case Library_Item_Type.Audiobook:
+        return <Audiobook_Content library_item={data} />;
+      case Library_Item_Type.Magazine:
+        return <Magazine_Content library_item={data} />;
+      case Library_Item_Type.Periodical:
+        return <Periodical_Content library_item={data} />;
+      case Library_Item_Type.Vinyl:
+        return <Vinyl_Content library_item={data} />;
+      case Library_Item_Type.CD:
+        return <Cd_Content library_item={data} />;
+      default:
+        return <div>Unsupported item type</div>;
+    }
+  };
+
   const page_loading = !library_item_id || item_loading;
   return (
     <PageContainer width='xl' sx={{ overflowY: 'auto' }}>
@@ -118,395 +198,95 @@ export const Library_Item_Page = () => {
         library_item={data || null}
         on_success={handle_edit_success}
       />
-      <Stack spacing={2} onClick={() => console.log(data)}>
-        <Card sx={{ borderRadius: 3 }}>
-          <CardHeader
-            action={
-              <>
-                <IconButton onClick={handleClick}>
-                  <MoreVert />
-                </IconButton>
-                <Menu
-                  id='basic-menu'
-                  anchorEl={anchorEl}
-                  open={open}
-                  onClose={handleClose}
-                  slotProps={{
-                    list: {
-                      'aria-labelledby': 'basic-button',
-                    },
-                  }}
-                >
-                  <MenuList>
-                    <MenuItem onClick={handle_edit_click}>
-                      <ListItemIcon>
-                        <Edit />
-                      </ListItemIcon>
-                      <ListItemText>Edit</ListItemText>
-                    </MenuItem>
-                    <MenuItem onClick={handleClose}>
-                      <ListItemIcon>
-                        <Delete />
-                      </ListItemIcon>
-                      <ListItemText>Delete</ListItemText>
-                    </MenuItem>
-                  </MenuList>
-                </Menu>
-              </>
-            }
-            title={
-              <PageTitle
-                loading={page_loading}
-                title={page_loading ? 'Library Item' : `${data?.title}`}
-                Icon_Component={BookIcon}
-              ></PageTitle>
-            }
-          />
+      <Card sx={{ borderRadius: 3, minHeight: 'min-content' }}>
+        <CardHeader
+          sx={{ pb: 0 }}
+          action={
+            <>
+              <IconButton onClick={handleClick}>
+                <MoreVert />
+              </IconButton>
+              <Menu
+                id='basic-menu'
+                anchorEl={anchorEl}
+                open={open}
+                onClose={handleClose}
+                slotProps={{
+                  list: {
+                    'aria-labelledby': 'basic-button',
+                  },
+                }}
+              >
+                <MenuList>
+                  <MenuItem onClick={handle_edit_click}>
+                    <ListItemIcon>
+                      <Edit />
+                    </ListItemIcon>
+                    <ListItemText>Edit</ListItemText>
+                  </MenuItem>
+                  <MenuItem onClick={handleClose}>
+                    <ListItemIcon>
+                      <Delete />
+                    </ListItemIcon>
+                    <ListItemText>Delete</ListItemText>
+                  </MenuItem>
+                </MenuList>
+              </Menu>
+            </>
+          }
+          title={
+            <Typography fontWeight={'bold'} variant='h6'>
+              {page_loading ? 'Library Item' : `${data?.title}`}
+            </Typography>
+          }
+        />
 
-          <Typography sx={{ px: 2 }} variant='subtitle1' color='text.secondary'>
-            {data?.description}
-          </Typography>
-          <Activity mode={data?.genre ? 'visible' : 'hidden'}>
-            <Stack sx={{ px: 2, py: 1 }} direction={'row'} gap={1}>
-              {data?.genre.map((b) => (
-                <GenreChip genre={b} />
-              ))}
-            </Stack>
-          </Activity>
-        </Card>
+        <Typography sx={{ px: 2 }} variant='subtitle2' color='text.secondary'>
+          {data?.description}
+        </Typography>
+        {data && data.genres.length > 0 && (
+          <Stack
+            sx={{ px: 2, py: 1 }}
+            direction={'row'}
+            gap={1}
+            flexWrap={'wrap'}
+          >
+            {data?.genres.map((b) => (
+              <Genre_Chip genre={b} />
+            ))}
+          </Stack>
+        )}
+      </Card>
 
-        <Grid container spacing={2}>
-          <Suspense fallback={<div>Loading content...</div>}>
-            <Grid size={8}>
-              <LIP_Section>
-                <Stack spacing={2}>
-                  <Stack direction={'row'} justifyContent={'space-between'}>
-                    <LIP_Field label='Title' value={data?.title || ''} />
-                    <LIP_Field label='Author' value={data?.author || ''} />
-                  </Stack>
-                  <Stack direction={'row'} justifyContent={'space-between'}>
-                    <LIP_Field
-                      label='Publisher'
-                      value={
-                        data?.publisher ||
-                        data?.audiobook_publisher ||
-                        'Unknown'
-                      }
-                    />
-                  </Stack>
-                  <Stack direction={'row'} justifyContent={'space-between'}>
-                    {/* <LIP_Field
-											label="Genre"
-											value={data?.book_genre || 'N/A'}
-										/> */}
-                    <LIP_Field
-                      label='Number of Pages'
-                      value={data?.number_of_pages?.toString() || 'N/A'}
-                    />
-                    <LIP_Field
-                      label='Publication Year'
-                      value={data?.publication_year?.toString() || 'N/A'}
-                    />
-                  </Stack>
-                  <LIP_Field
-                    label='Description'
-                    value={data?.description || 'No description available'}
-                  />
-                  <Stack direction={'row'} justifyContent={'space-between'}>
-                    <LIP_Field
-                      label='Total Copies'
-                      value={data?.total_copies || 'N/A'}
-                    />
-                    <LIP_Field
-                      label='Available Copies'
-                      value={data?.available_copies || 'N/A'}
-                    />
-                    <LIP_Field
-                      label='Checked Out Copies'
-                      value={data?.checked_out_copies?.toString() || 'N/A'}
-                    />
-                  </Stack>
-                </Stack>
-              </LIP_Section>
-              <LIP_Section sx={{ mt: 2 }}>
-                <Typography variant='h6' gutterBottom>
-                  Available Copies ({copies?.length || 0})
-                </Typography>
-                <SimpleGrid
-                  rows={copies || []}
-                  cols={copy_columns}
-                  loading={copies_loading}
-                />
-              </LIP_Section>
-            </Grid>
-            <Grid size={4}>
-              <img
-                style={{ width: '97%', borderRadius: '8px' }}
-                src={
-                  data?.cover_image_url ||
-                  data?.audiobook_cover_image ||
-                  undefined
-                }
-                alt={`Cover image of ${data?.title || ''}`}
-              />
-            </Grid>
-          </Suspense>
+      <Grid container spacing={2} sx={{ width: '100%' }}>
+        <Grid
+          size={{ xs: 12, md: 8 }}
+          order={{ xs: 2, sm: 1 }}
+          sx={{ width: '100%' }}
+        >
+          {render_main_content(data?.item_type)}
+          {get_copies_grid()}
         </Grid>
-      </Stack>
+        <Grid
+          size={{ xs: 12, md: 4 }}
+          order={{ xs: 1, sm: 2 }}
+          sx={{ width: '100%' }}
+        >
+          <img
+            style={{
+              width: '100%',
+              maxWidth: is_mobile ? 350 : '100%',
+              display: 'block',
+              margin: is_mobile ? '0 auto' : undefined,
+              borderRadius: '8px',
+            }}
+            src={
+              data?.cover_image_url || data?.audiobook_cover_image || undefined
+            }
+            alt={`Cover image of ${data?.title || ''}`}
+          />
+        </Grid>
+      </Grid>
     </PageContainer>
   );
 };
-
-// function get_content(item: Library_Item) {
-//   switch (item.item_type) {
-//     case Library_Item_Type.Audiobook:
-//       return Audiobook_Content({ audiobook: item as Audiobook });
-//     case Library_Item_Type.Book:
-//       return Book_Content({ book: item as Book });
-//     case Library_Item_Type.CD:
-//       return CD_Content({ cd: item as CD });
-//     case Library_Item_Type.Magazine:
-//       return Magazine_Content({ magazine: item as Magazine });
-//     case Library_Item_Type.Periodical:
-//       return Periodical_Content({ periodical: item as Periodical });
-//     case Library_Item_Type.Recording:
-//       return Recording_Content({ recording: item as Recording });
-//     case Library_Item_Type.Video:
-//       return Video_Content({ video: item as Video });
-//     case Library_Item_Type.Vinyl:
-//       return Vinyl_Content({ vinyl: item as Vinyl });
-//   }
-// }
-
-// function Audiobook_Content({ audiobook }: { audiobook: Audiobook }) {
-//   return (
-//     <LIP_Section>
-{
-  /* <Stack spacing={2}>
-		  <Stack direction={'row'} justifyContent={'space-between'}>
-			<LIP_Field label="Title" value={audiodata.title} />
-			<LIP_Field label="Narrator" value={audiodata.narrator} />
-			<LIP_Field label="Author" value={audiodata.author} />
-		  </Stack>
-		  <LIP_Field label="Publisher" value={audiodata.publisher} />
-		  <LIP_Field
-			label="Duration"
-			value={`${audiodata.audiobook_duration} seconds`}
-		  />
-		  <LIP_Field
-			label="Publication Year"
-			value={audiodata.publication_year?.toString() || 'N/A'}
-		  />
-		  <LIP_Field
-			label="Description"
-			value={audiodata.description || 'No description available'}
-		  />
-		  <LIP_Field label="Total Copies" value={audiodata.total_copies} />
-		  <LIP_Field
-			label="Available Copies"
-			value={audiodata.available_copies}
-		  />
-		  <LIP_Field
-			label="Checked Out Copies"
-			value={audiodata.checked_out_copies}
-		  />
-		</Stack> */
-}
-//     </LIP_Section>
-//   );
-// }
-
-// function Book_Content({ _ }: { book: Book }) {
-//   return <></>;
-// }
-
-// function CD_Content({ cd }: { cd: CD }) {
-//   return (
-//     <LIP_Section>
-//       <Stack spacing={2}>
-//         <LIP_Field label="Title" value={cd.title} />
-//         <LIP_Field label="Artist" value={cd.cd_artist} />
-//         <LIP_Field label="Record Label" value={cd.record_label} />
-//         <LIP_Field label="Number of Tracks" value={cd.cd_tracks} />
-//         <LIP_Field
-//           label="Publication Year"
-//           value={cd.publication_year?.toString() || 'N/A'}
-//         />
-//         <LIP_Field
-//           label="Description"
-//           value={cd.description || 'No description available'}
-//         />
-//         <LIP_Field label="Total Copies" value={cd.total_copies} />
-//         <LIP_Field label="Available Copies" value={cd.available_copies} />
-//         <LIP_Field label="Checked Out Copies" value={cd.checked_out_copies} />
-//       </Stack>
-//     </LIP_Section>
-//   );
-// }
-
-// function Magazine_Content({ magazine }: { magazine: Magazine }) {
-//   return (
-//     <LIP_Section>
-//       <Stack spacing={2}>
-//         <LIP_Field label="Title" value={magazine.title} />
-//         <LIP_Field label="Publisher" value={magazine.publisher} />
-//         <LIP_Field
-//           label="Publication Year"
-//           value={magazine.publication_year?.toString() || 'N/A'}
-//         />
-//         <LIP_Field
-//           label="Description"
-//           value={magazine.description || 'No description available'}
-//         />
-//         <LIP_Field label="Total Copies" value={magazine.total_copies} />
-//         <LIP_Field label="Available Copies" value={magazine.available_copies} />
-//         <LIP_Field
-//           label="Checked Out Copies"
-//           value={magazine.checked_out_copies}
-//         />
-//       </Stack>
-//     </LIP_Section>
-//   );
-// }
-
-// function Periodical_Content({ periodical }: { periodical: Periodical }) {
-//   return (
-//     <LIP_Section>
-//       <Stack spacing={2}>
-//         <LIP_Field label="Title" value={periodical.title} />
-//         <LIP_Field label="Publisher" value={periodical.publisher} />
-//         <LIP_Field
-//           label="Publication Year"
-//           value={periodical.publication_year?.toString() || 'N/A'}
-//         />
-//         <LIP_Field
-//           label="Description"
-//           value={periodical.description || 'No description available'}
-//         />
-//         <LIP_Field label="Total Copies" value={periodical.total_copies} />
-//         <LIP_Field
-//           label="Available Copies"
-//           value={periodical.available_copies}
-//         />
-//         <LIP_Field
-//           label="Checked Out Copies"
-//           value={periodical.checked_out_copies}
-//         />
-//       </Stack>
-//     </LIP_Section>
-//   );
-// }
-
-// function Recording_Content({ recording }: { recording: Recording }) {
-//   return (
-//     <LIP_Section>
-//       <Stack spacing={2}>
-//         <LIP_Field label="Title" value={recording.title} />
-//         <LIP_Field label="Artist" value={recording.cd_artist} />
-//         <LIP_Field label="Record Label" value={recording.record_label} />
-//         <LIP_Field label="Number of Tracks" value={recording.cd_tracks} />
-//         <LIP_Field
-//           label="Publication Year"
-//           value={recording.publication_year?.toString() || 'N/A'}
-//         />
-//         <LIP_Field
-//           label="Description"
-//           value={recording.description || 'No description available'}
-//         />
-//         <LIP_Field label="Total Copies" value={recording.total_copies} />
-//         <LIP_Field
-//           label="Available Copies"
-//           value={recording.available_copies}
-//         />
-//         <LIP_Field
-//           label="Checked Out Copies"
-//           value={recording.checked_out_copies}
-//         />
-//       </Stack>
-//     </LIP_Section>
-//   );
-// }
-
-// function Video_Content({ video }: { video: Video }) {
-//   return (
-//     <LIP_Section>
-//       <Stack spacing={2}>
-//         <LIP_Field label="Title" value={video.title} />
-//         <LIP_Field label="Director" value={video.director} />
-//         <LIP_Field label="Studio" value={video.studio} />
-//         <LIP_Field label="Format" value={video.video_format} />
-//         <LIP_Field
-//           label="Duration"
-//           value={`${video.duration_minutes} minutes`}
-//         />
-//         <LIP_Field label="Rating" value={video.video_rating} />
-//         <LIP_Field
-//           label="Publication Year"
-//           value={video.publication_year?.toString() || 'N/A'}
-//         />
-//         <LIP_Field
-//           label="Description"
-//           value={video.description || 'No description available'}
-//         />
-//         <LIP_Field label="Total Copies" value={video.total_copies} />
-//         <LIP_Field label="Available Copies" value={video.available_copies} />
-//         <LIP_Field
-//           label="Checked Out Copies"
-//           value={video.checked_out_copies}
-//         />
-//       </Stack>
-//     </LIP_Section>
-//   );
-// }
-
-// function Vinyl_Content({ vinyl }: { vinyl: Vinyl }) {
-//   return (
-//     <LIP_Section>
-//       <Stack spacing={2}>
-//         <LIP_Field label="Title" value={vinyl.title} />
-//         <LIP_Field label="Artist" value={vinyl.artist} />
-//         <LIP_Field label="Vinyl Color" value={vinyl.vinyl_color} />
-//         <LIP_Field label="Number of Tracks" value={vinyl.vinyl_tracks} />
-//         <LIP_Field
-//           label="Publication Year"
-//           value={vinyl.publication_year?.toString() || 'N/A'}
-//         />
-//         <LIP_Field
-//           label="Description"
-//           value={vinyl.description || 'No description available'}
-//         />
-//         <LIP_Field label="Total Copies" value={vinyl.total_copies} />
-//         <LIP_Field label="Available Copies" value={vinyl.available_copies} />
-//         <LIP_Field
-//           label="Checked Out Copies"
-//           value={vinyl.checked_out_copies}
-//         />
-//       </Stack>
-//     </LIP_Section>
-//   );
-// }
-
-function LIP_Section({ children, sx }: PropsWithChildren<{ sx?: SxProps }>) {
-  return (
-    <Paper sx={{ p: 2, borderRadius: 3, boxShadow: 3, ...sx }}>
-      {children}
-    </Paper>
-  );
-}
-
-// function LIP_Subsection({ children }: PropsWithChildren) {
-//   return (
-//     <Paper sx={{ p: 1, borderRadius: 2, boxShadow: 1 }}>{children}</Paper>
-//   );
-// }
-
-function LIP_Field({ label, value }: { label: string; value: string }) {
-  return (
-    <Stack spacing={1} sx={{ minWidth: 150, flex: 1 }}>
-      <Typography variant='subtitle2' color='text.secondary'>
-        {label}:
-      </Typography>
-      <Typography variant='body1'>{value}</Typography>
-    </Stack>
-  );
-}

@@ -1,7 +1,7 @@
 import { Add, TableRows } from '@mui/icons-material';
 import { Box, Fab } from '@mui/material';
 import { type PropsWithChildren, useState } from 'react';
-import { PageContainer, PageTitle } from '../components/common/PageBuilders';
+import { PageContainer, Page_Title } from '../components/common/PageBuilders';
 import { CopiesDataGrid } from '../components/copies/CopiesDataGrid';
 import { CreateCopyDialog } from '../components/copies/CreateCopyDialog';
 
@@ -16,8 +16,8 @@ function LibraryItemCopiesPageContent({ children }: PropsWithChildren) {
     set_dialog_open(true);
   };
   return (
-    <PageContainer width="xl">
-      <PageTitle title="Library Item Copies" Icon_Component={TableRows} />
+    <PageContainer width='xl'>
+      <Page_Title title='Library Item Copies' Icon_Component={TableRows} />
       <Box
         sx={{
           flex: 1,
@@ -30,10 +30,10 @@ function LibraryItemCopiesPageContent({ children }: PropsWithChildren) {
         {children}
       </Box>
       <Fab
-        color="primary"
+        color='primary'
         onClick={handle_create_library_item_copy}
-        aria-label="Add library item"
-        title="Add library item"
+        aria-label='Add library item'
+        title='Add library item'
         sx={{
           position: 'fixed',
           bottom: '3vh',

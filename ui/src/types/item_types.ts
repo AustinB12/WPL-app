@@ -103,7 +103,7 @@ export interface Library_Item {
   updated_at: string;
   author: string;
   publisher: string;
-  genre: Genre[];
+  genres: Genre[];
   number_of_pages: string;
   director: string;
   studio: string;

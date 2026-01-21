@@ -18,7 +18,7 @@ import {
 } from 'react';
 import { QuickCheckInCard } from '../components/checkin/QuickCheckInCard';
 import { RecentCheckInsList } from '../components/checkin/RecentCheckInsList';
-import { PageContainer, PageTitle } from '../components/common/PageBuilders';
+import { PageContainer, Page_Title } from '../components/common/PageBuilders';
 import { useSelectedBranch } from '../hooks/use_branch_hooks';
 import { useCheckedOutCopies } from '../hooks/use_copies';
 import { useSnackbar } from '../hooks/use_snackbar';
@@ -154,7 +154,7 @@ export const Check_In_Item: FC = () => {
   return (
     <LocalizationProvider dateAdapter={AdapterDateFns}>
       <PageContainer width='xl' scroll={true}>
-        <PageTitle title='Check In Item' Icon_Component={Input} />
+        <Page_Title title='Check In Item' Icon_Component={Input} />
         <Stack height={'100%'} gap={2}>
           <Autocomplete
             disabled={some_loading}

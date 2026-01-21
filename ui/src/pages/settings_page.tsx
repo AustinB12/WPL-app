@@ -32,7 +32,7 @@ import {
   useEffect,
   useState,
 } from 'react';
-import { PageContainer, PageTitle } from '../components/common/PageBuilders';
+import { PageContainer, Page_Title } from '../components/common/PageBuilders';
 import { useSnackbar } from '../hooks/use_snackbar';
 import { useSettings, useUpdateSettings } from '../hooks/use_settings';
 
@@ -82,14 +82,14 @@ export const SettingsPage: FC = () => {
     (e: React.ChangeEvent<HTMLInputElement>) => {
       set_notifications_enabled(e.target.checked);
     },
-    []
+    [],
   );
 
   const handle_email_toggle = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       set_email_updates(e.target.checked);
     },
-    []
+    [],
   );
 
   useEffect(() => {
@@ -106,7 +106,7 @@ export const SettingsPage: FC = () => {
 
   const handle_days_change = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
-    which: string
+    which: string,
   ) => {
     const value = parseInt(e.target.value);
     if (!isNaN(value) && value > 0) {
@@ -143,13 +143,13 @@ export const SettingsPage: FC = () => {
             severity: 'error',
           });
         },
-      }
+      },
     );
   };
 
   return (
     <PageContainer scroll={true}>
-      <PageTitle title='Settings' Icon_Component={SettingsIcon} />
+      <Page_Title title='Settings' Icon_Component={SettingsIcon} />
       <Stack spacing={3}>
         <Paper elevation={1} sx={SECTION_PAPER_SX}>
           <SectionHeader icon={<AccessTime />}>Loan Durations</SectionHeader>
@@ -228,7 +228,7 @@ export const SettingsPage: FC = () => {
                                       setting.id,
                                       data[
                                         setting.name.toLowerCase() as keyof Loan_Duration_Values
-                                      ] || setting.duration
+                                      ] || setting.duration,
                                     )
                                   }
                                   edge='end'
@@ -312,7 +312,7 @@ const SectionHeader = memo<PropsWithChildren<{ icon: JSX.Element }>>(
         {children}
       </Typography>
     </Stack>
-  )
+  ),
 );
 
 SectionHeader.displayName = 'SectionHeader';

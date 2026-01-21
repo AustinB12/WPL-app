@@ -23,14 +23,14 @@ export const CirculationChart: FC<CirculationChartProps> = ({
   end_date,
 }) => {
   const [interval, setInterval] = useState<'daily' | 'weekly' | 'monthly'>(
-    'daily'
+    'daily',
   );
 
   const { data, isLoading, error } = useCirculationTrends(
     start_date,
     end_date,
     interval,
-    branch_id
+    branch_id,
   );
 
   if (isLoading) {
@@ -60,7 +60,7 @@ export const CirculationChart: FC<CirculationChartProps> = ({
           justifyContent: 'center',
         }}
       >
-        <Typography color="error">Failed to load circulation data</Typography>
+        <Typography color='error'>Failed to load circulation data</Typography>
       </Paper>
     );
   }
@@ -76,7 +76,7 @@ export const CirculationChart: FC<CirculationChartProps> = ({
           justifyContent: 'center',
         }}
       >
-        <Typography color="text.secondary">
+        <Typography color='text.secondary'>
           No circulation data available
         </Typography>
       </Paper>
@@ -86,23 +86,23 @@ export const CirculationChart: FC<CirculationChartProps> = ({
   return (
     <Paper sx={{ p: 3 }}>
       <Stack
-        direction="row"
-        justifyContent="space-between"
-        alignItems="center"
+        direction='row'
+        justifyContent='space-between'
+        alignItems='center'
         mb={2}
       >
-        <Typography variant="h6" fontWeight="bold">
+        <Typography variant='h6' fontWeight='bold'>
           Circulation Trends
         </Typography>
         <ToggleButtonGroup
           value={interval}
           exclusive
           onChange={(_, newInterval) => newInterval && setInterval(newInterval)}
-          size="small"
+          size='small'
         >
-          <ToggleButton value="daily">Daily</ToggleButton>
-          <ToggleButton value="weekly">Weekly</ToggleButton>
-          <ToggleButton value="monthly">Monthly</ToggleButton>
+          <ToggleButton value='daily'>Daily</ToggleButton>
+          <ToggleButton value='weekly'>Weekly</ToggleButton>
+          <ToggleButton value='monthly'>Monthly</ToggleButton>
         </ToggleButtonGroup>
       </Stack>
 
@@ -124,24 +124,25 @@ export const CirculationChart: FC<CirculationChartProps> = ({
             {
               data: data.checkouts,
               label: 'Checkouts',
-              color: '#1976d2',
+              color: '#ff006e',
               curve: 'linear',
             },
             {
               data: data.checkins,
               label: 'Check-ins',
-              color: '#2e7d32',
+              color: '#8338ec',
               curve: 'linear',
             },
             {
               data: data.renewals,
               label: 'Renewals',
-              color: '#ed6c02',
+              color: '#3a86ff',
               curve: 'linear',
             },
           ]}
           height={350}
-          margin={{ left: 60, right: 20, top: 20, bottom: 60 }}
+          margin={{ left: 40, right: 40, top: 20, bottom: 40 }}
+          sx={{ pr: 2 }}
           slotProps={{
             legend: {
               direction: 'horizontal',

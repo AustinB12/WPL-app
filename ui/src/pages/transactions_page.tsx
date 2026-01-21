@@ -9,7 +9,7 @@ import {
   useTheme,
 } from '@mui/material';
 import { Activity, type JSX, useState } from 'react';
-import { PageContainer, PageTitle } from '../components/common/PageBuilders';
+import { PageContainer, Page_Title } from '../components/common/PageBuilders';
 import { TransactionsDataGrid } from '../components/transactions/TransactionsDataGrid';
 
 export const TransactionsPage = () => {
@@ -18,9 +18,9 @@ export const TransactionsPage = () => {
   const is_mobile = useMediaQuery(is_mobile_query);
 
   return (
-    <PageContainer width="xl" scroll={true}>
-      <PageTitle
-        title="Library Item Transactions"
+    <PageContainer width='xl' scroll={true}>
+      <Page_Title
+        title='Library Item Transactions'
         Icon_Component={ReceiptLong}
       />
       <Activity mode={is_mobile ? 'hidden' : 'visible'}>
@@ -51,7 +51,7 @@ function Transactions_List() {
     return (
       <List>
         {[1, 2, 3, 4, 5].map((s) => (
-          <Skeleton key={s} variant="rectangular" height={80} sx={{ mb: 2 }} />
+          <Skeleton key={s} variant='rectangular' height={80} sx={{ mb: 2 }} />
         ))}
       </List>
     );
@@ -79,7 +79,7 @@ function Transactions_List() {
         }}
       >
         <Stack
-          direction="row"
+          direction='row'
           spacing={2}
           justifyContent={'space-between'}
           sx={{ mt: 1, width: '100%' }}
@@ -92,17 +92,17 @@ function Transactions_List() {
           </ListItemText>
         </Stack>
         <Stack
-          direction="row"
+          direction='row'
           spacing={2}
           justifyContent={'space-between'}
           sx={{ mt: 1, width: '100%' }}
         >
-          <ListItemText secondary="Patron ID">{t.patron_id}</ListItemText>
-          <ListItemText sx={{ textAlign: 'right' }} secondary="Item ID">
+          <ListItemText secondary='Patron ID'>{t.patron_id}</ListItemText>
+          <ListItemText sx={{ textAlign: 'right' }} secondary='Item ID'>
             {t.item_copy_id}
           </ListItemText>
         </Stack>
-        {t.notes && <ListItemText secondary="Notes">{t.notes}</ListItemText>}
+        {t.notes && <ListItemText secondary='Notes'>{t.notes}</ListItemText>}
       </ListItem>
     );
   });
