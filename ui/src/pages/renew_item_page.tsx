@@ -12,7 +12,7 @@ import {
 import dayjs from 'dayjs';
 import { type SyntheticEvent, useCallback, useState } from 'react';
 import { PageContainer, Page_Title } from '../components/common/PageBuilders';
-import ItemTypeChip from '../components/library_items/ItemTypeChip';
+import Item_Type_Chip from '../components/library_items/ItemTypeChip';
 import {
   Recent_Renewals_List,
   type Recent_Renewal,
@@ -158,7 +158,7 @@ export function Renew_Item_Page() {
                     {option.title}
                   </Typography>
                   <Stack direction='row' spacing={1} alignItems='center'>
-                    <ItemTypeChip item_type={option.item_type} />
+                    <Item_Type_Chip item_type={option.item_type} />
                     <Typography variant='caption' color='text.secondary'>
                       Copy {option.copy_number}/{option.total_copies}
                     </Typography>
@@ -171,7 +171,7 @@ export function Renew_Item_Page() {
                     {option.due_date && (
                       <>
                         <Typography variant='caption' color='text.secondary'>
-                          •
+                          -
                         </Typography>
                         <Typography
                           variant='caption'

@@ -2,9 +2,9 @@ import { type GridColDef } from '@mui/x-data-grid';
 import { useMemo } from 'react';
 import { useSelectedBranch } from '../../hooks/use_branch_hooks';
 import { useCheckedOutCopies } from '../../hooks/use_copies';
-import { ItemCopyConditionChip } from '../copies/ItemCopyConditionChip';
+import { Item_Copy_Condition_Chip } from '../copies/ItemCopyConditionChip';
 import { ItemCopyStatusChip } from '../copies/ItemCopyStatusChip';
-import ItemTypeChip from '../library_items/ItemTypeChip';
+import Item_Type_Chip from '../library_items/ItemTypeChip';
 import { BaseDataGrid } from './BaseDataGrid';
 
 const columns: GridColDef[] = [
@@ -37,7 +37,9 @@ const columns: GridColDef[] = [
     field: 'condition',
     headerName: 'Condition',
     width: 130,
-    renderCell: (params) => <ItemCopyConditionChip condition={params.value} />,
+    renderCell: (params) => (
+      <Item_Copy_Condition_Chip condition={params.value} />
+    ),
   },
   {
     field: 'due_date',
@@ -70,7 +72,7 @@ const columns: GridColDef[] = [
     width: 120,
     sortable: true,
     valueGetter: (value) => String(value),
-    renderCell: (params) => <ItemTypeChip item_type={params.value} />,
+    renderCell: (params) => <Item_Type_Chip item_type={params.value} />,
   },
   { field: 'current_branch_name', headerName: 'Branch', width: 200 },
 ];
@@ -96,8 +98,8 @@ export const CheckedOutItemsGrid = ({
     if (!filter) return checked_out_copies;
     return checked_out_copies?.filter((copy) =>
       Object.values(copy).some((value) =>
-        String(value).toLowerCase().includes(filter.toLowerCase())
-      )
+        String(value).toLowerCase().includes(filter.toLowerCase()),
+      ),
     );
   }, [checked_out_copies, filter]);
   return (

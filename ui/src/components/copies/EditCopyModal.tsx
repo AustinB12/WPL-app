@@ -24,7 +24,7 @@ import type {
   Library_Copy_Status,
 } from '../../types/item_types';
 import { format_sql_datetime } from '../../utils/date_utils';
-import { ItemCopyConditionChip } from './ItemCopyConditionChip';
+import { Item_Copy_Condition_Chip } from './ItemCopyConditionChip';
 import { ItemCopyStatusChip } from './ItemCopyStatusChip';
 import type { Branch } from '../../types/others';
 
@@ -168,7 +168,7 @@ export const EditCopyModal = ({
                 >
                   {conditions.map((condition) => (
                     <MenuItem key={condition} value={condition}>
-                      <ItemCopyConditionChip condition={condition} />
+                      <Item_Copy_Condition_Chip condition={condition} />
                     </MenuItem>
                   ))}
                 </Select>
@@ -268,7 +268,7 @@ export const EditCopyModal = ({
                       set_form_data({
                         ...form_data,
                         due_date: format_sql_datetime(
-                          (new_date as Dayjs).toDate()
+                          (new_date as Dayjs).toDate(),
                         ),
                       })
                     }

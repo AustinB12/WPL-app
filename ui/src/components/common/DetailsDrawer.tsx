@@ -1,20 +1,20 @@
 import { Drawer } from '@mui/material';
 
-interface DetailsDrawerProps {
+interface Details_Drawer_Props {
   open: boolean;
-  handleClose: () => void;
+  handle_close: () => void;
   children: React.ReactNode;
 }
-export const DetailsDrawer = ({
+export const Details_Drawer = ({
   open,
-  handleClose,
+  handle_close,
   children,
-}: DetailsDrawerProps) => {
+}: Details_Drawer_Props) => {
   return (
     <Drawer
-      anchor="right"
+      anchor='right'
       open={open}
-      onClose={handleClose}
+      onClose={handle_close}
       slotProps={{
         paper: {
           sx: {

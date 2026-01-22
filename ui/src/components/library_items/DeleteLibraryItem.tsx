@@ -12,7 +12,7 @@ import {
 } from '@mui/material';
 import type { FC } from 'react';
 import type { Library_Item } from '../../types/item_types';
-import ItemTypeChip from './ItemTypeChip';
+import Item_Type_Chip from './ItemTypeChip';
 
 interface Delete_Library_Item_Props {
   open: boolean;
@@ -89,7 +89,7 @@ export const DeleteLibraryItem: FC<Delete_Library_Item_Props> = ({
                 Type
               </Typography>
               <Typography variant='body1' gutterBottom>
-                <ItemTypeChip item_type={item.item_type} />
+                <Item_Type_Chip item_type={item.item_type} />
               </Typography>
 
               {item.description && (

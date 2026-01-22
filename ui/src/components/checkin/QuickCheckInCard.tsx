@@ -25,8 +25,8 @@ import {
 // import dayjs from 'dayjs';
 import { Activity, type FC, useState } from 'react';
 import type { Item_Condition, Item_Copy_Result } from '../../types/item_types';
-import { ItemCopyConditionChip } from '../copies/ItemCopyConditionChip';
-import ItemTypeChip from '../library_items/ItemTypeChip';
+import { Item_Copy_Condition_Chip } from '../copies/ItemCopyConditionChip';
+import Item_Type_Chip from '../library_items/ItemTypeChip';
 
 interface QuickCheckInCardProps {
   item_info: Item_Copy_Result;
@@ -112,7 +112,7 @@ export const QuickCheckInCard: FC<QuickCheckInCardProps> = ({
               <Typography variant='body2' color='text.secondary'>
                 {item_info.copy_label}
               </Typography>
-              <ItemTypeChip item_type={item_info.item_type} size='small' />
+              <Item_Type_Chip item_type={item_info.item_type} size='small' />
             </Stack>
           </Box>
 
@@ -145,7 +145,7 @@ export const QuickCheckInCard: FC<QuickCheckInCardProps> = ({
                 >
                   Current Condition
                 </Typography>
-                <ItemCopyConditionChip
+                <Item_Copy_Condition_Chip
                   condition={item_info?.condition || 'Good'}
                 />
               </Box>
@@ -239,7 +239,7 @@ export const QuickCheckInCard: FC<QuickCheckInCardProps> = ({
                   >
                     {conditions.map((condition) => (
                       <MenuItem key={condition} value={condition}>
-                        <ItemCopyConditionChip
+                        <Item_Copy_Condition_Chip
                           condition={condition}
                           size='small'
                         />

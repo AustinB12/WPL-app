@@ -20,8 +20,8 @@ import {
 import { BaseDataGrid } from '../common/BaseDataGrid';
 import { DeleteLibraryItem } from './DeleteLibraryItem';
 import { EditLibraryItem } from './EditLibraryItem';
-import ItemTypeChip from './ItemTypeChip';
-import { LibraryItemDetails } from './LibraryItemDetails';
+import Item_Type_Chip from './ItemTypeChip';
+import { Library_Item_Details } from './LibraryItemDetails';
 import { Library_Item_Mobile_List } from './LibraryItemMobileList';
 
 export const Library_Item_Data_Grid = () => {
@@ -38,7 +38,13 @@ export const Library_Item_Data_Grid = () => {
     null,
   );
   const [item_to_edit, set_item_to_edit] = useState<Library_Item | null>(null);
-  const { data: rows, isLoading: loading, error } = useLibraryItems();
+  const {
+    data: rows,
+    isLoading: loading,
+    error,
+    refetch,
+    isRefetching,
+  } = useLibraryItems();
   const navigate = useNavigate();
 
   const delete_mutation = useDeleteLibraryItem({
@@ -168,27 +174,6 @@ export const Library_Item_Data_Grid = () => {
         valueGetter: (value) => Number(value),
       },
       {
-        field: 'cover_image_url',
-        headerName: 'Image',
-        width: 75,
-        editable: false,
-        renderCell: (params) => {
-          return (
-            <Box
-              component='img'
-              src={params.value}
-              alt='Library Item'
-              sx={{
-                width: 36,
-                height: 64,
-                objectFit: 'cover',
-                borderRadius: 1,
-              }}
-            />
-          );
-        },
-      },
-      {
         field: 'title',
         headerName: 'Title',
         width: 150,
@@ -201,7 +186,7 @@ export const Library_Item_Data_Grid = () => {
         width: 150,
         editable: false,
         renderCell: (params) => {
-          return <ItemTypeChip item_type={params.value} />;
+          return <Item_Type_Chip item_type={params.value} />;
         },
       },
       {
@@ -224,12 +209,14 @@ export const Library_Item_Data_Grid = () => {
         width: 150,
         getActions: (params) => [
           <GridActionsCellItem
+            title='View details'
             key='details'
             icon={<ReadMore />}
             label='Details'
             onClick={() => handle_item_selected(params.id)}
           />,
           <GridActionsCellItem
+            title='Edit item'
             key='edit'
             icon={<Edit />}
             label='Edit'
@@ -237,6 +224,7 @@ export const Library_Item_Data_Grid = () => {
           />,
           <GridActionsCellItem
             key='delete'
+            title='Delete item'
             icon={<Delete />}
             label='Delete'
             onClick={() => handle_delete_click(params.id)}
@@ -267,15 +255,16 @@ export const Library_Item_Data_Grid = () => {
             sx={{ height: 1 }}
             rows={rows}
             columns={columns}
-            loading={loading}
+            loading={loading || isRefetching}
             pageSizeOptions={[10, 25, 50, 100]}
             onRowDoubleClick={(params) => {
               navigate(`/library-item/${params.id}`);
             }}
+            refetch={refetch}
           />
         </Box>
       )}
-      <LibraryItemDetails
+      <Library_Item_Details
         is_open={details_open}
         item={selected_item}
         onClose={() => set_details_open(false)}

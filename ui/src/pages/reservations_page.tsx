@@ -1,7 +1,7 @@
 import { EventNote } from '@mui/icons-material';
 import { BaseDataGrid } from '../components/common/BaseDataGrid';
 import { PageContainer, Page_Title } from '../components/common/PageBuilders';
-import ItemTypeChip from '../components/library_items/ItemTypeChip';
+import Item_Type_Chip from '../components/library_items/ItemTypeChip';
 import { ReservationStatusChip } from '../components/reservations/ReservationStatusChip';
 import { useReservations } from '../hooks/use_reservations';
 import type { Reservation_Status } from '../types/transaction_types';
@@ -71,7 +71,7 @@ export const ReservationsPage = () => {
             headerName: 'Type',
             width: 100,
             renderCell: (params) => {
-              return <ItemTypeChip item_type={params.value} />;
+              return <Item_Type_Chip item_type={params.value} />;
             },
           },
         ]}

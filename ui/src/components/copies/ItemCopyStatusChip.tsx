@@ -14,6 +14,10 @@ export function ItemCopyStatusChip({
       return <Chip size={size} label='Available' color='success' />;
     case 'Checked Out':
       return <Chip size={size} label='Checked Out' color='primary' />;
+    case 'Renewed Once':
+      return <Chip size={size} label='Renewed Once' color='primary' />;
+    case 'Renewed Twice':
+      return <Chip size={size} label='Renewed Twice' color='primary' />;
     case 'Reserved':
       return <Chip size={size} label='Reserved' color='error' />;
     case 'Processing':

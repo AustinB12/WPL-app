@@ -137,6 +137,7 @@ async function create_tables() {
         duration_seconds INTEGER,
         isbn TEXT,
         color TEXT,
+        record_label TEXT,
         library_item_id INTEGER NOT NULL,
         FOREIGN KEY (library_item_id) REFERENCES LIBRARY_ITEMS(id) ON DELETE CASCADE
       );
@@ -372,6 +373,31 @@ async function create_tables() {
       BEGIN 
         UPDATE EMAIL_NOTIFICATIONS SET updated_at = CURRENT_TIMESTAMP WHERE id = NEW.id; 
       END;
+
+      CREATE TRIGGER IF NOT EXISTS update_patrons_timestamp 
+      AFTER UPDATE ON PATRONS 
+      BEGIN 
+        UPDATE PATRONS SET updated_at = CURRENT_TIMESTAMP WHERE id = NEW.id; 
+      END;
+
+      CREATE TRIGGER IF NOT EXISTS set_reservation_queue_position
+      AFTER INSERT ON RESERVATIONS
+      BEGIN
+        UPDATE RESERVATIONS
+        SET queue_position = (
+          SELECT COUNT(*) 
+          FROM RESERVATIONS AS r2 
+          WHERE r2.item_copy_id = NEW.item_copy_id 
+            AND r2.id <= NEW.id
+        )
+        WHERE id = NEW.id;
+      END;
+
+      CREATE TRIGGER IF NOT EXISTS update_transactions_timestamp 
+      AFTER UPDATE ON ITEM_TRANSACTIONS 
+      BEGIN 
+        UPDATE ITEM_TRANSACTIONS SET updated_at = CURRENT_TIMESTAMP WHERE id = NEW.id; 
+      END;
     `);
 
     console.log(pico.bgGreen(pico.bold('🔨 DB Tables Created Successfully')));
@@ -379,7 +405,7 @@ async function create_tables() {
     const errorMessage =
       error instanceof Error ? error.message : 'Unknown error';
     console.error(
-      pico.bgRed(pico.bold('Error Creating DB Tables: ')) + errorMessage
+      pico.bgRed(pico.bold('Error Creating DB Tables: ')) + errorMessage,
     );
     throw error;
   }
@@ -635,7 +661,7 @@ async function search_records(
   table_name,
   search_term,
   search_fields = [],
-  options = {}
+  options = {},
 ) {
   const limit = options.limit || 50;
   const offset = options.offset || 0;

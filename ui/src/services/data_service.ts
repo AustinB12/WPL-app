@@ -37,7 +37,7 @@ const API_BASE_URL = is_dev
 // Generic HTTP request function
 const api_request = async <T>(
   endpoint: string,
-  options?: RequestInit
+  options?: RequestInit,
 ): Promise<T> => {
   const url = `${API_BASE_URL}${endpoint}`;
 
@@ -61,7 +61,7 @@ const api_request = async <T>(
       text.trim().startsWith('<html')
     ) {
       throw new Error(
-        `Server returned HTML instead of JSON. HTTP ${response.status}: ${response.statusText}`
+        `Server returned HTML instead of JSON. HTTP ${response.status}: ${response.statusText}`,
       );
     }
 
@@ -72,7 +72,7 @@ const api_request = async <T>(
       throw new Error(
         `Invalid JSON response from server. HTTP ${response.status}: ${
           response.statusText
-        }. Response: ${text.substring(0, 200)}`
+        }. Response: ${text.substring(0, 200)}`,
       );
     }
 
@@ -128,7 +128,7 @@ export const data_service = {
   async check_out_item(
     patron_id: number,
     copy_id: number,
-    clear_fines: boolean = false
+    clear_fines: boolean = false,
   ): Promise<Check_Out_Details> {
     const checkout_data = {
       copy_id,
@@ -141,7 +141,7 @@ export const data_service = {
       {
         method: 'POST',
         body: JSON.stringify(checkout_data),
-      }
+      },
     );
 
     return receipt;
@@ -152,7 +152,7 @@ export const data_service = {
       `/transactions/renew-item/${copy_id}`,
       {
         method: 'PUT',
-      }
+      },
     );
 
     return receipt;
@@ -168,7 +168,7 @@ export const data_service = {
       {
         method: 'PUT',
         body: JSON.stringify(checkout_data),
-      }
+      },
     );
 
     return receipt;
@@ -178,7 +178,7 @@ export const data_service = {
     copy_id: number,
     new_location_id: number,
     new_condition?: Item_Condition,
-    notes?: string
+    notes?: string,
   ): Promise<Checkin_Receipt | null> {
     try {
       const checkin_data = {
@@ -209,15 +209,19 @@ export const data_service = {
 
   async getTransactionsByPatronId(patron_id: number): Promise<Transaction[]> {
     return await api_request<Transaction[]>(
-      `/transactions/patron/${patron_id}`
+      `/transactions/patron/${patron_id}`,
     );
+  },
+
+  async getTransactionsByItemId(item_id: number): Promise<Transaction[]> {
+    return await api_request<Transaction[]>(`/transactions/by-copy/${item_id}`);
   },
 
   async getOverdueTransactions(): Promise<Transaction[]> {
     // Get all active transactions and filter overdue on client side
     // TODO: Add server-side filtering for overdue transactions
     const all_transactions = await api_request<Transaction[]>(
-      '/transactions?status=Active'
+      '/transactions?status=Active',
     );
     const now = new Date();
 
@@ -238,19 +242,19 @@ export const data_service = {
   },
 
   async get_check_out_details(
-    copy_id: number | null
+    copy_id: number | null,
   ): Promise<Check_Out_Details | null> {
     if (copy_id === null) {
       return null;
     }
     return await api_request<Check_Out_Details>(
-      `/transactions/checkin-lookup/${copy_id}`
+      `/transactions/checkin-lookup/${copy_id}`,
     );
   },
 
   async reshelve_item(
     copy_id: number,
-    branch_id?: number
+    branch_id?: number,
   ): Promise<ReshelveResponseData | null> {
     try {
       const result = await api_request<ReshelveResponseData>(
@@ -258,7 +262,7 @@ export const data_service = {
         {
           method: 'POST',
           body: JSON.stringify({ copy_id, branch_id }),
-        }
+        },
       );
       return result;
     } catch (error: unknown) {
@@ -271,7 +275,7 @@ export const data_service = {
 
   async reshelve_items(
     copy_ids: number[],
-    branch_id?: number
+    branch_id?: number,
   ): Promise<ReshelveAllResult | null> {
     try {
       const result = await api_request<ReshelveAllResult>(
@@ -279,7 +283,7 @@ export const data_service = {
         {
           method: 'POST',
           body: JSON.stringify({ copy_ids, branch_id }),
-        }
+        },
       );
       return result;
     } catch (error: unknown) {
@@ -291,7 +295,7 @@ export const data_service = {
   },
 
   async undo_reshelve(
-    copy_id: number
+    copy_id: number,
   ): Promise<{ copy_id: number; status: string } | null> {
     try {
       const result = await api_request<{
@@ -313,7 +317,7 @@ export const data_service = {
   // Reservation operations
   async reserveBook(
     library_item_id: number,
-    patron_id?: number
+    patron_id?: number,
   ): Promise<Reservation> {
     const reservation_data = {
       library_item_id,
@@ -329,7 +333,7 @@ export const data_service = {
   async getAllReservations(
     patron_id?: number,
     status?: string,
-    library_item_id?: number
+    library_item_id?: number,
   ): Promise<Reservation[]> {
     let url = '/reservations';
     const params: string[] = [];
@@ -355,7 +359,7 @@ export const data_service = {
 
   async create_reservation(
     patron_id: number,
-    item_copy_id: number
+    item_copy_id: number,
   ): Promise<Create_Reservation_Data | null> {
     try {
       const response = await api_request(`/reservations`, {
@@ -372,11 +376,11 @@ export const data_service = {
   },
 
   async get_reservations_by_item_copy(
-    item_copy_id: number
+    item_copy_id: number,
   ): Promise<Reservation[]> {
     try {
       const response = await api_request<Reservation[]>(
-        `/reservations/item-copy/${item_copy_id}`
+        `/reservations/item-copy/${item_copy_id}`,
       );
       return response;
     } catch (error: unknown) {
@@ -417,7 +421,7 @@ export const data_service = {
   },
 
   async create_library_item(
-    item: Create_Library_Item_Form_Data
+    item: Create_Library_Item_Form_Data,
   ): Promise<Library_Item> {
     return await api_request<Library_Item>('/library-items', {
       method: 'POST',
@@ -427,7 +431,7 @@ export const data_service = {
 
   async update_library_item(
     item_id: number,
-    item: Create_Library_Item_Form_Data
+    item: Create_Library_Item_Form_Data,
   ): Promise<Library_Item> {
     return await api_request<Library_Item>(`/library-items/${item_id}`, {
       method: 'PUT',
@@ -443,7 +447,7 @@ export const data_service = {
 
   async get_all_copies_by_item_id(
     item_id: number,
-    branch_id?: number
+    branch_id?: number,
   ): Promise<Item_Copy_Result[]> {
     const url = branch_id
       ? `/item-copies/item/${item_id}?branch_id=${branch_id}`
@@ -460,7 +464,7 @@ export const data_service = {
     branch_id: number,
     status?: Library_Copy_Status,
     condition?: Item_Condition,
-    other_status?: Library_Copy_Status
+    other_status?: Library_Copy_Status,
   ): Promise<Item_Copy_Result[]> {
     let url = '/item-copies';
     const params: string[] = [];
@@ -507,7 +511,7 @@ export const data_service = {
   },
 
   async get_copy_by_id(
-    copy_id: number | null
+    copy_id: number | null,
   ): Promise<Item_Copy_Result | null> {
     if (copy_id === null) {
       return null;
@@ -523,16 +527,16 @@ export const data_service = {
   },
 
   async get_checked_out_copies(
-    branch_id?: number
+    branch_id?: number,
   ): Promise<Item_Copy_Result[]> {
-    const url = `/item-copies/checked-out${
+    const url = `/transactions/checked-out${
       branch_id ? `?branch_id=${branch_id}` : ''
     }`;
     return await api_request<Item_Copy_Result[]>(url);
   },
 
   async get_checked_out_copies_simple(
-    branch_id?: number
+    branch_id?: number,
   ): Promise<Checked_Out_Copy_Simple[]> {
     let url = '/item-copies/checked-out-simple';
     if (branch_id) {
@@ -543,7 +547,7 @@ export const data_service = {
 
   async get_all_copy_transactions(
     start_date?: string,
-    end_date?: string
+    end_date?: string,
   ): Promise<Transaction[]> {
     let url = '/item-copies/item-transactions/';
     if (start_date) url += `?start_date=${start_date}`;
@@ -558,7 +562,7 @@ export const data_service = {
   },
 
   async get_copies_recently_reshelved(
-    branch_id: number
+    branch_id: number,
   ): Promise<Item_Copy_Result[]> {
     const url = `/item-copies/recently-reshelved?branch_id=${branch_id}`;
     return await api_request<Item_Copy_Result[]>(url);
@@ -586,7 +590,7 @@ export const data_service = {
       current_branch_id?: number;
       cost?: number;
       notes?: string;
-    }
+    },
   ): Promise<Item_Copy> {
     return await api_request<Item_Copy>(`/item-copies/${copy_id}`, {
       method: 'PUT',
@@ -617,7 +621,7 @@ export const data_service = {
 
   async update_branch(
     branch_id: number,
-    branch_data: Partial<Branch>
+    branch_data: Partial<Branch>,
   ): Promise<Branch> {
     return await api_request<Branch>(`/branches/${branch_id}`, {
       method: 'PUT',
@@ -653,7 +657,7 @@ export const data_service = {
 
   async update_patron(
     patron_id: number,
-    patron_data: Update_Patron_Data
+    patron_data: Update_Patron_Data,
   ): Promise<Patron> {
     return await api_request<Patron>(`/patrons/${patron_id}`, {
       method: 'PUT',
@@ -689,7 +693,7 @@ export const data_service = {
   async get_loan_durations(): Promise<Loan_Duration[] | null> {
     try {
       const result = await api_request<Loan_Duration[]>(
-        '/settings/loan_durations'
+        '/settings/loan_durations',
       );
       return result;
     } catch (error: unknown) {
@@ -711,7 +715,7 @@ export const data_service = {
     start_date?: string,
     end_date?: string,
     interval: 'daily' | 'weekly' | 'monthly' = 'daily',
-    branch_id?: number
+    branch_id?: number,
   ): Promise<{
     labels: string[];
     checkouts: number[];
@@ -730,7 +734,7 @@ export const data_service = {
   async get_popular_items(
     period: '7d' | '30d' | '90d' | '1y' = '30d',
     branch_id?: number,
-    limit: number = 10
+    limit: number = 10,
   ): Promise<{
     top_items: Array<{
       library_item_id: number;
@@ -750,7 +754,7 @@ export const data_service = {
 
   async get_patron_metrics(
     period: '7d' | '30d' | '90d' | '1y' = '30d',
-    branch_id?: number
+    branch_id?: number,
   ): Promise<{
     active_patrons: number;
     new_registrations: number;
@@ -793,7 +797,7 @@ export const data_service = {
 
   async get_collection_utilization(
     branch_id?: number,
-    min_days: number = 30
+    min_days: number = 30,
   ): Promise<{
     summary: {
       total_never_checked: number;
@@ -817,7 +821,7 @@ export const data_service = {
     params.append('min_days', min_days.toString());
 
     return await api_request(
-      `/analytics/collection-utilization?${params.toString()}`
+      `/analytics/collection-utilization?${params.toString()}`,
     );
   },
 

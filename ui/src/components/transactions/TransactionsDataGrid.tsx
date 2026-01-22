@@ -14,6 +14,7 @@ const transaction_cols: GridColDef[] = [
     field: 'title',
     headerName: 'Title',
     width: 200,
+    flex: 1,
   },
   {
     field: 'item_copy_id',

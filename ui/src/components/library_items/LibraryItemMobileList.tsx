@@ -17,7 +17,7 @@ import {
 } from '@mui/material';
 import { useState } from 'react';
 import type { Library_Item } from '../../types/item_types';
-import ItemTypeChip from './ItemTypeChip';
+import Item_Type_Chip from './ItemTypeChip';
 
 interface Library_Item_Mobile_List_Props {
   items: Library_Item[] | undefined;
@@ -136,7 +136,7 @@ export const Library_Item_Mobile_List = ({
               >
                 <ListItemText
                   secondary={
-                    <ItemTypeChip item_type={item.item_type} size='small' />
+                    <Item_Type_Chip item_type={item.item_type} size='small' />
                   }
                 >
                   <Typography

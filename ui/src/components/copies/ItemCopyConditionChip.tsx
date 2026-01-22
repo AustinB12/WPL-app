@@ -2,7 +2,7 @@ import { Chip, type ChipProps } from '@mui/material';
 import type { JSX } from 'react';
 import type { Item_Condition } from '../../types/item_types';
 
-export function ItemCopyConditionChip({
+export function Item_Copy_Condition_Chip({
   condition,
   size = 'medium',
 }: {
@@ -13,7 +13,14 @@ export function ItemCopyConditionChip({
     case 'New':
       return <Chip size={size} label='New' color='success' />;
     case 'Excellent':
-      return <Chip size={size} label='Excellent' color='success' />;
+      return (
+        <Chip
+          size={size}
+          label='Excellent'
+          color='success'
+          sx={{ border: '2px solid #38ff6a' }}
+        />
+      );
     case 'Good':
       return <Chip size={size} label='Good' color='success' />;
     case 'Fair':

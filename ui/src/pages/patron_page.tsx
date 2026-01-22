@@ -30,8 +30,8 @@ import { type ReactNode, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { BaseDataGrid } from '../components/common/BaseDataGrid';
 import { PageContainer } from '../components/common/PageBuilders';
-import { ItemCopyConditionChip } from '../components/copies/ItemCopyConditionChip';
-import ItemTypeChip from '../components/library_items/ItemTypeChip';
+import { Item_Copy_Condition_Chip } from '../components/copies/ItemCopyConditionChip';
+import Item_Type_Chip from '../components/library_items/ItemTypeChip';
 import { DeletePatronModal } from '../components/patrons/DeletePatronModal';
 import { EditPatronModal } from '../components/patrons/EditPatronModal';
 import { TransactionTypeChip } from '../components/transactions/TransactionTypeChip';
@@ -127,13 +127,15 @@ const cols: GridColDef[] = [
     field: 'item_type',
     headerName: 'Item Type',
     width: 130,
-    renderCell: (params) => <ItemTypeChip item_type={params.value} />,
+    renderCell: (params) => <Item_Type_Chip item_type={params.value} />,
   },
   {
     field: 'condition',
     headerName: 'Condition',
     width: 130,
-    renderCell: (params) => <ItemCopyConditionChip condition={params.value} />,
+    renderCell: (params) => (
+      <Item_Copy_Condition_Chip condition={params.value} />
+    ),
   },
 ];
 
@@ -265,13 +267,13 @@ export const PatronPage = () => {
   const total_checkouts = pt?.reduce(
     (count, t) =>
       t.transaction_type.toUpperCase() === 'CHECKOUT' ? count + 1 : count,
-    0
+    0,
   );
 
   const total_returned = pt?.reduce(
     (count, t) =>
       t.transaction_type.toUpperCase() === 'CHECKIN' ? count + 1 : count,
-    0
+    0,
   );
 
   return (
@@ -378,7 +380,7 @@ export const PatronPage = () => {
                     value={
                       <>
                         {new Date(
-                          patron.card_expiration_date
+                          patron.card_expiration_date,
                         ).toLocaleDateString()}
                         {is_card_expired && (
                           <Chip

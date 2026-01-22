@@ -19,8 +19,8 @@ import {
 import { useState } from 'react';
 import { useReservationsByItemCopy } from '../../hooks/use_reservations';
 import type { Item_Copy_Result } from '../../types/item_types';
-import { ItemCopyConditionChip } from '../copies/ItemCopyConditionChip';
-import ItemTypeChip from '../library_items/ItemTypeChip';
+import { Item_Copy_Condition_Chip } from '../copies/ItemCopyConditionChip';
+import Item_Type_Chip from '../library_items/ItemTypeChip';
 
 interface ItemReservationCardProps {
   item?: Item_Copy_Result | null;
@@ -74,7 +74,7 @@ export const ItemReservationCard = ({ item }: ItemReservationCardProps) => {
           subheader={
             item ? (
               <Typography variant='body2' color='text.secondary'>
-                <ItemTypeChip
+                <Item_Type_Chip
                   sx={{ mr: 1 }}
                   item_type={item.item_type}
                   size='small'
@@ -211,7 +211,7 @@ export const ItemReservationCard = ({ item }: ItemReservationCardProps) => {
               <Chip label='Available' color='success' />
             )}
             {item && item.condition && (
-              <ItemCopyConditionChip condition={item.condition} />
+              <Item_Copy_Condition_Chip condition={item.condition} />
             )}
           </Stack>
         </CardContent>

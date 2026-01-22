@@ -53,6 +53,7 @@ export enum Genre {
   Reference = 'Reference',
   Romance = 'Romance',
   ScienceFiction = 'Science Fiction',
+  Score = 'Score',
   SelfHelp = 'Self-Help',
   Soundtrack = 'Soundtrack',
   Technology = 'Technology',
@@ -107,7 +108,6 @@ export interface Library_Item {
   number_of_pages: string;
   director: string;
   studio: string;
-  video_format: string;
   duration_minutes: string;
   video_rating: string;
   narrator: string;
@@ -128,10 +128,10 @@ export interface Library_Item {
   total_copies: string;
   available_copies: string;
   checked_out_copies: string;
-  audiobook_format?: string;
+  format: string;
   audiobook_rating?: string;
-  audiobook_cover_image?: string;
   audiobook_publisher?: string;
+  duration_seconds: string;
 }
 
 export type Audiobook = Omit<

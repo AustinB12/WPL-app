@@ -332,18 +332,18 @@ router.get('/checked-out', async (req, res) => {
     const query = `
       SELECT 
         t.id as transaction_id,
-        t.item_copy_id,
+        t.item_copy_id as id,
         t.patron_id,
         t.date,
-        ic.status as copy_status,
+        ic.status,
         ic.condition,
         ic.library_item_id,
         ic.owning_branch_id,
         ic.current_branch_id,
         li.title,
         li.item_type,
-        p.first_name,
-        p.last_name,
+        p.first_name as patron_first_name,
+        p.last_name as patron_last_name,
         p.email,
         CASE 
            WHEN ic.due_date < DATETIME('now', 'localtime') THEN 1  
@@ -420,7 +420,7 @@ router.get('/checked-out', async (req, res) => {
         copy_label: `Copy ${copy_data.copy_number} of ${copy_data.total_copies}`,
         copy_number: copy_data.copy_number,
         total_copies: copy_data.total_copies,
-        patron_name: `${item.first_name} ${item.last_name}`,
+        patron_name: `${item.patron_first_name} ${item.patron_last_name}`,
       };
     });
 
@@ -1168,19 +1168,6 @@ router.put('/renew-item/:item_id', async (req, res) => {
       });
     }
 
-    // Check if item is reserved - prevent renewal if there are active reservations
-    const reservations = await db.execute_query(
-      'SELECT COUNT(*) as count FROM RESERVATIONS WHERE item_copy_id = ? AND status IN ("waiting", "ready")',
-      [item_copy.library_item_id],
-    );
-
-    if (reservations[0].count > 0) {
-      return res.status(400).json({
-        error: 'Item has reservations',
-        message: 'This item has active reservations and cannot be renewed',
-      });
-    }
-
     // Get patron information (who has it checked out)
     const patron_id = item_copy.checked_out_by;
     if (!patron_id) {
@@ -1196,24 +1183,6 @@ router.put('/renew-item/:item_id', async (req, res) => {
       });
     }
 
-    // Check if patron's card is expired
-    const now = new Date();
-    const card_expiration = new Date(patron.card_expiration_date);
-    if (card_expiration < now) {
-      return res.status(400).json({
-        error: "Patron's library card is expired",
-        message: `Card expired on ${patron.card_expiration_date}`,
-      });
-    }
-
-    // Check if patron has fines
-    if (patron.balance > 0) {
-      return res.status(400).json({
-        error: 'Patron has outstanding fines',
-        message: `Outstanding balance: $${patron.balance.toFixed(2)}`,
-      });
-    }
-
     // Get library item details for calculating due date
     const library_item = await db.get_by_id(
       'LIBRARY_ITEMS',
@@ -1225,36 +1194,19 @@ router.put('/renew-item/:item_id', async (req, res) => {
       });
     }
 
-    // Get video details if applicable
-    let is_new_release = false;
-    if (
-      library_item.item_type === 'VIDEO' ||
-      library_item.item_type === 'video'
-    ) {
-      const videos = await db.execute_query(
-        'SELECT is_new_release FROM VIDEOS WHERE library_item_id = ?',
-        [library_item.id],
-      );
-      if (videos[0]) {
-        is_new_release = videos[0].is_new_release === 1;
-      }
-    }
+    const days_to_add = await db.execute_query(
+      `
+      SELECT duration FROM LOAN_DURATIONS
+      WHERE name = ? 
+      ORDER BY duration ASC LIMIT 1
+      `,
+      [library_item.item_type.toUpperCase()],
+    );
 
-    // Calculate new due date based on item type
-    const current_date = new Date();
-    let days_to_add = 28; // Default for books: 4 weeks
-
-    const item_type_upper = (library_item.item_type || '').toUpperCase();
-    if (item_type_upper === 'VIDEO') {
-      if (is_new_release) {
-        days_to_add = 3; // New release videos: 3 days
-      } else {
-        days_to_add = 7; // Regular videos: 1 week
-      }
-    }
+    const now = new Date();
 
     const new_due_date = new Date(
-      current_date.getTime() + days_to_add * 24 * 60 * 60 * 1000,
+      now.getTime() + days_to_add[0].duration * 24 * 60 * 60 * 1000,
     );
     const formatted_due_date = format_sql_datetime(new_due_date);
     const formatted_now = format_sql_datetime(now);
@@ -1280,7 +1232,6 @@ router.put('/renew-item/:item_id', async (req, res) => {
       await db.update_record('LIBRARY_ITEM_COPIES', copy_id, {
         due_date: formatted_due_date,
         status: new_status,
-        updated_at: formatted_now,
       });
     });
 
@@ -1478,98 +1429,32 @@ router.get('/by-copy/:copy_id', async (req, res) => {
   try {
     const copy_id = req.params.copy_id;
 
-    // Get the active transaction for this copy
-    const transactions = await db.execute_query(
-      'SELECT * FROM ITEM_TRANSACTIONS WHERE item_copy_id = ? AND transaction_type IN ("checkout", "CHECKOUT") ORDER BY created_at DESC LIMIT 1',
-      [copy_id],
-    );
+    const query = `
+      SELECT 
+        t.*,
+        p.first_name,
+        p.last_name,
+        ci.title,
+        ci.item_type,
+        ic.condition,
+        b.branch_name
+      FROM ITEM_TRANSACTIONS t
+      JOIN PATRONS p ON t.patron_id = p.id
+      JOIN LIBRARY_ITEM_COPIES ic ON t.item_copy_id = ic.id
+      JOIN LIBRARY_ITEMS ci ON ic.library_item_id = ci.id
+      JOIN BRANCHES b ON ic.owning_branch_id = b.id
+      WHERE t.item_copy_id = ?
+    `;
+    const transactions = await db.execute_query(query, [copy_id]);
 
     if (transactions.length === 0) {
       return res.status(404).json({
-        error: 'No active transaction found for this item',
+        error: 'No transaction found for this item',
       });
     }
-
-    const transaction = transactions[0];
-
-    // Get item copy information
-    const item_copy = await db.get_by_id('LIBRARY_ITEM_COPIES', copy_id);
-    if (!item_copy) {
-      return res.status(404).json({
-        error: 'Item copy not found',
-      });
-    }
-
-    // Get library item information
-    const library_item = await db.get_by_id(
-      'LIBRARY_ITEMS',
-      item_copy.library_item_id,
-    );
-    if (!library_item) {
-      return res.status(404).json({
-        error: 'Library item not found',
-      });
-    }
-
-    // Get item type-specific information
-    let item_details = {};
-    if (
-      library_item.item_type === 'BOOK' ||
-      library_item.item_type === 'book'
-    ) {
-      const books = await db.execute_query(
-        'SELECT * FROM BOOKS WHERE library_item_id = ?',
-        [library_item.id],
-      );
-      item_details = books[0] || {};
-    } else if (
-      library_item.item_type === 'VIDEO' ||
-      library_item.item_type === 'video'
-    ) {
-      const videos = await db.execute_query(
-        'SELECT * FROM VIDEOS WHERE library_item_id = ?',
-        [library_item.id],
-      );
-      item_details = videos[0] || {};
-    }
-
-    // Get patron information
-    const patron = await db.get_by_id('PATRONS', transaction.patron_id);
-    if (!patron) {
-      return res.status(404).json({
-        error: 'Patron not found',
-      });
-    }
-
-    // Get active checkout count for patron
-    const active_checkout_count = await db.execute_query(
-      'SELECT COUNT(*) as count FROM ITEM_TRANSACTIONS WHERE patron_id = ? AND transaction_type IN ("checkout", "CHECKOUT")',
-      [patron.id],
-    );
-
-    // Check for reservations
-    const reservations = await db.execute_query(
-      'SELECT COUNT(*) as count FROM RESERVATIONS WHERE library_item_id = ? AND status IN ("waiting", "ready")',
-      [library_item.id],
-    );
-
     res.json({
       success: true,
-      data: {
-        transaction: {
-          ...transaction,
-          item_copy,
-          library_item: {
-            ...library_item,
-            ...item_details,
-          },
-          patron: {
-            ...patron,
-            active_checkouts: active_checkout_count[0].count,
-          },
-          has_reservations: reservations[0].count > 0,
-        },
-      },
+      data: transactions,
     });
   } catch (error) {
     res.status(500).json({

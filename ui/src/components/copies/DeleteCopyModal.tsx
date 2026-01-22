@@ -17,8 +17,8 @@ import type {
   Library_Copy_Status,
   Library_Item_Type,
 } from '../../types/item_types';
-import ItemTypeChip from '../library_items/ItemTypeChip';
-import { ItemCopyConditionChip } from './ItemCopyConditionChip';
+import Item_Type_Chip from '../library_items/ItemTypeChip';
+import { Item_Copy_Condition_Chip } from './ItemCopyConditionChip';
 import { ItemCopyStatusChip } from './ItemCopyStatusChip';
 
 interface Delete_Copy_Modal_Props {
@@ -146,7 +146,9 @@ export const DeleteCopyModal = ({
                 >
                   Item Type
                 </Typography>
-                <ItemTypeChip item_type={copy.item_type as Library_Item_Type} />
+                <Item_Type_Chip
+                  item_type={copy.item_type as Library_Item_Type}
+                />
               </Grid>
               <Grid size={{ xs: 4 }}>
                 <Typography
@@ -169,7 +171,7 @@ export const DeleteCopyModal = ({
                 >
                   Condition
                 </Typography>
-                <ItemCopyConditionChip
+                <Item_Copy_Condition_Chip
                   condition={(copy.condition as Item_Condition) || 'Good'}
                 />
               </Grid>

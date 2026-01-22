@@ -107,7 +107,7 @@ const ITEM_TYPE_MAP_LIGHT: Record<Library_Item_Type, Item_Type_Config> = {
   },
 };
 
-const ItemTypeChip = ({
+const Item_Type_Chip = ({
   item_type,
   size = 'medium',
   sx,
@@ -141,4 +141,4 @@ const ItemTypeChip = ({
   );
 };
 
-export default ItemTypeChip;
+export default Item_Type_Chip;

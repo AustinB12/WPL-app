@@ -30,9 +30,9 @@ import {
 } from '@mui/material';
 import dayjs from 'dayjs';
 import { useState } from 'react';
-import { ItemCopyConditionChip } from '../copies/ItemCopyConditionChip';
+import { Item_Copy_Condition_Chip } from '../copies/ItemCopyConditionChip';
 import { ItemCopyStatusChip } from '../copies/ItemCopyStatusChip';
-import ItemTypeChip from '../library_items/ItemTypeChip';
+import Item_Type_Chip from '../library_items/ItemTypeChip';
 import type { Item_Copy_Result } from '../../types/item_types';
 import type { Reservation } from '../../types/transaction_types';
 import { useReservationsByItemCopy } from '../../hooks/use_reservations';
@@ -265,8 +265,8 @@ export function Renewal_Info_Card({
                   {selected_item.copy_label ||
                     `Copy ${selected_item.copy_number}/${selected_item.total_copies}`}
                 </Typography>
-                <ItemTypeChip item_type={selected_item.item_type} />
-                <ItemCopyConditionChip condition={selected_item.condition} />
+                <Item_Type_Chip item_type={selected_item.item_type} />
+                <Item_Copy_Condition_Chip condition={selected_item.condition} />
               </Stack>
             </Box>
 

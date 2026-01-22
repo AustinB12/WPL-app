@@ -35,7 +35,7 @@ import { usePatronById, useUpdatePatron } from '../../hooks/use_patrons';
 import { useSnackbar } from '../../hooks/use_snackbar';
 import type { Item_Copy_Result } from '../../types/item_types';
 import { is_overdue } from '../../utils/date_utils';
-import { ItemCopyConditionChip } from '../copies/ItemCopyConditionChip';
+import { Item_Copy_Condition_Chip } from '../copies/ItemCopyConditionChip';
 
 interface ConfirmCheckoutDetailsProps {
   patron_id: number;
@@ -231,11 +231,11 @@ export const ConfirmCheckoutDetails: FC<ConfirmCheckoutDetailsProps> = ({
 }) => {
   const { data: patron, isLoading: loading_patron } = usePatronById(patron_id);
   const { data: item_copy, isLoading: loading_copy } = useCopyById(
-    copy?.id || 0
+    copy?.id || 0,
   );
   const { data: library_item, isLoading: loading_library_item } =
     useLibraryItemById(
-      item_copy?.library_item_id || copy?.library_item_id || 0
+      item_copy?.library_item_id || copy?.library_item_id || 0,
     );
   const { mutate: updatePatron } = useUpdatePatron();
 
@@ -250,7 +250,7 @@ export const ConfirmCheckoutDetails: FC<ConfirmCheckoutDetailsProps> = ({
   const [show_override_dialog, set_show_override_dialog] = useState(false);
   const [new_expiration_date, set_new_expiration_date] =
     useState<dayjs.Dayjs | null>(
-      patron?.card_expiration_date ? dayjs(patron.card_expiration_date) : null
+      patron?.card_expiration_date ? dayjs(patron.card_expiration_date) : null,
     );
 
   const { show_snackbar } = useSnackbar();
@@ -278,7 +278,7 @@ export const ConfirmCheckoutDetails: FC<ConfirmCheckoutDetailsProps> = ({
       const pub_year = library_item.publication_year || 0;
       const is_new = pub_year >= this_year - 1;
       return new Date(
-        checkout_date.getTime() + (is_new ? 3 : 7) * 24 * 60 * 60 * 1000
+        checkout_date.getTime() + (is_new ? 3 : 7) * 24 * 60 * 60 * 1000,
       );
     } else {
       // Books: 4 weeks (28 days)
@@ -308,7 +308,7 @@ export const ConfirmCheckoutDetails: FC<ConfirmCheckoutDetailsProps> = ({
               });
               set_show_fine_dialog(false);
             },
-          }
+          },
         );
       }
     }
@@ -321,7 +321,7 @@ export const ConfirmCheckoutDetails: FC<ConfirmCheckoutDetailsProps> = ({
           patron_id: patron.id,
           patron_data: {
             card_expiration_date: new Date(
-              new_expiration_date.toString()
+              new_expiration_date.toString(),
             ).toLocaleDateString(),
           },
         },
@@ -336,7 +336,7 @@ export const ConfirmCheckoutDetails: FC<ConfirmCheckoutDetailsProps> = ({
               message: "Patron's library card updated successfully.",
             });
           },
-        }
+        },
       );
     }
   };
@@ -615,8 +615,8 @@ export const ConfirmCheckoutDetails: FC<ConfirmCheckoutDetailsProps> = ({
                       hasTooManyBooks
                         ? 'error'
                         : active_checkout_count >= 15
-                        ? 'warning'
-                        : 'default'
+                          ? 'warning'
+                          : 'default'
                     }
                     sx={{ fontWeight: 600 }}
                   />
@@ -777,7 +777,7 @@ export const ConfirmCheckoutDetails: FC<ConfirmCheckoutDetailsProps> = ({
                 <InfoRow
                   label='Condition'
                   value={
-                    <ItemCopyConditionChip
+                    <Item_Copy_Condition_Chip
                       size='small'
                       condition={item_copy?.condition || 'Good'}
                     />

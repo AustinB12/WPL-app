@@ -42,15 +42,22 @@ export const MetricCard: FC<MetricCardProps> = ({
   };
 
   return (
-    <Card sx={{ height: '100%' }}>
+    <Card
+      sx={{
+        height: '100%',
+        backgroundImage: `url('data:image/svg+xml;utf8,${encodeURIComponent(`
+<svg xmlns="http://www.w3.org/2000/svg"><defs><pattern id="a" width="40" height="40" patternTransform="scale(0.2)" patternUnits="userSpaceOnUse"><rect width="100%" height="100%" fill="none"/><path fill="#2d2d2d33" d="M11 6a5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5 5 5 0 0 1 5 5"/></pattern></defs><rect width="800%" height="800%" fill="url(#a)"/></svg>
+     `)}')`,
+      }}
+    >
       <CardContent>
         <Stack
-          direction="row"
-          justifyContent="space-between"
-          alignItems="flex-start"
+          direction='row'
+          justifyContent='space-between'
+          alignItems='flex-start'
           mb={2}
         >
-          <Typography variant="body2" color="text.secondary" fontWeight={500}>
+          <Typography variant='body2' color='text.secondary' fontWeight={500}>
             {title}
           </Typography>
           {icon && (
@@ -58,16 +65,16 @@ export const MetricCard: FC<MetricCardProps> = ({
           )}
         </Stack>
 
-        <Typography variant="h4" fontWeight="bold" mb={1}>
+        <Typography variant='h4' fontWeight='bold' mb={1}>
           {value.toLocaleString()}
         </Typography>
 
-        <Stack direction="row" alignItems="center" spacing={0.5}>
+        <Stack direction='row' alignItems='center' spacing={0.5}>
           {trend && (
             <>
               {getTrendIcon()}
               <Typography
-                variant="body2"
+                variant='body2'
                 color={getTrendColor()}
                 fontWeight={500}
               >
@@ -77,8 +84,8 @@ export const MetricCard: FC<MetricCardProps> = ({
           )}
           {subtitle && (
             <Typography
-              variant="body2"
-              color="text.secondary"
+              variant='body2'
+              color='text.secondary'
               ml={trend ? 1 : 0}
             >
               {subtitle}

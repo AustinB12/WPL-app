@@ -39,7 +39,7 @@ router.get('/circulation', async (req, res) => {
         ${date_group} as period,
         SUM(CASE WHEN UPPER(t.transaction_type) = 'CHECKOUT' THEN 1 ELSE 0 END) as checkouts,
         SUM(CASE WHEN UPPER(t.transaction_type) = 'CHECKIN' THEN 1 ELSE 0 END) as checkins,
-        SUM(CASE WHEN UPPER(t.transaction_type) = 'RENEW' THEN 1 ELSE 0 END) as renewals
+        SUM(CASE WHEN UPPER(t.transaction_type) = 'RENEWAL' THEN 1 ELSE 0 END) as renewals
       FROM ITEM_TRANSACTIONS t
       WHERE DATE(t.date) BETWEEN ? AND ?
         ${branch_filter}
@@ -153,7 +153,7 @@ router.get('/popular-items', async (req, res) => {
 
     const by_item_type = await db.execute_query(
       by_type_query,
-      branch_id ? [start_date, branch_id] : [start_date]
+      branch_id ? [start_date, branch_id] : [start_date],
     );
 
     res.json({
@@ -202,7 +202,7 @@ router.get('/patrons', async (req, res) => {
 
     const active_result = await db.execute_query(
       active_patrons_query,
-      branch_param
+      branch_param,
     );
     const active_patrons = active_result[0]?.count || 0;
 
@@ -236,7 +236,7 @@ router.get('/patrons', async (req, res) => {
 
     const checkout_distribution = await db.execute_query(
       distribution_query,
-      branch_param
+      branch_param,
     );
 
     // Patron types (categorize by checkout frequency)
@@ -307,7 +307,7 @@ router.get('/overdue', async (req, res) => {
 
     const by_branch = await db.execute_query(
       by_branch_query,
-      branch_id ? [branch_id] : []
+      branch_id ? [branch_id] : [],
     );
 
     // Detailed overdue items
@@ -337,7 +337,7 @@ router.get('/overdue', async (req, res) => {
 
     const overdue_items = await db.execute_query(
       overdue_items_query,
-      branch_id ? [branch_id] : []
+      branch_id ? [branch_id] : [],
     );
 
     // Overdue trend (last 8 weeks)
@@ -354,7 +354,7 @@ router.get('/overdue', async (req, res) => {
 
     const trend_results = await db.execute_query(
       trend_query,
-      branch_id ? [branch_id] : []
+      branch_id ? [branch_id] : [],
     );
 
     const overdue_trend = {
@@ -371,7 +371,7 @@ router.get('/overdue', async (req, res) => {
         total_overdue: overdue_items.length,
         total_fines: by_branch.reduce(
           (sum, b) => sum + (b.total_fines || 0),
-          0
+          0,
         ),
       },
     });
@@ -420,7 +420,7 @@ router.get('/collection-utilization', async (req, res) => {
 
     const never_checked_out = await db.execute_query(
       never_checked_query,
-      branch_param
+      branch_param,
     );
 
     // Checkout rate by item type
@@ -452,7 +452,7 @@ router.get('/collection-utilization', async (req, res) => {
 
     const checkout_rate_by_type = await db.execute_query(
       utilization_query,
-      branch_id ? [branch_id] : []
+      branch_id ? [branch_id] : [],
     );
 
     // Age analysis
@@ -487,7 +487,7 @@ router.get('/collection-utilization', async (req, res) => {
 
     const age_results = await db.execute_query(
       age_analysis_query,
-      branch_id ? [branch_id] : []
+      branch_id ? [branch_id] : [],
     );
 
     const age_analysis = {

@@ -69,58 +69,6 @@ router.get('/', async (req, res) => {
       params.push(`%${search}%`, `%${search}%`);
     }
 
-    const where_clause =
-      conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
-    // const query = `
-    //   SELECT
-    //     li.*,
-    //     bk.author,
-    //     bk.publisher,
-    //     bk.genre as book_genre,
-    //     bk.number_of_pages,
-    //     v.director,
-    //     v.studio,
-    //     v.format as video_format,
-    //     v.duration_minutes,
-    //     v.rating as video_rating,
-    //     v.genre as video_genre,
-    //     ab.narrator,
-    //     ab.duration_in_seconds as audiobook_duration,
-    //     ab.publisher as audiobook_publisher,
-    //     ab.genre as audiobook_genre,
-    //     va.artist as vinyl_artist,
-    //     va.color as vinyl_color,
-    //     va.number_of_tracks as vinyl_tracks,
-    //     va.genre as vinyl_genre,
-    //     cd.artist as cd_artist,
-    //     cd.record_label,
-    //     cd.number_of_tracks as cd_tracks,
-    //     cd.genre as cd_genre,
-    //     per.pages as periodical_pages,
-    //     per.issue_number as periodical_issue_number,
-    //     per.publication_date as periodical_publication_date,
-    //     mag.subscription_cost as magazine_subscription_cost,
-    //     mag.publisher as magazine_publisher,
-    //     mag.issue_number as magazine_issue_number,
-    //     mag.publication_month as magazine_publication_month,
-    //     mag.publication_year as magazine_publication_year,
-    //     COUNT(DISTINCT ic.id) as total_copies,
-    //     SUM(CASE WHEN ic.status = 'Available' THEN 1 ELSE 0 END) as available_copies,
-    //     SUM(CASE WHEN ic.status = 'Checked Out' THEN 1 ELSE 0 END) as checked_out_copies
-    //   FROM LIBRARY_ITEMS li
-    //   LEFT JOIN LIBRARY_ITEM_COPIES ic ON li.id = ic.library_item_id
-    //   LEFT JOIN BOOKS bk ON li.id = bk.library_item_id
-    //   LEFT JOIN VIDEOS v ON li.id = v.library_item_id
-    //   LEFT JOIN AUDIOBOOKS ab ON li.id = ab.library_item_id
-    //   LEFT JOIN VINYL_ALBUMS va ON li.id = va.library_item_id
-    //   LEFT JOIN CDS cd ON li.id = cd.library_item_id
-    //   LEFT JOIN PERIODICALS per ON li.id = per.library_item_id
-    //   LEFT JOIN MAGAZINES mag ON li.id = mag.library_item_id
-    //   ${where_clause}
-    //   ${group_by}
-    //   ${order_by}
-    // `;
-
     const query = `
     WITH books_table AS (
       SELECT 
@@ -133,7 +81,8 @@ router.get('/', async (req, res) => {
         bk.author,
         bk.genre,
         bk.cover_image_url,
-        bk.number_of_pages 
+        bk.number_of_pages,
+        (SELECT COUNT(*) FROM LIBRARY_ITEM_COPIES WHERE library_item_id = li.id) as total_copies
       FROM LIBRARY_ITEMS li
       JOIN BOOKS bk ON li.id = bk.library_item_id AND li.item_type = 'BOOK'
     ),
@@ -149,7 +98,8 @@ router.get('/', async (req, res) => {
         cds.record_label,
         cds.number_of_tracks,
         cds.genre,
-        cds.duration_seconds
+        cds.duration_seconds,
+        (SELECT COUNT(*) FROM LIBRARY_ITEM_COPIES WHERE library_item_id = li.id) as total_copies
       FROM LIBRARY_ITEMS li
       JOIN CDS cds ON li.id = cds.library_item_id AND li.item_type = 'CD'
     ),
@@ -166,7 +116,8 @@ router.get('/', async (req, res) => {
         abks.publisher,
         abks.genre,
         abks.format,
-        abks.rating
+        abks.rating,
+        (SELECT COUNT(*) FROM LIBRARY_ITEM_COPIES WHERE library_item_id = li.id) as total_copies
       FROM LIBRARY_ITEMS li
       JOIN AUDIOBOOKS abks ON li.id = abks.library_item_id AND li.item_type = 'AUDIOBOOK'
     ),
@@ -183,7 +134,8 @@ router.get('/', async (req, res) => {
         va.number_of_tracks,
         va.genre,
         va.color,
-        va.duration_seconds
+        va.duration_seconds,
+        (SELECT COUNT(*) FROM LIBRARY_ITEM_COPIES WHERE library_item_id = li.id) as total_copies
       FROM LIBRARY_ITEMS li
       JOIN VINYL_ALBUMS va ON li.id = va.library_item_id AND li.item_type = 'VINYL'
     ),
@@ -199,7 +151,8 @@ router.get('/', async (req, res) => {
         v.format as video_format,
         v.duration_minutes,
         v.rating as video_rating,
-        v.genre as video_genre
+        v.genre as video_genre,
+        (SELECT COUNT(*) FROM LIBRARY_ITEM_COPIES WHERE library_item_id = li.id) as total_copies
       FROM LIBRARY_ITEMS li
       JOIN VIDEOS v ON li.id = v.library_item_id AND li.item_type = 'VIDEO'
     ),
@@ -214,7 +167,8 @@ router.get('/', async (req, res) => {
         mag.publisher,
         mag.issue_number,
         mag.publication_month,
-        mag.publication_year
+        mag.publication_year,
+        (SELECT COUNT(*) FROM LIBRARY_ITEM_COPIES WHERE library_item_id = li.id) as total_copies
       FROM LIBRARY_ITEMS li
       JOIN MAGAZINES mag ON li.id = mag.library_item_id AND li.item_type = 'MAGAZINE'
     ),
@@ -227,18 +181,19 @@ router.get('/', async (req, res) => {
         li.publication_year,
         per.pages,
         per.issue_number,
-        per.publication_date
+        per.publication_date,
+        (SELECT COUNT(*) FROM LIBRARY_ITEM_COPIES WHERE library_item_id = li.id) as total_copies
       FROM LIBRARY_ITEMS li
       JOIN PERIODICALS per ON li.id = per.library_item_id AND li.item_type = 'PERIODICAL'
     )
     SELECT
-  (SELECT json_group_array(json_object('id', id, 'title', title, 'item_type', item_type, 'description', description, 'publication_year', publication_year, 'publisher', publisher, 'genres', genre, 'cover_image_url', cover_image_url, 'number_of_pages', number_of_pages, 'author', author)) FROM books_table) as books,
-  (SELECT json_group_array(json_object('id', id, 'title', title, 'item_type', item_type, 'description', description, 'publication_year', publication_year, 'cover_image_url', cover_image_url, 'artist', artist, 'record_label', record_label, 'number_of_tracks', number_of_tracks, 'genres', genre, 'duration_seconds', duration_seconds)) FROM cds_table) as cds,
-  (SELECT json_group_array(json_object('id', id, 'title', title, 'item_type', item_type, 'description', description, 'publication_year', publication_year, 'cover_image_url', cover_image_url, 'narrator', narrator, 'duration_in_seconds', duration_in_seconds, 'publisher', publisher, 'genres', genre, 'format', format, 'rating', rating)) FROM audiobooks_table) as audiobooks,
-  (SELECT json_group_array(json_object('id', id, 'title', title, 'item_type', item_type, 'description', description, 'publication_year', publication_year, 'cover_image_url', cover_image_url, 'artist', artist, 'color', color, 'number_of_tracks', number_of_tracks, 'genres', genre, 'duration_seconds', duration_seconds, 'color', color)) FROM vinyls_table) as vinyls,
-  (SELECT json_group_array(json_object('id', id, 'title', title, 'item_type', item_type, 'description', description, 'publication_year', publication_year, 'director', director, 'studio', studio, 'video_format', video_format, 'duration_minutes', duration_minutes, 'video_rating', video_rating, 'genres', video_genre)) FROM videos_table) as videos,
-  (SELECT json_group_array(json_object('id', id, 'title', title, 'item_type', item_type, 'description', description, 'publication_year', publication_year, 'subscription_cost', subscription_cost, 'publisher', publisher, 'issue_number', issue_number, 'publication_month', publication_month, 'publication_year', publication_year)) FROM magazines_table) as magazines,
-  (SELECT json_group_array(json_object('id', id, 'title', title, 'item_type', item_type, 'description', description, 'publication_year', publication_year, 'pages', pages, 'issue_number', issue_number, 'publication_date', publication_date)) FROM periodicals_table) as periodicals
+  (SELECT json_group_array(json_object('id', id, 'title', title, 'item_type', item_type, 'description', description, 'publication_year', publication_year, 'publisher', publisher, 'genres', genre, 'cover_image_url', cover_image_url, 'number_of_pages', number_of_pages, 'author', author, 'total_copies', total_copies)) FROM books_table) as books,
+  (SELECT json_group_array(json_object('id', id, 'title', title, 'item_type', item_type, 'description', description, 'publication_year', publication_year, 'cover_image_url', cover_image_url, 'artist', artist, 'record_label', record_label, 'number_of_tracks', number_of_tracks, 'genres', genre, 'duration_seconds', duration_seconds, 'total_copies', total_copies)) FROM cds_table) as cds,
+  (SELECT json_group_array(json_object('id', id, 'title', title, 'item_type', item_type, 'description', description, 'publication_year', publication_year, 'cover_image_url', cover_image_url, 'narrator', narrator, 'duration_in_seconds', duration_in_seconds, 'publisher', publisher, 'genres', genre, 'format', format, 'rating', rating, 'total_copies', total_copies)) FROM audiobooks_table) as audiobooks,
+  (SELECT json_group_array(json_object('id', id, 'title', title, 'item_type', item_type, 'description', description, 'publication_year', publication_year, 'cover_image_url', cover_image_url, 'artist', artist, 'color', color, 'number_of_tracks', number_of_tracks, 'genres', genre, 'duration_seconds', duration_seconds, 'color', color, 'total_copies', total_copies)) FROM vinyls_table) as vinyls,
+  (SELECT json_group_array(json_object('id', id, 'title', title, 'item_type', item_type, 'description', description, 'publication_year', publication_year, 'director', director, 'studio', studio, 'video_format', video_format, 'duration_minutes', duration_minutes, 'video_rating', video_rating, 'genres', video_genre, 'total_copies', total_copies)) FROM videos_table) as videos,
+  (SELECT json_group_array(json_object('id', id, 'title', title, 'item_type', item_type, 'description', description, 'publication_year', publication_year, 'subscription_cost', subscription_cost, 'publisher', publisher, 'issue_number', issue_number, 'publication_month', publication_month, 'publication_year', publication_year, 'total_copies', total_copies)) FROM magazines_table) as magazines,
+  (SELECT json_group_array(json_object('id', id, 'title', title, 'item_type', item_type, 'description', description, 'publication_year', publication_year, 'pages', pages, 'issue_number', issue_number, 'publication_date', publication_date, 'total_copies', total_copies)) FROM periodicals_table) as periodicals
     `;
 
     const [result] = await db.execute_query(query, params);
@@ -268,6 +223,8 @@ router.get('/', async (req, res) => {
       item.genres = item.genres !== undefined ? JSON.parse(item.genres) : [];
     });
 
+    all_items.sort((x, y) => x.id - y.id);
+
     res.json({
       success: true,
       count: all_items.length,
@@ -291,12 +248,14 @@ router.get('/:id', async (req, res) => {
         b.publisher,
         b.genre as book_genre,
         b.number_of_pages,
-        b.cover_image_url,
+        b.cover_image_url as book_cover_image_url,
         v.director,
         v.studio,
         v.format as video_format,
         v.duration_minutes,
         v.rating as video_rating,
+        v.cover_image_url as video_cover_image_url,
+        v.genre as video_genre,
         a.narrator,
         a.duration_in_seconds as audiobook_duration,
         a.publisher as audiobook_publisher,
@@ -308,11 +267,15 @@ router.get('/:id', async (req, res) => {
         va.color as vinyl_color,
         va.number_of_tracks as vinyl_tracks,
         va.cover_image_url as vinyl_cover_image,
+        va.record_label as vinyl_record_label,
+        va.duration_seconds as vinyl_duration,
         va.genre as vinyl_genre,
         cd.genre as cd_genre,
         cd.artist as cd_artist,
-        cd.record_label,
+        cd.record_label as cd_record_label,
         cd.number_of_tracks as cd_tracks,
+        cd.cover_image_url as cd_cover_image,
+        cd.duration_seconds as cd_duration,
         m.subscription_cost,
         m.publisher as magazine_publisher,
         m.issue_number,
@@ -350,18 +313,27 @@ router.get('/:id', async (req, res) => {
     }
     if (library_item.video_genre) {
       genres = JSON.parse(library_item.video_genre);
+      library_item.format = library_item.video_format;
+      library_item.duration_minutes = library_item.duration_minutes;
+      library_item.rating = library_item.video_rating;
     }
     if (library_item.audiobook_genre) {
       genres = JSON.parse(library_item.audiobook_genre);
+      library_item.format = library_item.audiobook_format;
+      library_item.publisher = library_item.audiobook_publisher;
+      library_item.duration_seconds = library_item.audiobook_duration;
     }
     if (library_item.vinyl_genre) {
       genres = JSON.parse(library_item.vinyl_genre);
+      library_item.record_label = library_item.vinyl_record_label;
+      library_item.duration_seconds = library_item.vinyl_duration;
+      library_item.artist = library_item.vinyl_artist;
+      library_item.number_of_tracks = library_item.vinyl_tracks;
     }
     if (library_item.cd_genre) {
       genres = JSON.parse(library_item.cd_genre);
-    }
-    if (library_item.magazine_genre) {
-      genres = JSON.parse(library_item.magazine_genre);
+      library_item.record_label = library_item.cd_record_label;
+      library_item.duration_seconds = library_item.cd_duration;
     }
     if (library_item.periodical_genre) {
       genres = JSON.parse(library_item.periodical_genre);
@@ -372,7 +344,31 @@ router.get('/:id', async (req, res) => {
       library_item?.vinyl_cover_image ||
       library_item?.audiobook_cover_image ||
       library_item?.book_cover_image_url ||
+      library_item?.video_cover_image_url ||
+      library_item?.cd_cover_image ||
       null;
+
+    delete library_item.book_genre;
+    delete library_item.video_genre;
+    delete library_item.audiobook_genre;
+    delete library_item.vinyl_genre;
+    delete library_item.cd_genre;
+    delete library_item.vinyl_cover_image;
+    delete library_item.audiobook_cover_image;
+    delete library_item.book_cover_image_url;
+    delete library_item.video_cover_image_url;
+    delete library_item.cd_cover_image;
+    delete library_item.vinyl_record_label;
+    delete library_item.cd_record_label;
+    delete library_item.vinyl_duration;
+    delete library_item.cd_duration;
+    delete library_item.vinyl_artist;
+    delete library_item.vinyl_tracks;
+    delete library_item.video_format;
+    delete library_item.video_rating;
+    delete library_item.audiobook_format;
+    delete library_item.audiobook_publisher;
+    delete library_item.audiobook_duration;
 
     res.json({
       success: true,

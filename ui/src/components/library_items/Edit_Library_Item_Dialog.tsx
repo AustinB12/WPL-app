@@ -84,11 +84,7 @@ export function Edit_Library_Item_Dialog({
         library_item.publisher || library_item.audiobook_publisher || '',
       );
       set_genres(library_item.genres || []);
-      set_cover_image_url(
-        library_item.cover_image_url ||
-          library_item.audiobook_cover_image ||
-          '',
-      );
+      set_cover_image_url(library_item.cover_image_url || '');
       set_number_of_pages(
         library_item.number_of_pages
           ? parseInt(library_item.number_of_pages)
@@ -96,7 +92,7 @@ export function Edit_Library_Item_Dialog({
       );
       set_director(library_item.director || '');
       set_studio(library_item.studio || '');
-      set_video_format(library_item.video_format || '');
+      set_video_format(library_item.format || '');
       set_duration_minutes(
         library_item.duration_minutes
           ? parseInt(library_item.duration_minutes)
@@ -171,11 +167,7 @@ export function Edit_Library_Item_Dialog({
         library_item.publisher || library_item.audiobook_publisher || '',
       );
       set_genres(library_item.genres || []);
-      set_cover_image_url(
-        library_item.cover_image_url ||
-          library_item.audiobook_cover_image ||
-          '',
-      );
+      set_cover_image_url(library_item.cover_image_url || '');
       set_number_of_pages(
         library_item.number_of_pages
           ? parseInt(library_item.number_of_pages)
@@ -183,7 +175,7 @@ export function Edit_Library_Item_Dialog({
       );
       set_director(library_item.director || '');
       set_studio(library_item.studio || '');
-      set_video_format(library_item.video_format || '');
+      set_video_format(library_item.format || '');
       set_duration_minutes(
         library_item.duration_minutes
           ? parseInt(library_item.duration_minutes)

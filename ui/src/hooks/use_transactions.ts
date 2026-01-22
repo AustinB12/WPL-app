@@ -61,7 +61,7 @@ export const useRenewItem = () => {
   });
 };
 
-export const use_reserve_item = () => {
+export const useReserveItem = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -108,6 +108,13 @@ export const useGetTransactionsByPatronId = (patron_id: number) => {
   return useQuery({
     queryKey: ['transactions', 'patron', patron_id],
     queryFn: () => data_service.getTransactionsByPatronId(patron_id),
+  });
+};
+
+export const useGetTransactionsByItemId = (item_id: number) => {
+  return useQuery({
+    queryKey: ['transactions', 'item', item_id],
+    queryFn: () => data_service.getTransactionsByItemId(item_id),
   });
 };
 

@@ -2,9 +2,9 @@ import { Fab } from '@mui/material';
 import { type GridColDef } from '@mui/x-data-grid';
 import { BaseDataGrid } from '../components/common/BaseDataGrid';
 import { PageContainer, Page_Title } from '../components/common/PageBuilders';
-import { ItemCopyConditionChip } from '../components/copies/ItemCopyConditionChip';
+import { Item_Copy_Condition_Chip } from '../components/copies/ItemCopyConditionChip';
 import { ItemCopyStatusChip } from '../components/copies/ItemCopyStatusChip';
-import ItemTypeChip from '../components/library_items/ItemTypeChip';
+import Item_Type_Chip from '../components/library_items/ItemTypeChip';
 import { useBranchContext } from '../contexts/Branch_Context';
 import { useReshelveItems } from '../hooks/use_reshelve_items';
 import { CheckCircle } from '@mui/icons-material';
@@ -39,7 +39,7 @@ const columns: GridColDef[] = [
     headerName: 'Type',
     width: 150,
     editable: false,
-    renderCell: (params) => <ItemTypeChip item_type={params.value} />,
+    renderCell: (params) => <Item_Type_Chip item_type={params.value} />,
   },
   {
     field: 'status',
@@ -53,7 +53,9 @@ const columns: GridColDef[] = [
     headerName: 'Condition',
     width: 125,
     editable: false,
-    renderCell: (params) => <ItemCopyConditionChip condition={params.value} />,
+    renderCell: (params) => (
+      <Item_Copy_Condition_Chip condition={params.value} />
+    ),
   },
   { field: 'notes', headerName: 'Notes', width: 250, editable: false },
 ];
@@ -74,9 +76,7 @@ export const Reshelve_Items_Page = () => {
   const has_items = data.length > 0;
   const can_reshelve_single = has_selected_item && !something_loading;
   const can_reshelve_all = has_items && !something_loading;
-  const grid_label = `Unshelved Items at ${
-    selected_branch?.branch_name || 'Branch'
-  }`;
+  const grid_label = 'Unshelved Items';
 
   return (
     <PageContainer>

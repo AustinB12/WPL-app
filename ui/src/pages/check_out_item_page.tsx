@@ -22,7 +22,7 @@ import { useSnackbar } from '../hooks/use_snackbar';
 import { useCheckoutItem } from '../hooks/use_transactions';
 import type { Item_Copy_Result } from '../types/item_types';
 import type { Patron } from '../types/patron_types';
-import ItemTypeChip from '../components/library_items/ItemTypeChip';
+import Item_Type_Chip from '../components/library_items/ItemTypeChip';
 
 const AUTOCOMPLETE_SX: SxProps<Theme> = {
   flex: 1,
@@ -177,7 +177,7 @@ const Check_Out_Item_Page_Content = () => {
   const render_item_option = useCallback(
     (props: any, option: Item_Copy_Result) => (
       <ListItem {...props} key={option.id}>
-        <ItemTypeChip item_type={option.item_type} size='small' />
+        <Item_Type_Chip item_type={option.item_type} size='small' />
         <ListItemText
           sx={{ ml: 1 }}
           secondary={`ID: ${option.id}`}

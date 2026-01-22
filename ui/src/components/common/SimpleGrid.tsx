@@ -21,19 +21,19 @@ const default_cols: GridColDef[] = [
     renderCell: (params) => (
       <GridActionsCell {...params}>
         <GridActionsCellItem
-          label="Reshelve"
+          label='Reshelve'
           icon={
             <Button
-              size="small"
-              variant="contained"
-              color="success"
+              size='small'
+              variant='contained'
+              color='success'
               startIcon={<CheckCircle />}
             >
               {'Reshelve'}
             </Button>
           }
           showInMenu={false}
-          title="Reshelve"
+          title='Reshelve'
         />
       </GridActionsCell>
     ),
@@ -48,9 +48,10 @@ type Simple_Grid_Props = {
   no_results_overlay?: React.ReactNode;
   overlay_height?: string;
   on_row_click?: DataGridProps['onRowClick'];
+  on_row_double_click?: DataGridProps['onRowDoubleClick'];
 };
 
-export default function SimpleGrid({
+export default function Simple_Grid({
   rows,
   cols,
   loading = false,
@@ -58,10 +59,11 @@ export default function SimpleGrid({
   no_results_overlay,
   overlay_height,
   on_row_click,
+  on_row_double_click,
 }: Simple_Grid_Props) {
   return (
     <DataGrid
-      density="compact"
+      density='compact'
       rows={rows}
       columns={cols || default_cols}
       loading={loading}
@@ -70,7 +72,9 @@ export default function SimpleGrid({
       disableColumnSorting
       disableDensitySelector
       disableMultipleRowSelection
+      disableRowSelectionOnClick
       onRowClick={on_row_click}
+      onRowDoubleClick={on_row_double_click}
       sx={{
         height: '100%',
         '--DataGrid-overlayHeight': overlay_height || '100px',

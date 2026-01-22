@@ -17,11 +17,11 @@ import {
 } from '@mui/material';
 import { type GridColDef } from '@mui/x-data-grid';
 import React, { useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { Genre_Chip } from '../components/common/GenreChip';
 import { PageContainer } from '../components/common/PageBuilders';
-import SimpleGrid from '../components/common/SimpleGrid';
-import { ItemCopyConditionChip } from '../components/copies/ItemCopyConditionChip';
+import Simple_Grid from '../components/common/SimpleGrid';
+import { Item_Copy_Condition_Chip } from '../components/copies/ItemCopyConditionChip';
 import { ItemCopyStatusChip } from '../components/copies/ItemCopyStatusChip';
 import { Edit_Library_Item_Dialog } from '../components/library_items/Edit_Library_Item_Dialog';
 import { useCopiesOfLibraryItem } from '../hooks/use_copies';
@@ -55,7 +55,7 @@ const copy_columns: GridColDef[] = [
     headerName: 'Condition',
     width: 120,
     renderCell: (params) => (
-      <ItemCopyConditionChip size='small' condition={params.value} />
+      <Item_Copy_Condition_Chip size='small' condition={params.value} />
     ),
   },
   {
@@ -100,7 +100,7 @@ const mobile_copy_columns: GridColDef[] = [
     width: 100,
     flex: 1,
     renderCell: (params) => (
-      <ItemCopyConditionChip size='small' condition={params.value} />
+      <Item_Copy_Condition_Chip size='small' condition={params.value} />
     ),
   },
 ];
@@ -125,12 +125,12 @@ export const Library_Item_Page = () => {
   const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     setAnchorEl(event.currentTarget);
   };
-  const handleClose = () => {
+  const handle_close = () => {
     setAnchorEl(null);
   };
 
   const handle_edit_click = () => {
-    handleClose();
+    handle_close();
     set_edit_dialog_open(true);
   };
 
@@ -142,16 +142,19 @@ export const Library_Item_Page = () => {
     refetch();
   };
 
+  const nav = useNavigate();
+
   const get_copies_grid = () => {
     return (
       <LIP_Section sx={{ mt: 2, width: '100%' }}>
         <Typography variant='h6' gutterBottom>
           Item Copies
         </Typography>
-        <SimpleGrid
+        <Simple_Grid
           rows={copies || []}
           cols={is_mobile ? mobile_copy_columns : copy_columns}
           loading={copies_loading}
+          on_row_double_click={(e) => nav(`/library-item-copy/${e.id}`)}
         />
       </LIP_Section>
     );
@@ -210,7 +213,7 @@ export const Library_Item_Page = () => {
                 id='basic-menu'
                 anchorEl={anchorEl}
                 open={open}
-                onClose={handleClose}
+                onClose={handle_close}
                 slotProps={{
                   list: {
                     'aria-labelledby': 'basic-button',
@@ -224,7 +227,7 @@ export const Library_Item_Page = () => {
                     </ListItemIcon>
                     <ListItemText>Edit</ListItemText>
                   </MenuItem>
-                  <MenuItem onClick={handleClose}>
+                  <MenuItem onClick={handle_close}>
                     <ListItemIcon>
                       <Delete />
                     </ListItemIcon>
@@ -280,9 +283,7 @@ export const Library_Item_Page = () => {
               margin: is_mobile ? '0 auto' : undefined,
               borderRadius: '8px',
             }}
-            src={
-              data?.cover_image_url || data?.audiobook_cover_image || undefined
-            }
+            src={data?.cover_image_url || undefined}
             alt={`Cover image of ${data?.title || ''}`}
           />
         </Grid>

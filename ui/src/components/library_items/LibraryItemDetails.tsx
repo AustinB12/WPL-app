@@ -1,14 +1,29 @@
-import { MenuBook, Newspaper, PersonalVideo } from '@mui/icons-material';
-import HeadsetIcon from '@mui/icons-material/Headset';
-import { Box, Paper, Stack, Typography } from '@mui/material';
-import { useBranches } from '../../hooks/use_branches';
+import {
+  Box,
+  Card,
+  CardContent,
+  CardHeader,
+  Grid,
+  IconButton,
+  Paper,
+  Stack,
+  Typography,
+  useMediaQuery,
+  useTheme,
+} from '@mui/material';
 import { useCopiesOfLibraryItem } from '../../hooks/use_copies';
-import type { Branch } from '../../types/others';
 import { Library_Item_Type, type Library_Item } from '../../types/item_types';
-import { DetailsDrawer } from '../common/DetailsDrawer';
-import { CopiesTable } from './LibraryItemCopiesTable';
+import { Details_Drawer } from '../common/DetailsDrawer';
+import Item_Type_Chip from './ItemTypeChip';
+import { LIP_Section } from './common';
+import Simple_Grid from '../common/SimpleGrid';
+import type { GridColDef } from '@mui/x-data-grid';
+import { ItemCopyStatusChip } from '../copies/ItemCopyStatusChip';
+import { Item_Copy_Condition_Chip } from '../copies/ItemCopyConditionChip';
+import { Close } from '@mui/icons-material';
+import { useNavigate } from 'react-router-dom';
 
-interface ItemDetailsProps {
+interface Item_Details_Props {
   is_open: boolean;
   item: Library_Item | null;
   onClose: () => void;
@@ -35,10 +50,10 @@ const getLayoutConfig = (item: Library_Item): LayoutConfig => {
         fields: [
           { label: 'ISBN', value: item.id },
           { label: 'Publication Year', value: item.publication_year },
-          { label: 'Genre', value: 'Literature' },
-          { label: 'Pages', value: 'Estimated 300-400' },
+          { label: 'Genre', value: 'TODO CHANGE THIS' },
+          { label: 'Pages', value: item.pages },
         ],
-        icon: <MenuBook fontSize='large' />,
+        icon: <Item_Type_Chip item_type={Library_Item_Type.Book} />,
       };
     case Library_Item_Type.Periodical:
       return {
@@ -50,7 +65,7 @@ const getLayoutConfig = (item: Library_Item): LayoutConfig => {
           { label: 'Frequency', value: 'Monthly' },
           { label: 'Publisher', value: 'Academic Press' },
         ],
-        icon: <Newspaper fontSize='large' />,
+        icon: <Item_Type_Chip item_type={Library_Item_Type.Periodical} />,
       };
     case Library_Item_Type.Recording:
       return {
@@ -62,7 +77,7 @@ const getLayoutConfig = (item: Library_Item): LayoutConfig => {
           { label: 'Duration', value: 'Approx. 45-60 minutes' },
           { label: 'Format', value: 'CD/Vinyl' },
         ],
-        icon: <HeadsetIcon fontSize='large' />,
+        icon: <Item_Type_Chip item_type={Library_Item_Type.Recording} />,
       };
     case Library_Item_Type.Video:
       return {
@@ -74,7 +89,7 @@ const getLayoutConfig = (item: Library_Item): LayoutConfig => {
           { label: 'Runtime', value: 'Feature Length' },
           { label: 'Format', value: 'DVD/Blu-ray' },
         ],
-        icon: <PersonalVideo fontSize='large' />,
+        icon: <Item_Type_Chip item_type={Library_Item_Type.Video} />,
       };
     case Library_Item_Type.Magazine:
       return {
@@ -86,6 +101,7 @@ const getLayoutConfig = (item: Library_Item): LayoutConfig => {
           { label: 'Volume', value: 'Current Issue' },
           { label: 'Category', value: 'General Interest' },
         ],
+        icon: <Item_Type_Chip item_type={Library_Item_Type.Magazine} />,
       };
     case Library_Item_Type.Audiobook:
       return {
@@ -97,7 +113,7 @@ const getLayoutConfig = (item: Library_Item): LayoutConfig => {
           { label: 'Duration', value: '8-12 hours' },
           { label: 'Narrator', value: 'Professional Voice Actor' },
         ],
-        icon: <MenuBook fontSize='large' />,
+        icon: <Item_Type_Chip item_type={Library_Item_Type.Audiobook} />,
       };
     default:
       return {
@@ -107,27 +123,22 @@ const getLayoutConfig = (item: Library_Item): LayoutConfig => {
           { label: 'Item ID', value: item.id },
           { label: 'Publication Year', value: item.publication_year },
         ],
+        icon: <Item_Type_Chip item_type={Library_Item_Type.Audiobook} />,
       };
   }
 };
 
-const ItemLayout = ({
-  item,
-  branches,
-}: {
-  item: Library_Item;
-  branches: Branch[];
-}) => {
+const Item_Layout = ({ item }: { item: Library_Item }) => {
   const config = getLayoutConfig(item);
 
   return (
     <Stack spacing={2}>
       <ItemInfoSection title={config.title} fields={config.fields} />
-      <DescriptionSection
+      <Description_Section
         title={config.descriptionTitle}
         description={item.description}
       />
-      <CopiesSection item={item} branches={branches} />
+      <Copies_Section item={item} />
     </Stack>
   );
 };
@@ -150,13 +161,13 @@ const ItemInfoSection = ({
             <Typography key={index} variant='body2'>
               <strong>{field.label}:</strong> {field.value}
             </Typography>
-          )
+          ),
       )}
     </Stack>
   </Paper>
 );
 
-const DescriptionSection = ({
+const Description_Section = ({
   title,
   description,
 }: {
@@ -174,75 +185,156 @@ const DescriptionSection = ({
   );
 };
 
-const CopiesSection = ({
-  item,
-  branches,
-}: {
-  item: Library_Item;
-  branches: Branch[];
-}) => {
-  const {
-    data: copies,
-    isLoading: loading,
-    error,
-  } = useCopiesOfLibraryItem(item.id);
-
+const Copies_Section = ({ item }: { item: Library_Item }) => {
+  const { data: copies, isLoading: loading } = useCopiesOfLibraryItem(item.id);
+  const theme = useTheme();
+  const is_mobile = useMediaQuery(theme.breakpoints.down('md'));
+  const nav = useNavigate();
   return (
-    <Paper elevation={1} sx={{ py: 2, px: 0 }}>
-      <Typography
-        sx={{ pl: 2 }}
-        variant='subtitle2'
-        color='text.secondary'
-        gutterBottom
-      >
-        Available Copies
+    <LIP_Section sx={{ mt: 2, width: '100%' }}>
+      <Typography variant='h6' gutterBottom>
+        Item Copies
       </Typography>
-      {loading && <Typography variant='body2'>Loading...</Typography>}
-      {error && (
-        <Typography variant='body2' color='error'>
-          {error.message}
-        </Typography>
-      )}
-      {!loading && !error && copies && (
-        <CopiesTable copies={copies} branches={branches} />
-      )}
-    </Paper>
+      <Simple_Grid
+        rows={copies || []}
+        cols={is_mobile ? mobile_copy_columns : copy_columns}
+        loading={loading}
+        on_row_double_click={(e) => nav(`/library-item-copy/${e.id}`)}
+      />
+    </LIP_Section>
   );
 };
 
-export const LibraryItemDetails = ({
+export const Library_Item_Details = ({
   is_open,
   item,
   onClose,
-}: ItemDetailsProps) => {
-  const { data: branches } = useBranches();
+}: Item_Details_Props) => {
   if (!item) {
     return (
-      <DetailsDrawer open={is_open} handleClose={onClose}>
+      <Details_Drawer open={is_open} handle_close={onClose}>
         <Box p={3}>
           <Typography variant='h6' color='text.secondary'>
             No item selected
           </Typography>
         </Box>
-      </DetailsDrawer>
+      </Details_Drawer>
     );
   }
 
   const config = getLayoutConfig(item);
 
   return (
-    <DetailsDrawer open={is_open} handleClose={onClose}>
-      <Box p={3}>
-        <Stack spacing={3}>
-          <Stack spacing={2} direction={'row'} sx={{ alignItems: 'center' }}>
-            {config?.icon && config.icon}
-            <Typography variant='h4' component='h1'>
+    <Details_Drawer open={is_open} handle_close={onClose}>
+      <Card
+        sx={{
+          p: 1,
+          mt: '64px',
+          boxShadow: 'none',
+          height: 1,
+          borderRadius: 0,
+          overflowY: 'hidden',
+          display: 'flex',
+          flexDirection: 'column',
+        }}
+      >
+        <CardHeader
+          sx={{ p: 0.5 }}
+          title={
+            <Typography
+              variant='h4'
+              component='h1'
+              fontWeight={'bold'}
+              sx={{ fontSize: { xs: '1.2rem', sm: '2rem' } }}
+            >
               {item.title}
             </Typography>
-          </Stack>
-          <ItemLayout item={item} branches={branches || []} />
-        </Stack>
-      </Box>
-    </DetailsDrawer>
+          }
+          subheader={config?.icon && config.icon}
+          action={
+            <IconButton onClick={onClose}>
+              <Close />
+            </IconButton>
+          }
+        />
+        <CardContent sx={{ p: 0, overflowY: 'auto', flex: 1 }}>
+          <Grid container spacing={2}>
+            <Grid size={{ xs: 12, md: 6 }}>
+              <Item_Layout item={item} />
+            </Grid>
+            <Grid size={{ xs: 12, md: 6 }}>
+              <Box
+                component={'img'}
+                src={item.cover_image_url}
+                sx={{ width: '100%', mt: 1, borderRadius: 2 }}
+              ></Box>
+            </Grid>
+          </Grid>
+        </CardContent>
+      </Card>
+    </Details_Drawer>
   );
 };
+
+const copy_columns: GridColDef[] = [
+  {
+    field: 'copy_label',
+    headerName: 'Copy',
+    width: 100,
+  },
+  {
+    field: 'status',
+    headerName: 'Status',
+    width: 150,
+    renderCell: (params) => (
+      <ItemCopyStatusChip size='small' status={params.value} />
+    ),
+  },
+  {
+    field: 'condition',
+    headerName: 'Condition',
+    width: 120,
+    renderCell: (params) => (
+      <Item_Copy_Condition_Chip size='small' condition={params.value} />
+    ),
+  },
+  {
+    field: 'patron_first_name',
+    headerName: 'Checked Out By',
+    width: 150,
+    valueGetter: (_value, row) => {
+      if (row.patron_first_name && row.patron_last_name) {
+        return `${row.patron_first_name} ${row.patron_last_name}`;
+      }
+      return '-';
+    },
+  },
+];
+
+// Simplified columns for mobile view
+const mobile_copy_columns: GridColDef[] = [
+  {
+    field: 'copy_number',
+    headerName: 'Copy',
+    width: 70,
+    valueFormatter: (value) => `#${value}`,
+  },
+  {
+    field: 'status',
+    headerName: 'Status',
+    width: 120,
+    flex: 1,
+    renderCell: (params) => (
+      <ItemCopyStatusChip size='small' status={params.value} />
+    ),
+  },
+  {
+    field: 'condition',
+    headerName: 'Condition',
+    width: 100,
+    flex: 1,
+    renderCell: (params) => (
+      <Item_Copy_Condition_Chip size='small' condition={params.value} />
+    ),
+  },
+];

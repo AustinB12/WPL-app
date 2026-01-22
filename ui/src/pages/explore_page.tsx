@@ -18,7 +18,7 @@ import { Page_Title } from '../components/common/PageBuilders';
 import { Explore, Refresh } from '@mui/icons-material';
 import { Library_Item_Type, type Library_Item } from '../types/item_types';
 import { useLibraryItems } from '../hooks/use_library_items';
-import ItemTypeChip from '../components/library_items/ItemTypeChip';
+import Item_Type_Chip from '../components/library_items/ItemTypeChip';
 import { Genre_Chip } from '../components/common/GenreChip';
 import Masonry from '@mui/lab/Masonry';
 import { useNavigate } from 'react-router-dom';
@@ -87,7 +87,7 @@ export const Explore_Page: FC = () => {
             <MenuItem value='all'>All</MenuItem>
             {Object.values(Library_Item_Type).map((type) => (
               <MenuItem key={type} value={type}>
-                <ItemTypeChip item_type={type} />
+                <Item_Type_Chip item_type={type} />
               </MenuItem>
             ))}
           </Select>
@@ -148,7 +148,7 @@ const Tall_Item_Card = ({ library_item }: { library_item: Library_Item }) => {
           }
         />
         <CardContent sx={{ pt: 0 }}>
-          <ItemTypeChip
+          <Item_Type_Chip
             item_type={library_item.item_type}
             sx={{ mb: 1 }}
             size='small'

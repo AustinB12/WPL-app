@@ -21,10 +21,10 @@ import { useSnackbar } from '../../hooks/use_snackbar';
 import type { Item_Copy, Item_Copy_Result } from '../../types/item_types';
 import { BaseDataGrid } from '../common/BaseDataGrid';
 import { Genre_Chip } from '../common/GenreChip';
-import ItemTypeChip from '../library_items/ItemTypeChip';
+import Item_Type_Chip from '../library_items/ItemTypeChip';
 import { DeleteCopyModal } from './DeleteCopyModal';
 import { type Edit_Copy_Form_Data, EditCopyModal } from './EditCopyModal';
-import { ItemCopyConditionChip } from './ItemCopyConditionChip';
+import { Item_Copy_Condition_Chip } from './ItemCopyConditionChip';
 import { ItemCopyStatusChip } from './ItemCopyStatusChip';
 
 export const CopiesDataGrid = ({
@@ -137,7 +137,7 @@ export const CopiesDataGrid = ({
       headerName: 'Type',
       width: 150,
       editable: false,
-      renderCell: (params) => <ItemTypeChip item_type={params.value} />,
+      renderCell: (params) => <Item_Type_Chip item_type={params.value} />,
     },
     {
       field: 'publication_year',
@@ -208,7 +208,7 @@ export const CopiesDataGrid = ({
       width: 125,
       editable: false,
       renderCell: (params) => (
-        <ItemCopyConditionChip condition={params.value} />
+        <Item_Copy_Condition_Chip condition={params.value} />
       ),
     },
     {

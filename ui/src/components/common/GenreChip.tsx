@@ -31,8 +31,9 @@ const genre_colors: Record<Genre, string> = {
   [Genre.Reference]: '#1976D2', // Blue
   [Genre.Romance]: '#F06292', // Pink Light
   [Genre.ScienceFiction]: '#00BCD4', // Cyan
+  [Genre.Score]: '#68c35c', // Brown Light
   [Genre.SelfHelp]: '#FFA726', // Orange
-  [Genre.Soundtrack]: '#491f12', // Brown Dark
+  [Genre.Soundtrack]: '#ac7303', // Brown Dark
   [Genre.Technology]: '#00ACC1', // Cyan Dark
   [Genre.Thriller]: '#E53935', // Red
   [Genre.Travel]: '#43A047', // Green
