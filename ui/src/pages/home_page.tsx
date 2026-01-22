@@ -513,7 +513,7 @@ background: linear-gradient(90deg, rgba(58, 134, 255, 1) 0%, rgba(131, 56, 236, 
                   borderColor: 'background.paper',
                   transition: 'transform 0.3s ease',
                 }}
-                src='https://media.licdn.com/dms/image/v2/C4D03AQF2qs6pZiimMg/profile-displayphoto-shrink_800_800/profile-displayphoto-shrink_800_800/0/1576023146183?e=1769040000&v=beta&t=NytL_qq2fxvZXKa9aLKQ1R8cVRezocfPVHjt5TK_I58'
+                src='/public/me.png'
               />
             </Box>
             <Box>
