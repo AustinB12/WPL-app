@@ -513,7 +513,7 @@ background: linear-gradient(90deg, rgba(58, 134, 255, 1) 0%, rgba(131, 56, 236, 
                   borderColor: 'background.paper',
                   transition: 'transform 0.3s ease',
                 }}
-                src='/public/me.png'
+                src='/me.png'
               />
             </Box>
             <Box>
