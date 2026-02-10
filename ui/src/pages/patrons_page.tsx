@@ -65,8 +65,9 @@ export const Patrons = () => {
         title='Create new patron'
         sx={{
           position: 'fixed',
-          bottom: '3vh',
-          right: '3vh',
+          bottom: '10vh',
+          right: '2vw',
+          display: { xs: 'inherit', sm: 'none' },
         }}
       >
         <Add />

@@ -1,4 +1,4 @@
-import type { Branch, Loan_Duration } from '../types/others';
+import type { Branch, Branch_Result, Loan_Duration } from '../types/others';
 import type {
   Checked_Out_Copy,
   Checked_Out_Copy_Simple,
@@ -608,9 +608,9 @@ export const data_service = {
     return await api_request<Branch[]>('/branches');
   },
 
-  async get_branch_by_id(branch_id: number): Promise<Branch | null> {
+  async get_branch_by_id(branch_id: number): Promise<Branch_Result | null> {
     try {
-      return await api_request<Branch>(`/branches/${branch_id}`);
+      return await api_request<Branch_Result>(`/branches/${branch_id}`);
     } catch (error: unknown) {
       if (error instanceof Error && error.message.includes('404')) {
         return null;

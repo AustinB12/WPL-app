@@ -12,6 +12,16 @@ export interface Branch {
   secondary_color?: string;
 }
 
+export interface Branch_Result extends Branch {
+  patron_count: number;
+  item_copy_count_total: number;
+  item_copy_count_active: number;
+  item_copy_count_checked_out: number;
+  item_copy_count_reserved: number;
+  item_copy_count_unshelved: number;
+  item_copy_count_overdue: number;
+}
+
 //! == SNACKBAR TYPES == //
 
 export interface Snackbar_Options {

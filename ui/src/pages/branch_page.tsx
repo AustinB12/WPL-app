@@ -40,22 +40,9 @@ import {
 import { type FC, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { PageContainer } from '../components/common/PageBuilders';
-import {
-  useBranchesContext,
-  useRefreshBranches,
-} from '../hooks/use_branch_hooks';
-import { useUpdateBranch } from '../hooks/use_branches';
+import { useBranchById, useUpdateBranch } from '../hooks/use_branches';
 import { useSnackbar } from '../hooks/use_snackbar';
 import type { Branch } from '../types/others';
-
-interface BranchStats {
-  total_copies: number;
-  available_copies: number;
-  checked_out_copies: number;
-  reserved_copies: number;
-  overdue_copies: number;
-  active_patrons: number;
-}
 
 interface StatCardProps {
   title: string;
@@ -75,42 +62,42 @@ const StatCard: FC<StatCardProps> = ({
   <Card
     sx={{
       height: '100%',
-      borderRadius: 3,
+      borderRadius: 4,
       transition: 'all 0.3s ease',
       '&:hover': {
         boxShadow: 6,
-        transform: 'translateY(-4px)',
       },
     }}
   >
     <CardContent>
       <Stack
-        direction="row"
-        alignItems="center"
-        justifyContent="space-between"
+        direction='row'
+        alignItems='center'
+        justifyContent='space-between'
         sx={{ mb: 2 }}
       >
         <Box
           sx={{
             bgcolor: `${color}.light`,
-            borderRadius: 2,
+            borderRadius: 6,
             p: 1.5,
             display: 'flex',
             alignItems: 'center',
+            cornerShape: 'squircle',
             justifyContent: 'center',
           }}
         >
           {icon}
         </Box>
+        <Typography variant='h3' fontWeight='bold' gutterBottom>
+          {value}
+        </Typography>
       </Stack>
-      <Typography variant="h4" fontWeight="bold" gutterBottom>
-        {value}
-      </Typography>
-      <Typography variant="body2" color="text.secondary" gutterBottom>
+      <Typography variant='body2' color='text.secondary' gutterBottom>
         {title}
       </Typography>
       {subtitle && (
-        <Typography variant="caption" color="text.secondary">
+        <Typography variant='caption' color='text.secondary'>
           {subtitle}
         </Typography>
       )}
@@ -153,19 +140,19 @@ const EditBranchDialog: FC<EditBranchDialogProps> = ({
   };
 
   return (
-    <Dialog open={open} onClose={on_close} maxWidth="sm" fullWidth>
+    <Dialog open={open} onClose={on_close} maxWidth='sm' fullWidth>
       <DialogTitle>Edit Branch Information</DialogTitle>
       <DialogContent>
         <Stack spacing={3} sx={{ mt: 1 }}>
           <TextField
-            label="Branch Name"
+            label='Branch Name'
             fullWidth
             value={form_data.branch_name}
             onChange={handle_change('branch_name')}
             disabled={is_loading}
           />
           <TextField
-            label="Address"
+            label='Address'
             fullWidth
             multiline
             rows={2}
@@ -174,14 +161,14 @@ const EditBranchDialog: FC<EditBranchDialogProps> = ({
             disabled={is_loading}
           />
           <TextField
-            label="Phone"
+            label='Phone'
             fullWidth
             value={form_data.phone}
             onChange={handle_change('phone')}
             disabled={is_loading}
           />
           <TextField
-            label="Description"
+            label='Description'
             fullWidth
             multiline
             rows={3}
@@ -189,22 +176,22 @@ const EditBranchDialog: FC<EditBranchDialogProps> = ({
             onChange={handle_change('description')}
             disabled={is_loading}
           />
-          <Stack direction="row" spacing={2} alignItems="center">
-            <InputLabel htmlFor="primary-color-input">Primary Color</InputLabel>
+          <Stack direction='row' spacing={2} alignItems='center'>
+            <InputLabel htmlFor='primary-color-input'>Primary Color</InputLabel>
             <Input
-              id="primary-color-input"
-              type="color"
+              id='primary-color-input'
+              type='color'
               sx={{ width: 50, height: 50, p: 0, border: 'none' }}
               value={form_data.primary_color || ''}
               onChange={handle_change('primary_color')}
               disabled={is_loading}
             />
-            <InputLabel htmlFor="secondary-color-input">
+            <InputLabel htmlFor='secondary-color-input'>
               Secondary Color
             </InputLabel>
             <Input
-              id="secondary-color-input"
-              type="color"
+              id='secondary-color-input'
+              type='color'
               sx={{ width: 50, height: 50, p: 0, border: 'none' }}
               value={form_data.secondary_color || ''}
               onChange={handle_change('secondary_color')}
@@ -212,7 +199,7 @@ const EditBranchDialog: FC<EditBranchDialogProps> = ({
             />
           </Stack>
           <TextField
-            label="Cover Image URL"
+            label='Cover Image URL'
             fullWidth
             value={form_data.cover_image || ''}
             onChange={handle_change('cover_image')}
@@ -226,7 +213,7 @@ const EditBranchDialog: FC<EditBranchDialogProps> = ({
         </Button>
         <Button
           onClick={handle_save}
-          variant="contained"
+          variant='contained'
           disabled={is_loading || !form_data.branch_name || !form_data.address}
         >
           {is_loading ? <CircularProgress size={24} /> : 'Save Changes'}
@@ -238,8 +225,6 @@ const EditBranchDialog: FC<EditBranchDialogProps> = ({
 
 export const BranchPage: FC = () => {
   const { branch_id } = useParams<{ branch_id: string }>();
-  const { branches } = useBranchesContext();
-  const refresh_branches = useRefreshBranches();
   const { show_snackbar } = useSnackbar();
 
   const { mutate: update_branch } = useUpdateBranch();
@@ -249,17 +234,18 @@ export const BranchPage: FC = () => {
 
   const open_menu = Boolean(anchor_el);
 
-  const branch = branches?.find((b) => b.id === parseInt(branch_id || '1'));
+  const {
+    data: branch,
+    isLoading: loading,
+    refetch,
+  } = useBranchById(parseInt(branch_id || '1'));
 
-  // Mock stats - In production, these would come from API calls
-  const branch_stats: BranchStats = {
-    total_copies: 2450,
-    available_copies: 1820,
-    checked_out_copies: 485,
-    reserved_copies: 95,
-    overdue_copies: 50,
-    active_patrons: 1250,
-  };
+  const overdue_rate = branch
+    ? Math.round(
+        (branch.item_copy_count_overdue / branch.item_copy_count_checked_out) *
+          100,
+      )
+    : 0;
 
   const handle_menu_click = (event: React.MouseEvent<HTMLElement>) => {
     set_anchor_el(event.currentTarget);
@@ -277,8 +263,8 @@ export const BranchPage: FC = () => {
   if (!branch_id) {
     return (
       <Container sx={{ p: 3 }}>
-        <Alert severity="error">No branch ID provided</Alert>
-        <Link to="/" style={{ textDecoration: 'none' }}>
+        <Alert severity='error'>No branch ID provided</Alert>
+        <Link to='/' style={{ textDecoration: 'none' }}>
           <Button startIcon={<ArrowBack />} sx={{ mt: 2 }}>
             Back to Home
           </Button>
@@ -287,7 +273,7 @@ export const BranchPage: FC = () => {
     );
   }
 
-  if (!branches) {
+  if (loading) {
     return (
       <Container sx={{ p: 3, display: 'flex', justifyContent: 'center' }}>
         <CircularProgress />
@@ -298,11 +284,11 @@ export const BranchPage: FC = () => {
   if (!branch) {
     return (
       <Container sx={{ p: 3 }}>
-        <Alert severity="error">
+        <Alert severity='error'>
           <AlertTitle>Branch not found</AlertTitle>
           No branch exists with ID: {branch_id}
         </Alert>
-        <Link to="/" style={{ textDecoration: 'none' }}>
+        <Link to='/' style={{ textDecoration: 'none' }}>
           <Button startIcon={<ArrowBack />} sx={{ mt: 2 }}>
             Back to Home
           </Button>
@@ -312,7 +298,7 @@ export const BranchPage: FC = () => {
   }
 
   const availability_percentage = Math.round(
-    (branch_stats.available_copies / branch_stats.total_copies) * 100
+    (branch.item_copy_count_active / branch.item_copy_count_total) * 100,
   );
 
   return (
@@ -326,51 +312,51 @@ export const BranchPage: FC = () => {
         }}
       >
         <Stack
-          direction="row"
-          alignItems="flex-start"
-          justifyContent="space-between"
+          direction='row'
+          alignItems='flex-start'
+          justifyContent='space-between'
         >
           <Box sx={{ flex: 1 }}>
             <Stack
-              direction="row"
-              alignItems="center"
+              direction='row'
+              alignItems='center'
               spacing={1}
               sx={{ mb: 1 }}
             >
-              <Typography variant="h4" fontWeight="bold">
+              <Typography variant='h4' fontWeight='bold'>
                 {branch.branch_name}
               </Typography>
               {!!branch.is_main && (
                 <Chip
                   icon={<Star />}
-                  label="Main Branch"
-                  color="primary"
-                  size="small"
+                  label='Main Branch'
+                  color='primary'
+                  size='small'
                   sx={{ fontWeight: 600 }}
                 />
               )}
             </Stack>
 
             <Stack spacing={1.5} sx={{ mt: 2 }}>
-              <Stack direction="row" alignItems="center" spacing={1}>
+              <Stack direction='row' alignItems='center' spacing={1}>
                 <LocationOn
                   sx={{
                     color: 'text.secondary',
                     fontSize: 20,
                   }}
                 />
-                <Typography variant="body2" color="text.secondary">
+                <Typography variant='body2' color='text.secondary'>
                   {branch.address}
                 </Typography>
               </Stack>
-              <Stack direction="row" alignItems="center" spacing={1}>
+              <Stack direction='row' alignItems='center' spacing={1}>
                 <Phone
                   sx={{
                     color: 'text.secondary',
                     fontSize: 20,
                   }}
                 />
-                <Typography variant="body2" color="text.secondary">
+                <Typography variant='body2' color='text.secondary'>
                   {branch.phone}
                 </Typography>
               </Stack>
@@ -395,7 +381,7 @@ export const BranchPage: FC = () => {
               }}
             >
               <MenuItem sx={{ gap: 2 }} onClick={handle_edit_click}>
-                <Edit fontSize="small" /> Edit Branch
+                <Edit fontSize='small' /> Edit Branch
               </MenuItem>
             </Menu>
           </Box>
@@ -403,75 +389,75 @@ export const BranchPage: FC = () => {
       </Paper>
 
       {/* Statistics Section */}
-      <Typography variant="h5" fontWeight="bold" sx={{ mb: 3 }}>
+      <Typography variant='h5' fontWeight='bold'>
         Branch Statistics
       </Typography>
 
       <Grid container spacing={3} sx={{ mb: 4 }}>
         <Grid size={{ xs: 12, sm: 6, md: 4 }}>
           <StatCard
-            title="Total Copies"
-            value={branch_stats.total_copies.toLocaleString()}
+            title='Total Copies'
+            value={branch.item_copy_count_total.toLocaleString()}
             icon={<LocalLibrary sx={{ color: 'primary.main', fontSize: 28 }} />}
-            color="primary"
-            subtitle="All items in this branch"
+            color='primary'
+            subtitle='All items in this branch'
           />
         </Grid>
 
         <Grid size={{ xs: 12, sm: 6, md: 4 }}>
           <StatCard
-            title="Available Copies"
-            value={branch_stats.available_copies.toLocaleString()}
+            title='Available Copies'
+            value={branch.item_copy_count_active.toLocaleString()}
             icon={<CheckCircle sx={{ color: 'success.main', fontSize: 28 }} />}
-            color="success"
+            color='success'
             subtitle={`${availability_percentage}% availability`}
           />
         </Grid>
 
         <Grid size={{ xs: 12, sm: 6, md: 4 }}>
           <StatCard
-            title="Checked Out"
-            value={branch_stats.checked_out_copies.toLocaleString()}
+            title='Checked Out'
+            value={branch.item_copy_count_checked_out.toLocaleString()}
             icon={<Schedule sx={{ color: 'info.main', fontSize: 28 }} />}
-            color="info"
-            subtitle="Currently on loan"
+            color='info'
+            subtitle='Currently on loan'
           />
         </Grid>
 
         <Grid size={{ xs: 12, sm: 6, md: 4 }}>
           <StatCard
-            title="Reserved"
-            value={branch_stats.reserved_copies.toLocaleString()}
+            title='Unshelved'
+            value={branch.item_copy_count_unshelved.toLocaleString()}
             icon={<Star sx={{ color: 'warning.main', fontSize: 28 }} />}
-            color="warning"
-            subtitle="Pending pickup"
+            color='warning'
+            subtitle='Pending reshelve'
           />
         </Grid>
 
         <Grid size={{ xs: 12, sm: 6, md: 4 }}>
           <StatCard
-            title="Overdue"
-            value={branch_stats.overdue_copies.toLocaleString()}
+            title='Overdue'
+            value={branch.item_copy_count_overdue.toLocaleString()}
             icon={<Warning sx={{ color: 'error.main', fontSize: 28 }} />}
-            color="error"
-            subtitle="Past due date"
+            color='error'
+            subtitle='Past due date'
           />
         </Grid>
 
         <Grid size={{ xs: 12, sm: 6, md: 4 }}>
           <StatCard
-            title="Active Patrons"
-            value={branch_stats.active_patrons.toLocaleString()}
+            title='Active Patrons'
+            value={branch.patron_count.toLocaleString()}
             icon={<TrendingUp sx={{ color: 'secondary.main', fontSize: 28 }} />}
-            color="secondary"
-            subtitle="Registered members"
+            color='secondary'
+            subtitle='Registered members'
           />
         </Grid>
       </Grid>
 
       {/* Collection Overview */}
       <Paper sx={{ p: 3, borderRadius: 3, mb: 3 }}>
-        <Typography variant="h6" fontWeight="bold" gutterBottom>
+        <Typography variant='h6' fontWeight='bold' gutterBottom>
           Collection Overview
         </Typography>
         <Divider sx={{ my: 2 }} />
@@ -481,14 +467,14 @@ export const BranchPage: FC = () => {
             <Stack spacing={2}>
               <Box>
                 <Stack
-                  direction="row"
-                  justifyContent="space-between"
+                  direction='row'
+                  justifyContent='space-between'
                   sx={{ mb: 1 }}
                 >
-                  <Typography variant="body2" color="text.secondary">
+                  <Typography variant='body2' color='text.secondary'>
                     Availability Rate
                   </Typography>
-                  <Typography variant="body2" fontWeight="bold">
+                  <Typography variant='body2' fontWeight='bold'>
                     {availability_percentage}%
                   </Typography>
                 </Stack>
@@ -513,18 +499,18 @@ export const BranchPage: FC = () => {
 
               <Box>
                 <Stack
-                  direction="row"
-                  justifyContent="space-between"
+                  direction='row'
+                  justifyContent='space-between'
                   sx={{ mb: 1 }}
                 >
-                  <Typography variant="body2" color="text.secondary">
+                  <Typography variant='body2' color='text.secondary'>
                     Utilization Rate
                   </Typography>
-                  <Typography variant="body2" fontWeight="bold">
+                  <Typography variant='body2' fontWeight='bold'>
                     {Math.round(
-                      (branch_stats.checked_out_copies /
-                        branch_stats.total_copies) *
-                        100
+                      (branch.item_copy_count_checked_out /
+                        branch.item_copy_count_total) *
+                        100,
                     )}
                     %
                   </Typography>
@@ -541,8 +527,8 @@ export const BranchPage: FC = () => {
                     sx={{
                       height: '100%',
                       width: `${
-                        (branch_stats.checked_out_copies /
-                          branch_stats.total_copies) *
+                        (branch.item_copy_count_checked_out /
+                          branch.item_copy_count_total) *
                         100
                       }%`,
                       bgcolor: 'info.main',
@@ -556,42 +542,42 @@ export const BranchPage: FC = () => {
 
           <Grid size={{ xs: 12, md: 6 }}>
             <Stack spacing={2}>
-              <Stack direction="row" justifyContent="space-between">
-                <Typography variant="body2" color="text.secondary">
+              <Stack direction='row' justifyContent='space-between'>
+                <Typography variant='body2' color='text.secondary'>
                   Total Circulation
                 </Typography>
-                <Typography variant="body2" fontWeight="bold">
+                <Typography variant='body2' fontWeight='bold'>
                   {(
-                    branch_stats.checked_out_copies +
-                    branch_stats.reserved_copies
+                    branch.item_copy_count_checked_out +
+                    branch.item_copy_count_reserved
                   ).toLocaleString()}
                 </Typography>
               </Stack>
-              <Stack direction="row" justifyContent="space-between">
-                <Typography variant="body2" color="text.secondary">
+              <Stack direction='row' justifyContent='space-between'>
+                <Typography variant='body2' color='text.secondary'>
                   Overdue Rate
                 </Typography>
                 <Typography
-                  variant="body2"
-                  fontWeight="bold"
-                  color="error.main"
+                  variant='body2'
+                  fontWeight='bold'
+                  color={
+                    overdue_rate > 20
+                      ? 'error'
+                      : overdue_rate > 10
+                        ? 'warning'
+                        : 'success'
+                  }
                 >
-                  {Math.round(
-                    (branch_stats.overdue_copies /
-                      branch_stats.checked_out_copies) *
-                      100
-                  )}
-                  %
+                  {overdue_rate}%
                 </Typography>
               </Stack>
-              <Stack direction="row" justifyContent="space-between">
-                <Typography variant="body2" color="text.secondary">
+              <Stack direction='row' justifyContent='space-between'>
+                <Typography variant='body2' color='text.secondary'>
                   Items per Patron
                 </Typography>
-                <Typography variant="body2" fontWeight="bold">
+                <Typography variant='body2' fontWeight='bold'>
                   {(
-                    branch_stats.checked_out_copies /
-                    branch_stats.active_patrons
+                    branch.item_copy_count_checked_out / branch.patron_count
                   ).toFixed(1)}
                 </Typography>
               </Stack>
@@ -616,7 +602,7 @@ export const BranchPage: FC = () => {
                   title: 'Success!',
                 });
                 set_edit_dialog_open(false);
-                refresh_branches();
+                refetch();
               },
               onError: (error) => {
                 show_snackbar({
@@ -625,7 +611,7 @@ export const BranchPage: FC = () => {
                   severity: 'error',
                 });
               },
-            }
+            },
           )
         }
       />

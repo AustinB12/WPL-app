@@ -16,13 +16,13 @@ export const Layout = () => {
         <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
         <Box
           component='main'
-          sx={(theme) => ({
+          sx={{
             flexGrow: 1,
-            bgcolor: theme.palette.mode === 'dark' ? '#292929ff' : '#eeeeeeff',
+            bgcolor: 'background.default',
             width: '100%',
             overflow: 'auto',
-            mt: '64px', // Height of the Header/AppBar
-          })}
+            mt: '64px',
+          }}
         >
           <ErrorBoundary>
             <Outlet />

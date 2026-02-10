@@ -48,7 +48,7 @@ const NoResultsOverlay = () => {
 
 const create_columns = (
   handle_edit: (patron_id: number) => void,
-  handle_delete: (patron_id: number) => void
+  handle_delete: (patron_id: number) => void,
 ): GridColDef[] => [
   {
     field: 'id',
@@ -324,7 +324,7 @@ export const PatronsDataGrid: FC<PatronsDataGridProps> = ({
   // Create columns with handlers
   const columns_with_actions = create_columns(
     handle_edit_patron,
-    handle_delete_patron
+    handle_delete_patron,
   );
 
   // Use provided columns or default columns with actions
@@ -357,7 +357,13 @@ export const PatronsDataGrid: FC<PatronsDataGridProps> = ({
           variant='contained'
           startIcon={<PersonAdd />}
           onClick={() => set_dialog_open(true)}
-          sx={{ textWrap: 'nowrap', ml: 2, px: 4 }}
+          sx={{
+            textWrap: 'nowrap',
+            ml: 2,
+            px: 4,
+            cornerShape: 'squircle',
+            borderRadius: 6,
+          }}
         >
           Create Patron
         </Button>

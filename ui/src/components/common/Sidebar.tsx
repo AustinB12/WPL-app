@@ -87,7 +87,7 @@ export const Sidebar = ({
   ];
 
   const drawer_content = (
-    <Box sx={{ overflow: 'auto', flex: 1 }}>
+    <Box sx={{ overflow: 'auto', flex: 1, bgcolor: 'background.paper' }}>
       <List
         sx={{
           height: 1,
