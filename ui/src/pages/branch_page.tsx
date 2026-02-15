@@ -1,6 +1,7 @@
 import {
   ArrowBack,
   CheckCircle,
+  Delete,
   Edit,
   LocalLibrary,
   LocationOn,
@@ -18,31 +19,44 @@ import {
   Button,
   Card,
   CardContent,
+  CardHeader,
   Chip,
   CircularProgress,
   Container,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
   Divider,
   Grid,
   IconButton,
-  Input,
-  InputLabel,
   Menu,
   MenuItem,
   Paper,
   Stack,
-  TextField,
   Typography,
 } from '@mui/material';
 import { type FC, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
+import { Cover_Image_Dialog } from '../components/branch/Cover_Image_Dialog';
+import { Edit_Branch_Dialog } from '../components/branch/Edit_Branch_Dialog';
 import { PageContainer } from '../components/common/PageBuilders';
 import { useBranchById, useUpdateBranch } from '../hooks/use_branches';
+import { useImageUrl } from '../hooks/use_images';
 import { useSnackbar } from '../hooks/use_snackbar';
-import type { Branch } from '../types/others';
+
+// Helper to get branch cover image URL with optional cache buster
+const get_branch_cover_url = (
+  branch: { id: number; image_id?: number; cover_image?: string } | null,
+  image_url_fn: (entity_type: 'BRANCH', id: number) => string,
+  cache_buster?: number,
+): string | undefined => {
+  if (!branch) return undefined;
+  // If branch has an image_id, use the IMAGES table endpoint
+  if (branch.image_id) {
+    const base_url = image_url_fn('BRANCH', branch.id);
+    // Append cache buster to force browser to refetch
+    return cache_buster ? `${base_url}?v=${cache_buster}` : base_url;
+  }
+  // Fallback to legacy cover_image field
+  return branch.cover_image;
+};
 
 interface StatCardProps {
   title: string;
@@ -105,125 +119,7 @@ const StatCard: FC<StatCardProps> = ({
   </Card>
 );
 
-interface EditBranchDialogProps {
-  open: boolean;
-  branch: Branch | null;
-  on_close: () => void;
-  on_save: (updates: Partial<Branch>) => void;
-  is_loading?: boolean;
-}
-
-const EditBranchDialog: FC<EditBranchDialogProps> = ({
-  open,
-  branch,
-  on_close,
-  on_save,
-  is_loading = false,
-}) => {
-  const [form_data, set_form_data] = useState({
-    branch_name: branch?.branch_name || '',
-    address: branch?.address || '',
-    phone: branch?.phone || '',
-    description: branch?.description || '',
-    primary_color: branch?.primary_color || '',
-    secondary_color: branch?.secondary_color || '',
-    cover_image: branch?.cover_image || '',
-  });
-
-  const handle_change =
-    (field: string) => (e: React.ChangeEvent<HTMLInputElement>) => {
-      set_form_data((prev) => ({ ...prev, [field]: e.target.value }));
-    };
-
-  const handle_save = () => {
-    on_save(form_data);
-  };
-
-  return (
-    <Dialog open={open} onClose={on_close} maxWidth='sm' fullWidth>
-      <DialogTitle>Edit Branch Information</DialogTitle>
-      <DialogContent>
-        <Stack spacing={3} sx={{ mt: 1 }}>
-          <TextField
-            label='Branch Name'
-            fullWidth
-            value={form_data.branch_name}
-            onChange={handle_change('branch_name')}
-            disabled={is_loading}
-          />
-          <TextField
-            label='Address'
-            fullWidth
-            multiline
-            rows={2}
-            value={form_data.address}
-            onChange={handle_change('address')}
-            disabled={is_loading}
-          />
-          <TextField
-            label='Phone'
-            fullWidth
-            value={form_data.phone}
-            onChange={handle_change('phone')}
-            disabled={is_loading}
-          />
-          <TextField
-            label='Description'
-            fullWidth
-            multiline
-            rows={3}
-            value={form_data.description || ''}
-            onChange={handle_change('description')}
-            disabled={is_loading}
-          />
-          <Stack direction='row' spacing={2} alignItems='center'>
-            <InputLabel htmlFor='primary-color-input'>Primary Color</InputLabel>
-            <Input
-              id='primary-color-input'
-              type='color'
-              sx={{ width: 50, height: 50, p: 0, border: 'none' }}
-              value={form_data.primary_color || ''}
-              onChange={handle_change('primary_color')}
-              disabled={is_loading}
-            />
-            <InputLabel htmlFor='secondary-color-input'>
-              Secondary Color
-            </InputLabel>
-            <Input
-              id='secondary-color-input'
-              type='color'
-              sx={{ width: 50, height: 50, p: 0, border: 'none' }}
-              value={form_data.secondary_color || ''}
-              onChange={handle_change('secondary_color')}
-              disabled={is_loading}
-            />
-          </Stack>
-          <TextField
-            label='Cover Image URL'
-            fullWidth
-            value={form_data.cover_image || ''}
-            onChange={handle_change('cover_image')}
-            disabled={is_loading}
-          />
-        </Stack>
-      </DialogContent>
-      <DialogActions>
-        <Button onClick={on_close} disabled={is_loading}>
-          Cancel
-        </Button>
-        <Button
-          onClick={handle_save}
-          variant='contained'
-          disabled={is_loading || !form_data.branch_name || !form_data.address}
-        >
-          {is_loading ? <CircularProgress size={24} /> : 'Save Changes'}
-        </Button>
-      </DialogActions>
-    </Dialog>
-  );
-};
-
-export const BranchPage: FC = () => {
+export const Branch_Page: FC = () => {
   const { branch_id } = useParams<{ branch_id: string }>();
   const { show_snackbar } = useSnackbar();
 
@@ -231,6 +127,11 @@ export const BranchPage: FC = () => {
 
   const [anchor_el, set_anchor_el] = useState<null | HTMLElement>(null);
   const [edit_dialog_open, set_edit_dialog_open] = useState(false);
+  const [cover_image_dialog_open, set_cover_image_dialog_open] =
+    useState(false);
+  const [image_cache_buster, set_image_cache_buster] = useState<number>(
+    Date.now(),
+  );
 
   const open_menu = Boolean(anchor_el);
 
@@ -240,25 +141,12 @@ export const BranchPage: FC = () => {
     refetch,
   } = useBranchById(parseInt(branch_id || '1'));
 
-  const overdue_rate = branch
-    ? Math.round(
-        (branch.item_copy_count_overdue / branch.item_copy_count_checked_out) *
-          100,
-      )
-    : 0;
-
-  const handle_menu_click = (event: React.MouseEvent<HTMLElement>) => {
-    set_anchor_el(event.currentTarget);
-  };
-
-  const handle_menu_close = () => {
-    set_anchor_el(null);
-  };
-
-  const handle_edit_click = () => {
-    set_edit_dialog_open(true);
-    handle_menu_close();
-  };
+  // Get cover image URL - uses IMAGES table if image_id exists, otherwise falls back to cover_image
+  const branch_cover_image_url = get_branch_cover_url(
+    branch ?? null,
+    useImageUrl,
+    image_cache_buster,
+  );
 
   if (!branch_id) {
     return (
@@ -297,47 +185,101 @@ export const BranchPage: FC = () => {
     );
   }
 
-  const availability_percentage = Math.round(
-    (branch.item_copy_count_active / branch.item_copy_count_total) * 100,
-  );
+  const handle_menu_click = (event: React.MouseEvent<HTMLElement>) => {
+    set_anchor_el(event.currentTarget);
+  };
+
+  const handle_menu_close = () => {
+    set_anchor_el(null);
+  };
+
+  const handle_edit_click = () => {
+    set_edit_dialog_open(true);
+    handle_menu_close();
+  };
+
+  const overdue_rate = branch?.item_copy_count_checked_out
+    ? Math.round(
+        (branch.item_copy_count_overdue / branch.item_copy_count_checked_out) *
+          100,
+      )
+    : 0;
+
+  const availability_rate = branch?.item_copy_count_total
+    ? Math.round(
+        (branch.item_copy_count_active / branch.item_copy_count_total) * 100,
+      )
+    : 0;
+
+  const utilization_rate = branch?.item_copy_count_total
+    ? Math.round(
+        (branch.item_copy_count_checked_out / branch.item_copy_count_total) *
+          100,
+      )
+    : 0;
+
+  const items_per_patron = branch?.patron_count
+    ? (branch.item_copy_count_checked_out / branch.patron_count).toFixed(1)
+    : '0';
 
   return (
     <PageContainer sx={{ overflowY: 'auto' }}>
-      <Paper
-        sx={{
-          p: 3,
-          mb: 3,
-          borderRadius: 3,
-          background: `linear-gradient(135deg, ${branch.primary_color}50 0%, ${branch.secondary_color}50 100%)`,
-        }}
-      >
-        <Stack
-          direction='row'
-          alignItems='flex-start'
-          justifyContent='space-between'
-        >
-          <Box sx={{ flex: 1 }}>
-            <Stack
-              direction='row'
-              alignItems='center'
-              spacing={1}
-              sx={{ mb: 1 }}
-            >
-              <Typography variant='h4' fontWeight='bold'>
-                {branch.branch_name}
-              </Typography>
-              {!!branch.is_main && (
-                <Chip
-                  icon={<Star />}
-                  label='Main Branch'
-                  color='primary'
-                  size='small'
-                  sx={{ fontWeight: 600 }}
-                />
-              )}
-            </Stack>
-
-            <Stack spacing={1.5} sx={{ mt: 2 }}>
+      <Grid container sx={{ width: '100%' }} spacing={2}>
+        <Grid size={{ xs: 12, sm: 6 }}>
+          <Card
+            sx={{
+              height: '100%',
+              width: '100%',
+              borderRadius: 3,
+              background: `linear-gradient(135deg, ${branch.primary_color}50 0%, ${branch.secondary_color}50 100%)`,
+            }}
+          >
+            <CardHeader
+              title={
+                <Typography variant='h4' fontWeight='bold'>
+                  {branch.branch_name}
+                </Typography>
+              }
+              subheader={
+                !!branch.is_main && (
+                  <Chip
+                    icon={<Star />}
+                    label='Main Branch'
+                    color='primary'
+                    size='small'
+                    sx={{ fontWeight: 600 }}
+                  />
+                )
+              }
+              action={
+                <Box>
+                  <IconButton onClick={handle_menu_click}>
+                    <MoreVert />
+                  </IconButton>
+                  <Menu
+                    anchorEl={anchor_el}
+                    open={open_menu}
+                    onClose={handle_menu_close}
+                    anchorOrigin={{
+                      vertical: 'bottom',
+                      horizontal: 'right',
+                    }}
+                    transformOrigin={{
+                      vertical: 'top',
+                      horizontal: 'right',
+                    }}
+                  >
+                    <MenuItem sx={{ gap: 2 }} onClick={handle_edit_click}>
+                      <Edit fontSize='small' /> Edit Branch
+                    </MenuItem>
+                    <MenuItem sx={{ gap: 2 }} onClick={handle_edit_click}>
+                      <Delete fontSize='small' /> Delete Branch
+                    </MenuItem>
+                  </Menu>
+                </Box>
+              }
+            ></CardHeader>
+            <CardContent>
               <Stack direction='row' alignItems='center' spacing={1}>
                 <LocationOn
                   sx={{
@@ -349,7 +291,12 @@ export const BranchPage: FC = () => {
                   {branch.address}
                 </Typography>
               </Stack>
-              <Stack direction='row' alignItems='center' spacing={1}>
+              <Stack
+                direction='row'
+                alignItems='center'
+                spacing={1}
+                sx={{ my: 2 }}
+              >
                 <Phone
                   sx={{
                     color: 'text.secondary',
@@ -360,33 +307,54 @@ export const BranchPage: FC = () => {
                   {branch.phone}
                 </Typography>
               </Stack>
-            </Stack>
-          </Box>
-
-          <Box>
-            <IconButton onClick={handle_menu_click}>
-              <MoreVert />
-            </IconButton>
-            <Menu
-              anchorEl={anchor_el}
-              open={open_menu}
-              onClose={handle_menu_close}
-              anchorOrigin={{
-                vertical: 'bottom',
-                horizontal: 'right',
+              <Typography variant='body2' color='text.secondary' sx={{ mb: 2 }}>
+                {branch.description}
+              </Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+        <Grid size={{ xs: 12, sm: 6 }}>
+          <Box sx={{ width: '100%', position: 'relative' }}>
+            <Box
+              component={'img'}
+              src={branch_cover_image_url}
+              alt={`${branch.branch_name} Cover`}
+              sx={{
+                borderRadius: 3,
+                width: '100%',
               }}
-              transformOrigin={{
-                vertical: 'top',
-                horizontal: 'right',
+            />
+            <Box
+              sx={{
+                width: '80%',
+                height: '80%',
+                bgcolor: 'primary.main',
+                position: 'absolute',
+                top: 0,
+                right: 0,
+                borderRadius: 3,
+                opacity: 0,
+                transition: 'opacity 0.3s ease',
+                background: `linear-gradient(35deg, #00000000 60%, #00000095 80%, #000000 100%)`,
+                '&:hover': {
+                  opacity: 1,
+                },
               }}
             >
-              <MenuItem sx={{ gap: 2 }} onClick={handle_edit_click}>
-                <Edit fontSize='small' /> Edit Branch
-              </MenuItem>
-            </Menu>
+              <Edit
+                onClick={() => set_cover_image_dialog_open(true)}
+                sx={{
+                  position: 'absolute',
+                  cursor: 'pointer',
+                  top: 20,
+                  right: 20,
+                  fill: 'white',
+                }}
+              ></Edit>
+            </Box>
           </Box>
-        </Stack>
-      </Paper>
+        </Grid>
+      </Grid>
 
       {/* Statistics Section */}
       <Typography variant='h5' fontWeight='bold'>
@@ -410,7 +378,7 @@ export const BranchPage: FC = () => {
             value={branch.item_copy_count_active.toLocaleString()}
             icon={<CheckCircle sx={{ color: 'success.main', fontSize: 28 }} />}
             color='success'
-            subtitle={`${availability_percentage}% availability`}
+            subtitle={`${availability_rate}% availability`}
           />
         </Grid>
 
@@ -475,7 +443,7 @@ export const BranchPage: FC = () => {
                     Availability Rate
                   </Typography>
                   <Typography variant='body2' fontWeight='bold'>
-                    {availability_percentage}%
+                    {availability_rate}%
                   </Typography>
                 </Stack>
                 <Box
@@ -489,7 +457,7 @@ export const BranchPage: FC = () => {
                   <Box
                     sx={{
                       height: '100%',
-                      width: `${availability_percentage}%`,
+                      width: `${availability_rate}%`,
                       bgcolor: 'success.main',
                       transition: 'width 0.3s ease',
                     }}
@@ -507,12 +475,7 @@ export const BranchPage: FC = () => {
                     Utilization Rate
                   </Typography>
                   <Typography variant='body2' fontWeight='bold'>
-                    {Math.round(
-                      (branch.item_copy_count_checked_out /
-                        branch.item_copy_count_total) *
-                        100,
-                    )}
-                    %
+                    {utilization_rate}%
                   </Typography>
                 </Stack>
                 <Box
@@ -576,9 +539,7 @@ export const BranchPage: FC = () => {
                   Items per Patron
                 </Typography>
                 <Typography variant='body2' fontWeight='bold'>
-                  {(
-                    branch.item_copy_count_checked_out / branch.patron_count
-                  ).toFixed(1)}
+                  {items_per_patron}
                 </Typography>
               </Stack>
             </Stack>
@@ -587,7 +548,7 @@ export const BranchPage: FC = () => {
       </Paper>
 
       {/* Edit Dialog */}
-      <EditBranchDialog
+      <Edit_Branch_Dialog
         open={edit_dialog_open}
         branch={branch}
         on_close={() => set_edit_dialog_open(false)}
@@ -614,6 +575,18 @@ export const BranchPage: FC = () => {
             },
           )
         }
+      />
+
+      {/* Cover Image Dialog */}
+      <Cover_Image_Dialog
+        open={cover_image_dialog_open}
+        branch_id={branch.id}
+        current_image_url={branch_cover_image_url}
+        on_close={() => set_cover_image_dialog_open(false)}
+        on_success={() => {
+          set_image_cache_buster(Date.now()); // Force browser to refetch image
+          refetch();
+        }}
       />
     </PageContainer>
   );

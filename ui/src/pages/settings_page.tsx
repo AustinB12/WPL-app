@@ -281,7 +281,7 @@ export const SettingsPage: FC = () => {
                 Version
               </Typography>
               <Typography variant='body2' fontWeight={500}>
-                1.2.8
+                1.2.9
               </Typography>
             </Box>
             <Box

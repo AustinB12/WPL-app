@@ -27,6 +27,7 @@ export interface Patron {
   is_active?: boolean;
   local_branch_id: number;
   active_checkouts: number;
+  profile_image_id?: number;
 }
 
 export type Update_Patron_Data = Partial<Omit<Patron, 'id'>>;

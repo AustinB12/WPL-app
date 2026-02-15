@@ -19,9 +19,9 @@ export const Layout = () => {
           sx={{
             flexGrow: 1,
             bgcolor: 'background.default',
-            width: '100%',
-            overflow: 'auto',
             mt: '64px',
+            display: 'flex',
+            overflow: 'hidden',
           }}
         >
           <ErrorBoundary>

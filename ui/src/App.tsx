@@ -12,121 +12,121 @@ import { Full_Page_Loading } from './pages/Full_Page_Loading/Full_Page_Loading';
 const Home_Page = lazy(() =>
   import('./pages/home_page').then((module) => ({
     default: module.Home_Page,
-  }))
+  })),
 );
 
 const Library_Items_Page = lazy(() =>
   import('./pages/library_items_page').then((module) => ({
     default: module.LibraryItemsPage,
-  }))
+  })),
 );
 
 const Library_Item_Page = lazy(() =>
   import('./pages/library_item_page').then((module) => ({
     default: module.Library_Item_Page,
-  }))
+  })),
 );
 
 const Library_Item_Copy_Page = lazy(() =>
   import('./pages/library_item_copy_page').then((module) => ({
     default: module.Library_Item_Copy_Page,
-  }))
+  })),
 );
 
 const Patrons = lazy(() =>
   import('./pages/patrons_page').then((module) => ({
     default: module.Patrons,
-  }))
+  })),
 );
 
 const Patron_Page = lazy(() =>
   import('./pages/patron_page').then((module) => ({
     default: module.PatronPage,
-  }))
+  })),
 );
 
 const Branch_Page = lazy(() =>
   import('./pages/branch_page').then((module) => ({
-    default: module.BranchPage,
-  }))
+    default: module.Branch_Page,
+  })),
 );
 
 const Search_Page = lazy(() =>
   import('./pages/search_page').then((module) => ({
     default: module.SearchPage,
-  }))
+  })),
 );
 
 const Renew_Item_Page = lazy(() =>
   import('./pages/renew_item_page').then((module) => ({
     default: module.Renew_Item_Page,
-  }))
+  })),
 );
 
 const Check_In_Item = lazy(() =>
   import('./pages/check_in_item').then((module) => ({
     default: module.Check_In_Item,
-  }))
+  })),
 );
 
 const Check_Out_Item_Page = lazy(() =>
   import('./pages/check_out_item_page').then((module) => ({
     default: module.Check_Out_Item_Page,
-  }))
+  })),
 );
 
 const Reserve_Item_Page = lazy(() =>
   import('./pages/reserve_item_page').then((module) => ({
     default: module.ReserveItemPage,
-  }))
+  })),
 );
 
 const Branches_Page = lazy(() =>
   import('./pages/branches_page').then((module) => ({
     default: module.BranchesPage,
-  }))
+  })),
 );
 
 const Settings_Page = lazy(() =>
   import('./pages/settings_page').then((module) => ({
     default: module.SettingsPage,
-  }))
+  })),
 );
 const Renewals_Page = lazy(() =>
   import('./pages/renewals_page').then((module) => ({
     default: module.RenewalsPage,
-  }))
+  })),
 );
 const Reservations_Page = lazy(() =>
   import('./pages/reservations_page').then((module) => ({
     default: module.ReservationsPage,
-  }))
+  })),
 );
 const Library_Item_Copies_Page = lazy(() =>
   import('./pages/library_item_copies_page').then((module) => ({
     default: module.LibraryItemCopiesPage,
-  }))
+  })),
 );
 const Transactions_Page = lazy(() =>
   import('./pages/transactions_page').then((module) => ({
     default: module.TransactionsPage,
-  }))
+  })),
 );
 const Dashboard_Page = lazy(() =>
   import('./pages/dashboard_page').then((module) => ({
     default: module.DashboardPage,
-  }))
+  })),
 );
 const Reshelve_Items_Page = lazy(() =>
   import('./pages/reshelve_items_page').then((module) => ({
     default: module.Reshelve_Items_Page,
-  }))
+  })),
 );
 
 const Explore_Page = lazy(() =>
   import('./pages/explore_page').then((module) => ({
     default: module.Explore_Page,
-  }))
+  })),
 );
 
 const query_client = new QueryClient({

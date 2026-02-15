@@ -34,7 +34,9 @@ import { Item_Copy_Condition_Chip } from '../components/copies/ItemCopyCondition
 import Item_Type_Chip from '../components/library_items/ItemTypeChip';
 import { DeletePatronModal } from '../components/patrons/DeletePatronModal';
 import { EditPatronModal } from '../components/patrons/EditPatronModal';
+import { PatronImageDialog } from '../components/patrons/PatronImageDialog';
 import { TransactionTypeChip } from '../components/transactions/TransactionTypeChip';
+import { useImageUrl } from '../hooks/use_images';
 import {
   useDeletePatronById,
   usePatronById,
@@ -47,17 +49,19 @@ import type { Update_Patron_Data } from '../types/patron_types';
 interface Info_Item_Props {
   icon: ReactNode;
   value: string | ReactNode;
-  label: string;
+  label?: string;
 }
 
 const InfoItem = ({ icon, value, label }: Info_Item_Props) => (
-  <Stack gap={1} alignItems='center' direction='row'>
+  <Stack gap={1} alignItems='flex-end' direction='row'>
     {icon}
     <Stack>
       <Box sx={{ typography: 'body2' }}>{value}</Box>
-      <Typography color='text.secondary' variant='caption'>
-        {label}
-      </Typography>
+      {label && (
+        <Typography color='text.secondary' variant='caption'>
+          {label}
+        </Typography>
+      )}
     </Stack>
   </Stack>
 );
@@ -94,6 +98,22 @@ const StatCard = ({ value, label }: StatCardProps) => (
     </Box>
   </Grid>
 );
+
+// Helper to get patron profile image URL with optional cache buster
+const get_patron_profile_image_url = (
+  patron: { id: number; profile_image_id?: number } | null,
+  image_url_fn: (entity_type: 'PATRON', id: number) => string,
+  cache_buster?: number,
+): string | undefined => {
+  if (!patron) return undefined;
+  // If patron has a profile_image_id, use the IMAGES table endpoint
+  if (patron.profile_image_id) {
+    const base_url = image_url_fn('PATRON', patron.id);
+    // Append cache buster to force browser to refetch
+    return cache_buster ? `${base_url}?v=${cache_buster}` : base_url;
+  }
+  return undefined;
+};
 
 // Columns for patron's transaction history
 const cols: GridColDef[] = [
@@ -145,6 +165,10 @@ export const PatronPage = () => {
   const [anchor_el, set_anchor_el] = useState<null | HTMLElement>(null);
   const [edit_modal_open, set_edit_modal_open] = useState(false);
   const [delete_dialog_open, set_delete_dialog_open] = useState(false);
+  const [image_dialog_open, set_image_dialog_open] = useState(false);
+  const [image_cache_buster, set_image_cache_buster] = useState<number>(
+    Date.now(),
+  );
 
   const open = Boolean(anchor_el);
 
@@ -225,6 +249,7 @@ export const PatronPage = () => {
     data: patron,
     isLoading: patron_loading,
     error: patron_error,
+    refetch: refetch_patron,
   } = usePatronById(parseInt(patron_id || '0'));
 
   const { data: pt, isLoading: transactions_loading } =
@@ -274,6 +299,12 @@ export const PatronPage = () => {
     (count, t) =>
       t.transaction_type.toUpperCase() === 'CHECKIN' ? count + 1 : count,
     0,
+  );
+
+  const profile_image_url = get_patron_profile_image_url(
+    patron,
+    useImageUrl,
+    image_cache_buster,
   );
 
   return (
@@ -350,30 +381,62 @@ export const PatronPage = () => {
                 </Stack>
               }
               avatar={
-                <Avatar
-                  sx={{
-                    width: { xs: 60, sm: 80, md: 100 },
-                    height: { xs: 60, sm: 80, md: 100 },
-                    bgcolor: 'primary.main',
-                    fontSize: {
-                      xs: '1.5rem',
-                      sm: '2rem',
-                      md: '2.5rem',
-                    },
-                    mb: { xs: 1, md: 2 },
-                  }}
-                  src={patron.image_url}
-                >
-                  {patron?.image_url
-                    ? null
-                    : patron.first_name[0] + patron.last_name[0]}
-                </Avatar>
+                <Box sx={{ position: 'relative' }}>
+                  <Avatar
+                    sx={{
+                      width: { xs: 60, sm: 80, md: 100 },
+                      height: { xs: 60, sm: 80, md: 100 },
+                      bgcolor: 'primary.main',
+                      fontSize: {
+                        xs: '1.5rem',
+                        sm: '2rem',
+                        md: '2.5rem',
+                      },
+                      mb: { xs: 1, md: 2 },
+                    }}
+                    src={
+                      patron.profile_image_id ? profile_image_url : undefined
+                    }
+                  >
+                    {patron?.profile_image_id
+                      ? null
+                      : patron.first_name[0] + patron.last_name[0]}
+                  </Avatar>
+                  <Box
+                    onClick={() => set_image_dialog_open(true)}
+                    sx={{
+                      width: { xs: 60, sm: 80, md: 100 },
+                      height: { xs: 60, sm: 80, md: 100 },
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      bgcolor: 'rgba(0,0,0,0.3)',
+                      borderRadius: '50%',
+                      opacity: 0,
+                      '&:hover': {
+                        opacity: 1,
+                        cursor: 'pointer',
+                      },
+                    }}
+                  >
+                    <Edit
+                      sx={{
+                        color: 'white',
+                        position: 'absolute',
+                        top: '50%',
+                        left: '50%',
+                        transform: 'translate(-50%, -50%)',
+                      }}
+                    />
+                  </Box>
+                </Box>
               }
               subheader={
                 <Stack
                   gap={{ xs: 1, sm: 2, md: 3 }}
                   direction={{ xs: 'column', sm: 'row' }}
                   flexWrap='wrap'
+                  sx={{ mt: 1 }}
                 >
                   <InfoItem
                     icon={<CreditCard sx={{ color: 'text.secondary' }} />}
@@ -394,7 +457,6 @@ export const PatronPage = () => {
                         )}
                       </>
                     }
-                    label='Card Expiration'
                   />
 
                   <InfoItem
@@ -412,7 +474,6 @@ export const PatronPage = () => {
                         {Math.abs(patron.balance).toFixed(2)}
                       </Typography>
                     }
-                    label='Balance'
                   />
 
                   {patron?.birthday && (
@@ -425,7 +486,6 @@ export const PatronPage = () => {
                         />
                       }
                       value={patron.birthday}
-                      label='Birthday'
                     />
                   )}
                 </Stack>
@@ -509,6 +569,18 @@ export const PatronPage = () => {
         on_close={() => set_delete_dialog_open(false)}
         on_confirm={handle_delete_confirm}
         is_loading={delete_patron_mutation.isPending}
+      />
+
+      <PatronImageDialog
+        open={image_dialog_open}
+        patron_id={patron.id}
+        patron_name={`${patron.first_name} ${patron.last_name}`}
+        current_image_url={profile_image_url}
+        on_close={() => set_image_dialog_open(false)}
+        on_success={() => {
+          set_image_cache_buster(Date.now());
+          refetch_patron();
+        }}
       />
     </PageContainer>
   );

@@ -1,4 +1,13 @@
-import type { Branch, Branch_Result, Loan_Duration } from '../types/others';
+import type {
+  Branch,
+  Branch_Result,
+  Create_Image_Data,
+  Image_Data,
+  Image_Entity_Type,
+  Image_Metadata,
+  Loan_Duration,
+  Update_Image_Data,
+} from '../types/others';
 import type {
   Checked_Out_Copy,
   Checked_Out_Copy_Simple,
@@ -835,5 +844,71 @@ export const data_service = {
     if (branch_id) params.append('branch_id', branch_id.toString());
 
     return await api_request(`/analytics/summary?${params.toString()}`);
+  },
+
+  // Image operations
+  async get_all_images(
+    entity_type?: Image_Entity_Type,
+  ): Promise<Image_Metadata[]> {
+    const url = entity_type ? `/images?entity_type=${entity_type}` : '/images';
+    return await api_request<Image_Metadata[]>(url);
+  },
+
+  async get_image(
+    entity_type: Image_Entity_Type,
+    entity_id: number,
+  ): Promise<Image_Data | null> {
+    try {
+      return await api_request<Image_Data>(
+        `/images/${entity_type}/${entity_id}`,
+      );
+    } catch (error: unknown) {
+      if (error instanceof Error && error.message.includes('404')) {
+        return null;
+      }
+      throw error;
+    }
+  },
+
+  get_image_url(entity_type: Image_Entity_Type, entity_id: number): string {
+    return `${API_BASE_URL}/images/${entity_type}/${entity_id}/raw`;
+  },
+
+  async create_image(image_data: Create_Image_Data): Promise<Image_Metadata> {
+    return await api_request<Image_Metadata>('/images', {
+      method: 'POST',
+      body: JSON.stringify(image_data),
+    });
+  },
+
+  async update_image(
+    entity_type: Image_Entity_Type,
+    entity_id: number,
+    image_data: Update_Image_Data,
+  ): Promise<Image_Metadata> {
+    return await api_request<Image_Metadata>(
+      `/images/${entity_type}/${entity_id}`,
+      {
+        method: 'PUT',
+        body: JSON.stringify(image_data),
+      },
+    );
+  },
+
+  async delete_image(
+    entity_type: Image_Entity_Type,
+    entity_id: number,
+  ): Promise<boolean> {
+    try {
+      await api_request(`/images/${entity_type}/${entity_id}`, {
+        method: 'DELETE',
+      });
+      return true;
+    } catch (error: unknown) {
+      if (error instanceof Error && error.message.includes('404')) {
+        return false;
+      }
+      throw error;
+    }
   },
 };

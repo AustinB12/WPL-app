@@ -10,6 +10,7 @@ export interface Branch {
   description?: string;
   primary_color?: string;
   secondary_color?: string;
+  image_id?: number;
 }
 
 export interface Branch_Result extends Branch {
@@ -40,4 +41,42 @@ export interface Loan_Duration {
   id: number;
   name: Library_Item_Type;
   duration: number;
+}
+
+//! == IMAGE TYPES == //
+// Image types
+export type Image_Entity_Type = 'PATRON' | 'LIBRARY_ITEM' | 'BRANCH';
+export type Image_Mime_Type =
+  | 'image/jpeg'
+  | 'image/png'
+  | 'image/gif'
+  | 'image/webp';
+
+export interface Image_Metadata {
+  id: number;
+  entity_type: Image_Entity_Type;
+  entity_id: number;
+  mime_type: Image_Mime_Type;
+  file_name: string | null;
+  file_size: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Image_Data extends Image_Metadata {
+  image_data: string; // base64 encoded
+}
+
+export interface Create_Image_Data {
+  entity_type: Image_Entity_Type;
+  entity_id: number;
+  image_data: string; // base64 encoded
+  mime_type: Image_Mime_Type;
+  file_name?: string;
+}
+
+export interface Update_Image_Data {
+  image_data: string; // base64 encoded
+  mime_type: Image_Mime_Type;
+  file_name?: string;
 }

@@ -59,6 +59,19 @@ async function create_tables() {
   try {
     // Create all tables in a single batch execution for performance
     await db.exec(`
+      CREATE TABLE IF NOT EXISTS IMAGES (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        entity_type TEXT NOT NULL CHECK (entity_type IN ('PATRON', 'LIBRARY_ITEM', 'BRANCH')),
+        entity_id INTEGER NOT NULL,
+        image_data BLOB NOT NULL,
+        mime_type TEXT NOT NULL CHECK (mime_type IN ('image/jpeg', 'image/png', 'image/gif', 'image/webp')),
+        file_name TEXT,
+        file_size INTEGER,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE (entity_type, entity_id)
+      );
+
       CREATE TABLE IF NOT EXISTS BRANCHES (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         branch_name TEXT NOT NULL DEFAULT 'Default Branch Name',
@@ -292,6 +305,7 @@ async function create_tables() {
     // Create optimized indexes for better performance
     await db.exec(`
       -- Core entity indexes
+      CREATE INDEX IF NOT EXISTS idx_images_entity ON IMAGES (entity_type, entity_id);
       CREATE INDEX IF NOT EXISTS idx_library_items_type ON LIBRARY_ITEMS(item_type);
       CREATE INDEX IF NOT EXISTS idx_library_items_year ON LIBRARY_ITEMS(publication_year);
       CREATE INDEX IF NOT EXISTS idx_library_items_title ON LIBRARY_ITEMS(title COLLATE NOCASE);

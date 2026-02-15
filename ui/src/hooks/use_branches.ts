@@ -13,7 +13,7 @@ export const useBranches = () => {
 
 export const useBranchById = (branch_id: number) => {
   return useQuery({
-    queryKey: ['branch', branch_id],
+    queryKey: ['branch', 'branches', branch_id],
     queryFn: () => data_service.get_branch_by_id(branch_id),
     enabled: branch_id !== null,
   });
@@ -34,9 +34,9 @@ export const useUpdateBranch = (options?: {
     }) => data_service.update_branch(branch_id, branch_data),
     onSuccess: (_data, variables) => {
       query_client.invalidateQueries({
-        queryKey: ['branch', variables.branch_id],
+        queryKey: ['branch', 'branches', variables.branch_id],
       });
-      query_client.invalidateQueries({ queryKey: ['branch'] });
+      query_client.invalidateQueries({ queryKey: ['branches', 'branch'] });
       options?.onSuccess?.();
     },
     onError: options?.onError,

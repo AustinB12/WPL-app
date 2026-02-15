@@ -54,7 +54,7 @@ router.get('/', async (req, res) => {
 
     if (search) {
       conditions.push(
-        '(p.first_name LIKE ? OR p.last_name LIKE ? OR p.email LIKE ?)'
+        '(p.first_name LIKE ? OR p.last_name LIKE ? OR p.email LIKE ?)',
       );
       params.push(`%${search}%`, `%${search}%`, `%${search}%`);
     }
@@ -67,14 +67,16 @@ router.get('/', async (req, res) => {
       `SELECT
         p.*,
         b.branch_name as local_branch_name,
+        i.id as profile_image_id,
         COUNT(CASE WHEN lic.checked_out_by = p.id THEN 1 END) as active_checkouts
       FROM PATRONS p
       LEFT JOIN LIBRARY_ITEM_COPIES lic ON p.id = lic.checked_out_by
+      LEFT JOIN IMAGES i ON i.entity_type = 'PATRON' AND i.entity_id = p.id
       JOIN BRANCHES b ON p.local_branch_id = b.id
       ${where_clause}
       GROUP BY p.id
       ORDER BY p.last_name, p.first_name`,
-      params
+      params,
     );
     res.json({
       success: true,
@@ -117,7 +119,7 @@ router.get('/search-for-renewal', async (req, res) => {
          OR LOWER(first_name) = LOWER(?)
          OR LOWER(last_name) = LOWER(?)
          LIMIT 1`,
-        [query, query, query]
+        [query, query, query],
       );
 
       if (patrons.length > 0) {
@@ -152,13 +154,13 @@ router.get('/search-for-renewal', async (req, res) => {
        LEFT JOIN VIDEOS v ON li.id = v.library_item_id
        WHERE t.patron_id = ?
        ORDER BY t.date ASC`,
-      [patron.id]
+      [patron.id],
     );
 
     // Get active checkout count
     const active_checkout_count = await db.execute_query(
       'SELECT COUNT(*) as count FROM ITEM_TRANSACTIONS WHERE patron_id = ? ',
-      [patron.id]
+      [patron.id],
     );
 
     res.json({
@@ -201,13 +203,15 @@ router.get('/:id', async (req, res) => {
         p.*,
         b.id as local_branch_id,
         b.branch_name as local_branch_name,
+        i.id as profile_image_id,
         COUNT(CASE WHEN lic.checked_out_by = p.id THEN 1 END) as active_checkouts
       FROM PATRONS p
       LEFT JOIN LIBRARY_ITEM_COPIES lic ON p.id = lic.checked_out_by
+      LEFT JOIN IMAGES i ON i.entity_type = 'PATRON' AND i.entity_id = p.id
       JOIN BRANCHES b ON p.local_branch_id = b.id
       WHERE p.id = ?
       GROUP BY p.id`,
-      [req.params.id]
+      [req.params.id],
     );
 
     if (!patron) {
@@ -261,7 +265,7 @@ router.get('/:id/transactions', async (req, res) => {
        JOIN LIBRARY_ITEMS ci ON ic.library_item_id = ci.id
        WHERE t.patron_id = ?
        ORDER BY t.created_at DESC`,
-      [req.params.id]
+      [req.params.id],
     );
 
     // Add copy labels to transactions
@@ -339,7 +343,7 @@ router.post(
         message: error.message,
       });
     }
-  }
+  },
 );
 
 // PUT /api/v1/patrons/:id - Update patron
@@ -372,7 +376,7 @@ router.put(
       if (req.body.email && req.body.email !== existing_patron.email) {
         const email_check = await db.execute_query(
           'SELECT id FROM PATRONS WHERE email = ? AND id != ?',
-          [req.body.email, req.params.id]
+          [req.body.email, req.params.id],
         );
         if (email_check.length > 0) {
           return res.status(409).json({
@@ -405,7 +409,7 @@ router.put(
         message: error.message,
       });
     }
-  }
+  },
 );
 
 // DELETE /api/v1/patrons/:id - Delete patron

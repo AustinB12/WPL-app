@@ -15,6 +15,7 @@ import reports_routes from './routes/reports.js';
 import reservations_routes from './routes/reservations.js';
 import settings_routes from './routes/settings.js';
 import transactions_routes from './routes/transactions.js';
+import images_routes from './routes/images.js';
 import {
   start_email_worker,
   stop_email_worker,
@@ -41,7 +42,7 @@ app.use(
   cors({
     referredPolicy: 'no-referrer',
     credentials: false,
-  })
+  }),
 );
 
 // Middleware
@@ -50,10 +51,11 @@ app.use(
     referrerPolicy: {
       policy: ['unsafe-url'],
     },
-  })
+    crossOriginResourcePolicy: { policy: 'cross-origin' }, // Allow cross-origin image requests
+  }),
 ); // Security headers with referrer policy
-app.use(express.json()); // Parse JSON bodies
-app.use(express.urlencoded({ extended: true })); // Parse URL-encoded bodies
+app.use(express.json({ limit: '10mb' })); // Parse JSON bodies (increased for image uploads)
+app.use(express.urlencoded({ extended: true, limit: '10mb' })); // Parse URL-encoded bodies
 
 // Rate limiting
 const limiter = rateLimit({
@@ -80,6 +82,7 @@ app.get('/', (_req, res) => {
       item_copies: `${api_base}/item-copies`,
       settings: `${api_base}/settings`,
       analytics: `${api_base}/analytics`,
+      images: `${api_base}/images`,
     },
   });
 });
@@ -103,6 +106,7 @@ app.use(`${api_base}/emails`, emails_routes);
 app.use(`${api_base}/item-copies`, item_copies_routes);
 app.use(`${api_base}/reports`, reports_routes);
 app.use(`${api_base}/settings`, settings_routes);
+app.use(`${api_base}/images`, images_routes);
 // 404 handler (must come after routes)
 app.use((req, res) => {
   res.status(404).json({
@@ -128,9 +132,9 @@ const server = app.listen(PORT, url, async () => {
   console.log(
     pico.bgGreen(
       pico.bold(
-        `🚀 Server running on http://${url}:${PORT} | 💻 Environment: ${!is_dev ? 'PROD' : 'DEV'}`
-      )
-    )
+        `🚀 Server running on http://${url}:${PORT} | 💻 Environment: ${!is_dev ? 'PROD' : 'DEV'}`,
+      ),
+    ),
   );
 
   // Initialize email system
@@ -143,8 +147,8 @@ const server = app.listen(PORT, url, async () => {
   } catch (_error) {
     console.error(
       pico.red(
-        '⚠️  Email system initialization failed, emails will not be sent'
-      )
+        '⚠️  Email system initialization failed, emails will not be sent',
+      ),
     );
   }
 });

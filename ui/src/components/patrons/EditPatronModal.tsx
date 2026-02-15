@@ -50,7 +50,6 @@ export const EditPatronModal: FC<Edit_Patron_Modal_Props> = ({
         phone: patron.phone || '',
         birthday: patron.birthday ? patron.birthday : undefined,
         card_expiration_date: patron.card_expiration_date,
-        image_url: patron.image_url || '',
         balance: Number.isNaN(patron.balance) ? 0 : patron.balance,
         is_active: patron.is_active,
         local_branch_id: patron.local_branch_id,
@@ -60,14 +59,14 @@ export const EditPatronModal: FC<Edit_Patron_Modal_Props> = ({
 
   const handle_input_change = (
     field: keyof Update_Patron_Data,
-    value: string | boolean
+    value: string | boolean,
   ) => {
     set_form_data((prev) => ({ ...prev, [field]: value }));
   };
 
   const handle_date_change = (
     field: keyof Update_Patron_Data,
-    value: Dayjs | null | Date
+    value: Dayjs | null | Date,
   ) => {
     const dayjs_value = value instanceof Date ? dayjs(value) : value;
     set_form_data((prev) => ({ ...prev, [field]: dayjs_value }));
@@ -85,7 +84,6 @@ export const EditPatronModal: FC<Edit_Patron_Modal_Props> = ({
       card_expiration_date: form_data.card_expiration_date
         ? new Date(form_data.card_expiration_date).toLocaleDateString()
         : new Date().toLocaleDateString(),
-      image_url: form_data.image_url || undefined,
       balance: form_data.balance !== undefined ? form_data.balance : undefined,
       is_active: form_data.is_active !== undefined ? form_data.is_active : true,
       local_branch_id: form_data.local_branch_id,
@@ -158,7 +156,7 @@ export const EditPatronModal: FC<Edit_Patron_Modal_Props> = ({
                   onChange={(e) =>
                     handle_input_change(
                       'local_branch_id',
-                      e.target.value.toString()
+                      e.target.value.toString(),
                     )
                   }
                 >
@@ -201,19 +199,7 @@ export const EditPatronModal: FC<Edit_Patron_Modal_Props> = ({
                 }}
               />
             </Grid>
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <TextField
-                label='Profile Image URL'
-                type='url'
-                value={form_data.image_url}
-                onChange={(e) =>
-                  handle_input_change('image_url', e.target.value)
-                }
-                fullWidth
-                disabled={is_loading}
-              />
-            </Grid>
-            <Grid size={{ xs: 12, sm: 5 }}>
+            <Grid size={{ xs: 12, sm: 4 }}>
               <TextField
                 label='Balance'
                 type='number'

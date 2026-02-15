@@ -1,5 +1,5 @@
 import {
-  Container,
+  Box,
   Skeleton,
   Stack,
   type SxProps,
@@ -15,26 +15,27 @@ interface Page_Container_Props {
 }
 
 export const PageContainer = ({
-  width = 'lg',
   children,
   scroll = false,
   sx,
 }: PropsWithChildren<Page_Container_Props>) => {
   return (
-    <Container
-      maxWidth={width}
+    <Box
       sx={{
         py: { xs: 1, sm: 3 },
         height: 1,
+        flex: 1,
         overflow: scroll ? 'auto' : 'hidden',
         display: 'flex',
         flexDirection: 'column',
         gap: { xs: 1, sm: 2 },
+        mx: 0,
+        px: 8,
         ...sx,
       }}
     >
       {children}
-    </Container>
+    </Box>
   );
 };
 

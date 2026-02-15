@@ -1,5 +1,12 @@
 import { Delete, Edit, PersonAdd } from '@mui/icons-material';
-import { Avatar, Box, Button, Chip, Stack, Typography } from '@mui/material';
+import {
+  Avatar,
+  Box,
+  Button,
+  LinearProgress,
+  Stack,
+  Typography,
+} from '@mui/material';
 import {
   GridActionsCellItem,
   type GridColDef,
@@ -27,6 +34,8 @@ import { DeletePatronModal } from './DeletePatronModal';
 import { EditPatronModal } from './EditPatronModal';
 import New_Patron_Modal from './NewPatronModal';
 import { PatronsStatusChip } from './PatronsStatusChip';
+import { get_entity_image_url } from '../../utils/images';
+import { get_checkout_count_color } from '../../utils/colors';
 
 const NoResultsOverlay = () => {
   return (
@@ -53,7 +62,7 @@ const create_columns = (
   {
     field: 'id',
     headerName: 'ID',
-    width: 90,
+    width: 80,
   },
   {
     field: 'name_link',
@@ -68,7 +77,14 @@ const create_columns = (
                 ? 'primary.main'
                 : 'secondary.main',
           }}
-          src={params.row.image_url || ''}
+          src={
+            get_entity_image_url(
+              'PATRON',
+              params.row.id,
+              params.row.profile_image_id,
+              Date.now(),
+            ) || params.row.image_url
+          }
         >
           {`${params.row.first_name?.charAt(0) || ''}${
             params.row.last_name?.charAt(0) || ''
@@ -157,13 +173,21 @@ const create_columns = (
     headerName: 'Checked Out',
     width: 120,
     renderCell: (params: GridRenderCellParams) => {
-      const count = params.value || 0;
-      const tooMany = count >= 20;
+      let count = params.value || 0;
       return (
-        <Chip
-          label={`${count} / 20`}
-          color={tooMany ? 'error' : 'success'}
-          variant='filled'
+        <LinearProgress
+          title={`${count} / 20`}
+          variant='determinate'
+          value={(count / 20) * 100}
+          sx={{
+            height: 10,
+            borderRadius: 5,
+            display: 'absolute',
+            top: '40%',
+            '.MuiLinearProgress-bar': {
+              backgroundColor: get_checkout_count_color(count),
+            },
+          }}
         />
       );
     },

@@ -30,10 +30,25 @@ const handle_validation_errors = (req, res, next) => {
 // GET /api/v1/branches - Get all branches
 router.get('/', async (_req, res) => {
   try {
-    const branches = await db.get_all(
-      'BRANCHES',
-      'ORDER BY is_main DESC, branch_name',
-    );
+    const query = `
+    SELECT 
+      b.id, 
+      b.branch_name, 
+      b.address, 
+      b.phone, 
+      b.cover_image,
+      b.is_main,
+      b.primary_color,
+      b.secondary_color,
+      b.description,
+      i.id as image_id
+    FROM BRANCHES b
+    LEFT JOIN IMAGES i ON i.entity_type = 'BRANCH' AND i.entity_id = b.id
+    ORDER BY b.is_main DESC, b.branch_name
+    `;
+
+    const branches = await db.execute_query(query, []);
+
     res.json({
       success: true,
       count: branches.length,
@@ -56,7 +71,12 @@ router.get('/:id', async (req, res) => {
       b.branch_name, 
       b.address, 
       b.phone, 
+      b.cover_image,
       b.is_main,
+      b.primary_color,
+      b.secondary_color,
+      b.description,
+      i.id as image_id,
       COUNT(DISTINCT p.id) as patron_count,
       COUNT(DISTINCT lic.id) as item_copy_count_total,
       COUNT(DISTINCT CASE WHEN lic.status = 'Available' THEN lic.id END) as item_copy_count_active,
@@ -67,11 +87,11 @@ router.get('/:id', async (req, res) => {
     FROM BRANCHES b
     LEFT JOIN PATRONS p ON b.id = p.local_branch_id
     LEFT JOIN LIBRARY_ITEM_COPIES lic ON b.id = lic.owning_branch_id
+    LEFT JOIN IMAGES i ON i.entity_type = 'BRANCH' AND i.entity_id = b.id
     WHERE b.id = ?
     GROUP BY b.id;`;
 
     const results = await db.execute_query(query, [req.params.id]);
-    console.log('Branch query results:', results);
 
     if (!results || results.length === 0) {
       return res.status(404).json({
@@ -144,6 +164,10 @@ router.post(
         address: req.body.address || null,
         phone: req.body.phone || null,
         is_main: req.body.is_main || false,
+        primary_color: req.body.primary_color || null,
+        secondary_color: req.body.secondary_color || null,
+        description: req.body.description || null,
+        cover_image: req.body.cover_image || null,
         created_at: format_sql_datetime(new Date()),
       };
 

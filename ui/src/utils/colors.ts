@@ -54,5 +54,33 @@ export const get_status_color = (status: string): Chip_Color => {
 };
 
 export const get_condition_color = (condition?: string): Chip_Color => {
-  return condition ? CONDITION_COLOR_MAP[condition] ?? 'default' : 'default';
+  return condition ? (CONDITION_COLOR_MAP[condition] ?? 'default') : 'default';
+};
+
+export const get_checkout_count_color = (count: number): string => {
+  return checkout_count_color_map[count] ?? '#2E7D32';
+};
+
+const checkout_count_color_map: Record<number, string> = {
+  0: '#2E7D32',
+  1: '#2E7D32',
+  2: '#2E7D32',
+  3: '#2E7D32',
+  4: '#2E7D32',
+  5: '#2E7D32',
+  6: '#2E7D32',
+  7: '#2E7D32',
+  8: '#3E7B2E',
+  9: '#577928',
+  10: '#7B761F',
+  11: '#9E7316',
+  12: '#C0700D',
+  13: '#E96407',
+  14: '#E35414',
+  15: '#DD6D06',
+  16: '#DC451F',
+  17: '#D6352A',
+  18: '#D32F2F',
+  19: '#D32F2F',
+  20: '#D32F2F',
 };
