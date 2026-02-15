@@ -13,6 +13,7 @@ import { PageContainer, Page_Title } from '../components/common/PageBuilders';
 import { useBranches } from '../hooks/use_branches';
 import { data_service } from '../services/data_service';
 import type { Branch } from '../types/others';
+import { useNavigate } from 'react-router-dom';
 
 // Pre-computed skeleton placeholders to avoid array creation on each render
 const SKELETON_COUNT = 6;
@@ -72,13 +73,15 @@ const BranchCard = memo(function BranchCard({
     return branch.cover_image;
   }, [branch.id, branch.image_id, branch.cover_image, cache_buster]);
 
+  const nav = useNavigate();
+
   return (
     <Card
       sx={{
         maxWidth: 555,
       }}
     >
-      <CardActionArea href={`/branch/${branch.id}`}>
+      <CardActionArea onClick={() => nav(`/branch/${branch.id}`)}>
         <CardMedia
           component='img'
           height='140'
